@@ -1,5 +1,6 @@
 use glium::{
     glutin::{
+        dpi::PhysicalSize,
         event::{Event, WindowEvent},
         event_loop::{ControlFlow, EventLoop},
         window::WindowBuilder,
@@ -15,7 +16,10 @@ pub fn main() {
         model.data.objects[0].groups[0].polys[0].0[0]
     );
 
-    let window_builder = WindowBuilder::new().with_title("Hello, world!");
+    let window_builder = WindowBuilder::new()
+    .with_title("Hello, world!")
+    .with_resizable(true)
+    .with_min_inner_size(PhysicalSize::new(800, 600));
     let context_builder = ContextBuilder::new();
     let event_loop = EventLoop::new();
 
@@ -28,7 +32,7 @@ pub fn main() {
         } => {
             *c = ControlFlow::Exit;
         }
-        Event::WindowEvent { event, .. } => {}
+        Event::WindowEvent {..} => {}
         Event::RedrawRequested(_) => {
             let mut frame = display.draw();
 
