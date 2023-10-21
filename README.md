@@ -1,4 +1,5 @@
-[![Rust](https://github.com/TrayRacers/Raytracing/actions/workflows/rust.yml/badge.svg)](https://github.com/TrayRacers/Raytracing/actions/workflows/rust.yml)
+[![Linux](https://github.com/TrayRacers/Raytracing/actions/workflows/rust-linux.yml/badge.svg)](https://github.com/TrayRacers/Raytracing/actions/workflows/rust-linux.yml)
+[![Windows](https://github.com/TrayRacers/Raytracing/actions/workflows/rust-windows.yml/badge.svg)](https://github.com/TrayRacers/Raytracing/actions/workflows/rust-windows.yml)
 
 # Raytracing
 
