@@ -6,5 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+cargo-husky = "1.5.0"
 glium = "0.32.1"
 obj = "0.10.2"
+
+#"cargo test"
+[dev-dependencies.cargo-husky]
+version = "1.5.0"
+default-features = false
+features = [ "user-hooks" ]
