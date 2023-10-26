@@ -8,10 +8,15 @@ edition = "2021"
 [dependencies]
 cargo-husky = "1.5.0"
 glium = "0.32.1"
+image = { version = "0.24.7", default-features = false, features = [
+    "png",
+    "jpeg",
+] }
+nalgebra = "0.32.3"
 obj = "0.10.2"
 
 #"cargo test"
 [dev-dependencies.cargo-husky]
 version = "1.5.0"
 default-features = false
-features = [ "user-hooks" ]
+features = ["user-hooks"]
