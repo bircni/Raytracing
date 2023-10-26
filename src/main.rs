@@ -12,6 +12,11 @@ use glium::{
     uniforms::MagnifySamplerFilter,
     BlitTarget, Rect, Surface, Texture2d,
 };
+use nalgebra::Vector3;
+
+mod scene;
+
+pub type Color = Vector3<f32>;
 
 pub fn main() {
     let window_builder = WindowBuilder::new()
