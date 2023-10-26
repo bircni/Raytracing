@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use chrono::Local;
 use glium::{
     glutin::{
         dpi::PhysicalSize,
@@ -13,12 +14,32 @@ use glium::{
     BlitTarget, Rect, Surface, Texture2d,
 };
 use nalgebra::Vector3;
+use simplelog::*;
+use std::fs::File;
 
 mod scene;
 
 pub type Color = Vector3<f32>;
 
 pub fn main() {
+    //initialize the logger
+    let timestamp = Local::now().format("%Y-%m-%d_%H-%M-%S").to_string();
+    std::fs::create_dir_all("logs").unwrap();
+    let log_file_name = format!("logs/trayracer_{}.log", timestamp);
+    CombinedLogger::init(vec![
+        TermLogger::new(
+            LevelFilter::Warn,
+            Config::default(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        ),
+        WriteLogger::new(
+            LevelFilter::Info,
+            Config::default(),
+            File::create(log_file_name).unwrap(),
+        ),
+    ])
+    .unwrap();
     let window_builder = WindowBuilder::new()
         .with_title("TrayRacer!")
         .with_resizable(true)
