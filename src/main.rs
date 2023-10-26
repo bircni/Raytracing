@@ -13,12 +13,40 @@ use glium::{
     BlitTarget, Rect, Surface, Texture2d,
 };
 use nalgebra::Vector3;
+use simplelog::*;
+use std::fs::File;
 
 mod scene;
 
 pub type Color = Vector3<f32>;
 
 pub fn main() {
+    std::fs::create_dir_all("logs").expect("Failed to create logs directory");
+    let log_file_name = format!(
+        "logs/trayracer_{}.log",
+        chrono::Local::now().format("%Y-%m-%d_%H-%M-%S")
+    );
+
+    let log_level = if cfg!(debug_assertions) {
+        LevelFilter::Trace
+    } else {
+        LevelFilter::Info
+    };
+    CombinedLogger::init(vec![
+        TermLogger::new(
+            log_level,
+            Config::default(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        ),
+        WriteLogger::new(
+            log_level,
+            Config::default(),
+            File::create(log_file_name).unwrap(),
+        ),
+    ])
+    .expect("Failed to initialize logger");
+
     let window_builder = WindowBuilder::new()
         .with_title("TrayRacer!")
         .with_resizable(true)
