@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 
-use chrono::Local;
 use glium::{
     glutin::{
         dpi::PhysicalSize,
@@ -22,24 +21,32 @@ mod scene;
 pub type Color = Vector3<f32>;
 
 pub fn main() {
-    //initialize the logger
-    let timestamp = Local::now().format("%Y-%m-%d_%H-%M-%S").to_string();
-    std::fs::create_dir_all("logs").unwrap();
-    let log_file_name = format!("logs/trayracer_{}.log", timestamp);
+    std::fs::create_dir_all("logs").expect("Failed to create logs directory");
+    let log_file_name = format!(
+        "logs/trayracer_{}.log",
+        chrono::Local::now().format("%Y-%m-%d_%H-%M-%S")
+    );
+
+    let log_level = if cfg!(debug_assertions) {
+        LevelFilter::Trace
+    } else {
+        LevelFilter::Info
+    };
     CombinedLogger::init(vec![
         TermLogger::new(
-            LevelFilter::Warn,
+            log_level,
             Config::default(),
             TerminalMode::Mixed,
             ColorChoice::Auto,
         ),
         WriteLogger::new(
-            LevelFilter::Info,
+            log_level,
             Config::default(),
             File::create(log_file_name).unwrap(),
         ),
     ])
-    .unwrap();
+    .expect("Failed to initialize logger");
+
     let window_builder = WindowBuilder::new()
         .with_title("TrayRacer!")
         .with_resizable(true)
