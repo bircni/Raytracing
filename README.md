@@ -5,21 +5,7 @@
 
 This is the main repository for the raytracing project.
 
-## SimpleLog Usage
+## `log` crate
 
-```rust
-// error
-error!("error message");
-
-// warn
-warn!("warn message");
-
-// info (only appears in the log file)
-info!("info message");
-
-// debug
-debug!("debug message");
-
-// trace
-trace!("trace message");
-```
+> Usage:  
+> The basic use of the log crate is through the five logging macros: `error!`, `warn!`, `info!`, `debug!` and `trace!` where `error!` represents the highest-priority log messages and trace! the lowest. The log messages are filtered by configuring the log level to exclude messages with a lower priority. Each of these macros accept format strings similarly to println!.
