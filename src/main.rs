@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use anyhow::Context;
 use glium::{
     glutin::{
         dpi::PhysicalSize,
@@ -20,12 +21,8 @@ mod scene;
 
 pub type Color = Vector3<f32>;
 
-pub fn main() {
-    std::fs::create_dir_all("logs").expect("Failed to create logs directory");
-    let log_file_name = format!(
-        "logs/trayracer_{}.log",
-        chrono::Local::now().format("%Y-%m-%d_%H-%M-%S")
-    );
+pub fn main() -> anyhow::Result<()> {
+    std::fs::create_dir_all("logs").context("Failed to create logs directory")?;
 
     let log_level = if cfg!(debug_assertions) {
         LevelFilter::Trace
@@ -42,10 +39,14 @@ pub fn main() {
         WriteLogger::new(
             log_level,
             Config::default(),
-            File::create(log_file_name).unwrap(),
+            File::create(format!(
+                "logs/trayracer_{}.log",
+                chrono::Local::now().format("%Y-%m-%d_%H-%M-%S")
+            ))
+            .context("Failed to create log file")?,
         ),
     ])
-    .expect("Failed to initialize logger");
+    .context("Failed to initialize logger")?;
 
     let window_builder = WindowBuilder::new()
         .with_title("TrayRacer!")
@@ -54,7 +55,8 @@ pub fn main() {
     let context_builder = ContextBuilder::new();
     let event_loop = EventLoop::new();
 
-    let display = glium::Display::new(window_builder, context_builder, &event_loop).unwrap();
+    let display = glium::Display::new(window_builder, context_builder, &event_loop)
+        .context("Failed to create display")?;
 
     event_loop.run(move |e, _, c| match e {
         Event::WindowEvent {
@@ -86,6 +88,7 @@ pub fn main() {
                 UncompressedFloatFormat::F32F32F32F32,
                 MipmapsOption::NoMipmap,
             )
+            .context("Failed to create texture")
             .unwrap();
 
             let mut frame = display.draw();
@@ -106,7 +109,7 @@ pub fn main() {
                 MagnifySamplerFilter::Linear,
             );
 
-            frame.finish().unwrap();
+            frame.finish().context("Failed to finish frame").unwrap();
         }
         Event::WindowEvent { .. } => {}
         Event::RedrawRequested(_) => {}
