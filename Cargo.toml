@@ -20,6 +20,8 @@ log = "0.4.20"
 nalgebra = "0.32.3"
 obj = "0.10.2"
 simplelog = "0.12.1"
+serde = "1"
+serde_yaml = "0.8"
 
 #"cargo test"
 [dev-dependencies.cargo-husky]
