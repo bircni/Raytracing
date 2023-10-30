@@ -12,10 +12,10 @@ mod triangle;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scene {
-    objects: Vec<Object>,
-    lights: Vec<Light>,
-    camera: Camera,
-    settings: Settings,
+    pub objects: Vec<Object>,
+    pub lights: Vec<Light>,
+    pub camera: Camera,
+    pub settings: Settings,
 }
 
 impl<'de> Deserialize<'de> for Scene {
