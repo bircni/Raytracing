@@ -1,4 +1,5 @@
-use std::borrow::Cow;
+/*use std::borrow::Cow;
+
 
 use anyhow::Context;
 use glium::{
@@ -119,4 +120,68 @@ pub fn main() -> anyhow::Result<()> {
         Event::RedrawRequested(_) => {}
         _ => {}
     });
+}*/
+
+use std::borrow::Cow;
+use eframe::egui;
+
+
+fn main() -> Result<(), eframe::Error> {
+    let options = eframe::NativeOptions {
+        initial_window_size: Some(egui::vec2(1200.0, 800.0)),
+        ..Default::default()
+    };
+    eframe::run_native(
+        "RayTracer!",
+        options,
+        Box::new(|cc| {
+            // This gives us image support:
+            egui_extras::install_image_loaders(&cc.egui_ctx);
+
+            Box::<TrayRacerApp>::default()
+        }),
+    )
+}
+
+struct TrayRacerApp {
+    sample_string: String,
+    sample_num: u32,
+}
+
+impl Default for TrayRacerApp {
+    fn default() -> Self {
+        Self {
+            sample_string: "Raytracing is fun!".to_owned(),
+            sample_num: 42,
+        }
+    }
+}
+
+impl eframe::App for TrayRacerApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            //adding an image to the gui
+            ui.image(egui::include_image!(
+                "../res/Farbverlauf.jpg"
+            ));
+            ui.heading(&mut self.sample_string);
+            ui.label(self.sample_num.to_string());
+            ui.vertical(|ui| {
+                ui.add(
+                    //sample slider to modify a varaible on the fly
+                        egui::Slider::new(&mut self.sample_num, 0..=100)
+                );
+                //radio menu to select a value to bind to variable sample_string
+                let test1:String = "test1".to_string();
+                let test2:String = "test2".to_string();
+                let test3:String = "test3".to_string();
+                ui.radio_value(&mut self.sample_string,  test1, "Option 1");
+                ui.radio_value(&mut self.sample_string,  test2, "Option 2");
+                ui.radio_value(&mut self.sample_string,  test3, "Option 3");
+              
+            
+            });
+            
+        });
+    }
 }
