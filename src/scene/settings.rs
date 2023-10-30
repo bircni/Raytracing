@@ -1,8 +1,7 @@
+use anyhow::Context;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::Read;
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ModelConfig {
@@ -27,7 +26,7 @@ pub struct CameraConfig {
     width: u32,
     height: u32,
 }
-    
+
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ExtraArgsConfig {
     max_bounces: u32,
@@ -43,23 +42,20 @@ pub struct AppConfig {
     pub extra_args: ExtraArgsConfig,
 }
 
-pub fn load_configuration() -> Result<AppConfig, Box<dyn std::error::Error>> {
-    let file_path = "./config.yaml";
-    let mut file = File::open(file_path)?;
+impl AppConfig {
+    pub fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<AppConfig> {
+        let s = std::fs::read_to_string(path.as_ref()).context(format!(
+            "Failed to read file from path: {}",
+            path.as_ref().display()
+        ))?;
 
-    let mut config_data = String::new();
-    file.read_to_string(&mut config_data)?;
-
-    // Deserialize the YAML data into an AppConfig struct
-    let app_config: AppConfig = serde_yaml::from_str(&config_data)?;
-
-    // Check for errors during deserialization
-    if let Err(err) = serde_yaml::from_str::<AppConfig>(&config_data) {
-        eprintln!("Error deserializing YAML: {:?}", err);
-        return Err(err.into());
+        serde_yaml::from_str(s.as_str()).context("Failed to parse config file")
     }
+}
 
-    print!("{:?}", app_config);
-    // Return the deserialized configuration
-    Ok(app_config)
+#[test]
+pub fn test_load() -> anyhow::Result<()> {
+    let config = AppConfig::load("./res/config.yaml")?;
+    assert!(config.title == "Raytracer");
+    Ok(())
 }
