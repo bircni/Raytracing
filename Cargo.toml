@@ -17,10 +17,10 @@ image = { version = "0.24.7", default-features = false, features = [
     "jpeg",
 ] }
 log = "0.4.20"
-nalgebra = "0.32.3"
+nalgebra = { version = "0.32.3", features = ["serde", "serde-serialize"] }
 obj = "0.10.2"
 simplelog = "0.12.1"
-serde = "1"
+serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.8"
 
 #"cargo test"

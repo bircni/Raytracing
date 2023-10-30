@@ -17,12 +17,15 @@ use nalgebra::Vector3;
 use simplelog::*;
 use std::fs::File;
 
+
 mod scene;
 
 pub type Color = Vector3<f32>;
 
 pub fn main() -> anyhow::Result<()> {
+
     std::fs::create_dir_all("logs").context("Failed to create logs directory")?;
+    scene::settings::load_configuration().unwrap();
 
     let log_level = if cfg!(debug_assertions) {
         LevelFilter::Trace
