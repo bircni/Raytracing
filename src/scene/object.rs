@@ -1,7 +1,5 @@
 
 use nalgebra::{Translation3, UnitQuaternion, Point, Vector3};
-use obj::Obj;
-use crate::scene::triangle;
 
 use super::triangle::Triangle;
 
@@ -17,6 +15,7 @@ pub fn load_obj_file(file_path: &str) {
     
     // Load the OBJ file
     let mut obj = obj::Obj::load(file_path).unwrap();
+    // load materials
     obj.load_mtls().unwrap();
     
     let objects = obj.data.objects.iter().map(|object| {
