@@ -8,5 +8,5 @@ pub struct Triangle {
     pub a_normal: Vector3<f32>,
     pub b_normal: Vector3<f32>,
     pub c_normal: Vector3<f32>,
-    pub material_index: usize,
+    pub material_index: Option<usize>,
 }

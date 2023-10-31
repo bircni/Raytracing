@@ -24,11 +24,8 @@ pub type Color = Vector3<f32>;
 pub fn main() -> anyhow::Result<()> {
     std::fs::create_dir_all("logs").context("Failed to create logs directory")?;
 
-    let config = scene::settings::AppConfig::load("./res/config.yaml")?;
-    println!("{:?}", config);
-
-    scene::object::load_obj_file("./res/test.obj");
-
+    let scene = scene::Scene::load("./res/config.yaml")?;
+    println!("{:?}", scene);
 
     let log_level = if cfg!(debug_assertions) {
         LevelFilter::Trace

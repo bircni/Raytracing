@@ -1,16 +1,27 @@
 title: "Raytracer"
 
-model:
-  file_path: "./res/test.obj"
-  position:
-    x: 2.0
-    y: 2.0
-    z: 2.0
-  rotation:
-    x: 2.0
-    y: 2.0
-    z: 2.0 # in degree
-  scale: 1
+models:
+  - file_path: "./res/test.obj"
+    position:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0 # in degree
+    scale: 1
+
+  - file_path: "./res/test.obj"
+    position:
+      x: 1.0
+      y: 2.0
+      z: 3.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0 # in degree
+    scale: 1
 
 point_lights:
   - position:
