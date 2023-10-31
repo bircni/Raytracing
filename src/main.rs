@@ -160,27 +160,33 @@ impl Default for TrayRacerApp {
 impl eframe::App for TrayRacerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
+            //horizontqal layout with multiple seperate vertical layouts to sit on top of displayed image
+            ui.horizontal(|ui| {
+            ui.vertical(|ui| {
+                ui.heading(format!("Global String variable now set to: {}", self.sample_string));
+                ui.label(format!("Global Num variable now set to: {}", self.sample_num));
+                ui.add(
+                    //sample slider to modify a varaible on the fly
+                    egui::Slider::new(&mut self.sample_num, 0..=100)
+                );
+            });
+            ui.vertical(|ui|{
+                 //radio menu to select a value to bind to variable sample_string
+                 let test1:String = "test1".to_string();
+                 let test2:String = "test2".to_string();
+                 let test3:String = "test3".to_string();
+                 ui.radio_value(&mut self.sample_string,  test1, "Option 1");
+                 ui.radio_value(&mut self.sample_string,  test2, "Option 2");
+                 ui.radio_value(&mut self.sample_string,  test3, "Option 3");
+            });
+            });
+
             //adding an image to the gui
             ui.image(egui::include_image!(
                 "../res/Farbverlauf.jpg"
             ));
-            ui.heading(&mut self.sample_string);
-            ui.label(self.sample_num.to_string());
-            ui.vertical(|ui| {
-                ui.add(
-                    //sample slider to modify a varaible on the fly
-                        egui::Slider::new(&mut self.sample_num, 0..=100)
-                );
-                //radio menu to select a value to bind to variable sample_string
-                let test1:String = "test1".to_string();
-                let test2:String = "test2".to_string();
-                let test3:String = "test3".to_string();
-                ui.radio_value(&mut self.sample_string,  test1, "Option 1");
-                ui.radio_value(&mut self.sample_string,  test2, "Option 2");
-                ui.radio_value(&mut self.sample_string,  test3, "Option 3");
-              
             
-            });
+           
             
         });
     }
