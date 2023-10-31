@@ -2,7 +2,7 @@ use self::{camera::Camera, light::Light, object::Object, settings::AppConfig};
 
 mod camera;
 mod light;
-mod object;
+pub mod object;
 pub mod settings;
 mod triangle;
 

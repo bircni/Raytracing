@@ -27,6 +27,9 @@ pub fn main() -> anyhow::Result<()> {
     let config = scene::settings::AppConfig::load("./res/config.yaml")?;
     println!("{:?}", config);
 
+    scene::object::load_obj_file("./res/test.obj");
+
+
     let log_level = if cfg!(debug_assertions) {
         LevelFilter::Trace
     } else {
