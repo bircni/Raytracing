@@ -4,11 +4,17 @@ use egui::{CentralPanel, RichText, Slider};
 
 pub struct App {
     current_tab: usize,
+    rays_per_pixel: i32,
+    picked_path: Option<String>,
 }
 
 impl App {
     pub fn new() -> Self {
-        Self { current_tab: 0 }
+        Self {
+            current_tab: 0,
+            rays_per_pixel: 0,
+            picked_path: None,
+        }
     }
 }
 
@@ -46,7 +52,29 @@ impl eframe::App for App {
 
                         ui.separator();
 
-                        ui.add(Slider::new(&mut 0, RangeInclusive::new(0, 100)));
+                        ui.label("Rays per pixel:");
+
+                        ui.add(Slider::new(
+                            &mut self.rays_per_pixel,
+                            RangeInclusive::new(0, 100),
+                        ));
+
+                        ui.label("FEATURE: pick file");
+
+                        if ui.button("Open file").clicked() {
+                            if let Some(path) = rfd::FileDialog::new()
+                                .add_filter("Object", &["obj", "mtl"])
+                                .pick_file()
+                            {
+                                self.picked_path = Some(path.display().to_string());
+                                println!("picked path: {:?}", self.picked_path)
+                            }
+                        }
+
+                        if self.picked_path.is_some() {
+                            ui.label("Picked path:");
+                            ui.label(self.picked_path.as_ref().unwrap());
+                        }
 
                         ui.separator();
 

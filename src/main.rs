@@ -8,6 +8,6 @@ fn main() -> Result<(), eframe::Error> {
     eframe::run_native(
         "RayTracer!",
         options,
-        Box::new(|ctx| Box::new(ui::App::new())),
+        Box::new(|_| Box::new(ui::App::new())),
     )
 }
