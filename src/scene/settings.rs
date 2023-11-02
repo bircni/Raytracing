@@ -1,5 +1,13 @@
-#[derive(Debug, Clone, PartialEq)]
+use serde::{Deserialize, Serialize};
+
+// This struct represents settings for a program and is both serializable and deserializable
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Settings {
-    max_bounces: u32,
-    samples: u32,
+    
+    // This field specifies the maximum number of bounces for ray tracing or similar operations
+    max_bounces: usize,
+
+    // This field represents the number of samples used in rendering or some other operation
+    samples: usize,
 }
+
