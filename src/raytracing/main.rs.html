@@ -116,6 +116,9 @@
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
 <a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::borrow::Cow;
 
 <span class="kw">use </span>anyhow::Context;
@@ -141,6 +144,9 @@
 
 <span class="kw">pub fn </span>main() -&gt; anyhow::Result&lt;()&gt; {
     std::fs::create_dir_all(<span class="string">&quot;logs&quot;</span>).context(<span class="string">&quot;Failed to create logs directory&quot;</span>)<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>scene = scene::Scene::load(<span class="string">&quot;./res/config.yaml&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">println!</span>(<span class="string">&quot;{:?}&quot;</span>, scene);
 
     <span class="kw">let </span>log_level = <span class="kw">if </span><span class="macro">cfg!</span>(debug_assertions) {
         LevelFilter::Trace
