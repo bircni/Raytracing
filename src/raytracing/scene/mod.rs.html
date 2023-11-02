@@ -167,10 +167,10 @@
 
 <span class="attr">#[derive(Debug, Clone, PartialEq)]
 </span><span class="kw">pub struct </span>Scene {
-    objects: Vec&lt;Object&gt;,
-    lights: Vec&lt;Light&gt;,
-    camera: Camera,
-    settings: Settings,
+    <span class="kw">pub </span>objects: Vec&lt;Object&gt;,
+    <span class="kw">pub </span>lights: Vec&lt;Light&gt;,
+    <span class="kw">pub </span>camera: Camera,
+    <span class="kw">pub </span>settings: Settings,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>Scene {

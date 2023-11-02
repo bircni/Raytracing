@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["main"],"mod":["scene"],"type":["Color"]};
+window.SIDEBAR_ITEMS = {"fn":["main"],"mod":["raytracer","scene"],"type":["Color"]};
