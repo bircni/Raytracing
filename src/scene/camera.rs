@@ -4,7 +4,7 @@ use serde::Deserialize;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Camera {
     pub position: Point3<f32>,
-    pub direction: Vector3<f32>,
+    pub look_at: Point3<f32>,
     pub up: Vector3<f32>,
     pub fov: f32,
 }
@@ -32,7 +32,7 @@ impl<'de> Deserialize<'de> for Camera {
     {
         yaml::Camera::deserialize(deserializer).map(|yaml_camera| Camera {
             position: yaml_camera.position,
-            direction: (yaml_camera.look_at - yaml_camera.position).normalize(),
+            look_at: yaml_camera.look_at,
             up: yaml_camera.up_vec,
             fov: yaml_camera.field_of_view,
         })

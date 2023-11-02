@@ -1,7 +1,7 @@
 use anyhow::Context;
 use log::warn;
-use nalgebra::{Point, Point3, Similarity3, Vector3};
-use obj::Material;
+use nalgebra::{Point3, Similarity3, Vector3};
+use obj::{Material, SimplePolygon};
 use ordered_float::OrderedFloat;
 
 use crate::raytracer::{Hit, Ray};
@@ -10,9 +10,9 @@ use super::triangle::Triangle;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Object {
-    triangles: Vec<Triangle>,
-    materials: Vec<Material>,
-    transform: Similarity3<f32>,
+    pub triangles: Vec<Triangle>,
+    pub materials: Vec<Material>,
+    pub transform: Similarity3<f32>,
 }
 
 impl<'de> serde::Deserialize<'de> for Object {
@@ -40,9 +40,9 @@ impl<'de> serde::Deserialize<'de> for Object {
         let transform = Similarity3::from_parts(
             nalgebra::Translation3::from(yaml_object.position.coords),
             nalgebra::UnitQuaternion::from_euler_angles(
-                yaml_object.rotation.x,
-                yaml_object.rotation.y,
-                yaml_object.rotation.z,
+                yaml_object.rotation.x * std::f32::consts::PI * 2.0 / 360.0,
+                yaml_object.rotation.y * std::f32::consts::PI * 2.0 / 360.0,
+                yaml_object.rotation.z * std::f32::consts::PI * 2.0 / 360.0,
             ),
             yaml_object.scale,
         );
@@ -104,24 +104,7 @@ impl Object {
                 group
                     .polys
                     .iter()
-                    .map(|poly| {
-                        let pos1 = obj.data.position[poly.0[0].0];
-                        let pos2 = obj.data.position[poly.0[1].0];
-                        let pos3 = obj.data.position[poly.0[2].0];
-                        let normal1 = obj.data.normal[poly.0[0].2.unwrap()];
-                        let normal2 = obj.data.normal[poly.0[1].2.unwrap()];
-                        let normal3 = obj.data.normal[poly.0[2].2.unwrap()];
-
-                        Triangle {
-                            a: Point::from(pos1),
-                            b: Point::from(pos2),
-                            c: Point::from(pos3),
-                            a_normal: Vector3::from(normal1),
-                            b_normal: Vector3::from(normal2),
-                            c_normal: Vector3::from(normal3),
-                            material_index,
-                        }
-                    })
+                    .flat_map(|p| triangulate(&obj, p, material_index))
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
@@ -132,6 +115,37 @@ impl Object {
             transform,
         })
     }
+}
+
+fn triangulate(
+    obj: &obj::Obj,
+    poly: &SimplePolygon,
+    material_index: Option<usize>,
+) -> Vec<Triangle> {
+    let mut triangles = Vec::new();
+
+    for i in 1..poly.0.len() - 1 {
+        triangles.push(Triangle {
+            a: Point3::from(obj.data.position[poly.0[0].0]),
+            b: Point3::from(obj.data.position[poly.0[i].0]),
+            c: Point3::from(obj.data.position[poly.0[i + 1].0]),
+            a_normal: poly.0[0]
+                .2
+                .map(|i| Vector3::from(obj.data.normal[i]))
+                .unwrap_or(Vector3::zeros()),
+            b_normal: poly.0[i]
+                .2
+                .map(|i| Vector3::from(obj.data.normal[i]))
+                .unwrap_or(Vector3::zeros()),
+            c_normal: poly.0[i + 1]
+                .2
+                .map(|i| Vector3::from(obj.data.normal[i]))
+                .unwrap_or(Vector3::zeros()),
+            material_index,
+        });
+    }
+
+    triangles
 }
 
 impl Object {
