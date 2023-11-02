@@ -1,39 +1,47 @@
-use anyhow::Context;
-use log::warn;
-use nalgebra::{Point, Similarity3, Vector3};
-use obj::Material;
+// Import necessary Rust crates and modules
+use anyhow::Context;           // Error handling and context for `anyhow` crate
+use log::warn;                  // Logging for warnings
+use nalgebra::{Point, Similarity3, Vector3}; // Linear algebra utilities
+use obj::Material;              // Material from the `obj` crate
+use super::triangle::Triangle; // Custom Triangle struct
 
-use super::triangle::Triangle;
-
+// Define a custom struct called 'Object'
 #[derive(Debug, Clone, PartialEq)]
 pub struct Object {
-    triangles: Vec<Triangle>,
-    materials: Vec<Material>,
-    transform: Similarity3<f32>,
+    triangles: Vec<Triangle>,     // A vector of triangles that make up the object
+    materials: Vec<Material>,    // A vector of materials associated with the object
+    transform: Similarity3<f32>, // A similarity transform for the object
 }
 
+// Implement a custom deserializer for 'Object'
 impl<'de> serde::Deserialize<'de> for Object {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
+        // Define a nested module 'yaml' for deserializing YAML data
         mod yaml {
             use nalgebra::{Point3, Vector3};
             use serde::Deserialize;
 
+            // Define a struct to represent YAML data for 'Object'
             #[derive(Deserialize)]
             pub struct Object {
-                pub file_path: String,
+                pub file_path: String, // File path for the object
+                // Deserialize position as a Point3 using a custom deserializer
                 #[serde(with = "super::super::yaml::point3_xyz")]
                 pub position: Point3<f32>,
+                // Deserialize rotation as a Vector3 using a custom deserializer
                 #[serde(with = "super::super::yaml::vector3_xyz")]
                 pub rotation: Vector3<f32>,
-                pub scale: f32,
+                pub scale: f32, // Scale factor
             }
         }
 
+        // Deserialize YAML data into 'yaml_object'
         let yaml_object = yaml::Object::deserialize(deserializer)?;
 
+        // Create a transformation based on position, rotation, and scale
         let transform = Similarity3::from_parts(
             nalgebra::Translation3::from(yaml_object.position.coords),
             nalgebra::UnitQuaternion::from_euler_angles(
@@ -44,6 +52,7 @@ impl<'de> serde::Deserialize<'de> for Object {
             yaml_object.scale,
         );
 
+        // Create an 'Object' from an OBJ file using the specified transform
         Object::from_obj(yaml_object.file_path.as_str(), transform)
             .context(format!(
                 "Failed to load object from path: {:?}",
@@ -53,11 +62,14 @@ impl<'de> serde::Deserialize<'de> for Object {
     }
 }
 
+// Implement methods for the 'Object' struct
 impl Object {
+    // Define a method to create an 'Object' from an OBJ file
     fn from_obj<P: AsRef<std::path::Path>>(
         path: P,
         transform: Similarity3<f32>,
     ) -> anyhow::Result<Object> {
+        // Load the OBJ file and materials
         let mut obj = obj::Obj::load(path.as_ref())
             .context(format!("Failed to load obj from path: {:?}", path.as_ref()))?;
         obj.load_mtls().context(format!(
@@ -65,6 +77,7 @@ impl Object {
             path.as_ref()
         ))?;
 
+        // Extract materials from the loaded OBJ
         let materials: Vec<Material> = obj
             .data
             .material_libs
@@ -73,12 +86,14 @@ impl Object {
             .map(|m| m.as_ref().clone())
             .collect::<Vec<_>>();
 
+        // Extract triangles from the loaded OBJ
         let triangles = obj
             .data
             .objects
             .iter()
             .flat_map(|object| object.groups.iter())
             .flat_map(|group| {
+                // Determine the material index for the group
                 let material_index = group
                     .material
                     .as_ref()
@@ -98,6 +113,7 @@ impl Object {
                             })
                     });
 
+                // Extract triangles for the group
                 group
                     .polys
                     .iter()
@@ -123,6 +139,7 @@ impl Object {
             })
             .collect::<Vec<_>>();
 
+        // Create and return the 'Object' instance
         Ok(Object {
             triangles,
             materials,
