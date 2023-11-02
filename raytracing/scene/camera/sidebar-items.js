@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["yaml"],"struct":["Camera"]};
+window.SIDEBAR_ITEMS = {"struct":["Camera"]};

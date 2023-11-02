@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["color_rgb","point3_xyz","vector3_xyz"]};
