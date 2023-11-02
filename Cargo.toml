@@ -20,6 +20,8 @@ ordered-float = "4.1.1"
 simplelog = "0.12.1"
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9.27"
+eframe = "0.23.0"
+egui = "0.23.0"
 
 
 #"cargo test"
