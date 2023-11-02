@@ -1,5 +1,7 @@
-#[derive(Debug, Clone, PartialEq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Settings {
-    max_bounces: u32,
-    samples: u32,
+    max_bounces: usize,
+    samples: usize,
 }

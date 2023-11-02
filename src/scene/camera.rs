@@ -1,4 +1,5 @@
 use nalgebra::{Point3, Vector3};
+use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Camera {
@@ -6,4 +7,34 @@ pub struct Camera {
     direction: Vector3<f32>,
     up: Vector3<f32>,
     fov: f32,
+}
+
+mod yaml {
+    use nalgebra::{Point3, Vector3};
+    use serde::Deserialize;
+
+    #[derive(Deserialize)]
+    pub struct Camera {
+        #[serde(with = "super::super::yaml::point3_xyz")]
+        pub position: Point3<f32>,
+        #[serde(with = "super::super::yaml::point3_xyz")]
+        pub look_at: Point3<f32>,
+        #[serde(with = "super::super::yaml::vector3_xyz")]
+        pub up_vec: Vector3<f32>,
+        pub field_of_view: f32,
+    }
+}
+
+impl<'de> Deserialize<'de> for Camera {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        yaml::Camera::deserialize(deserializer).map(|yaml_camera| Camera {
+            position: yaml_camera.position,
+            direction: (yaml_camera.look_at - yaml_camera.position).normalize(),
+            up: yaml_camera.up_vec,
+            fov: yaml_camera.field_of_view,
+        })
+    }
 }
