@@ -1,7 +1,10 @@
 use anyhow::Context;
 use log::warn;
-use nalgebra::{Point, Similarity3, Vector3};
+use nalgebra::{Point, Point3, Similarity3, Vector3};
 use obj::Material;
+use ordered_float::OrderedFloat;
+
+use crate::raytracer::{Hit, Ray};
 
 use super::triangle::Triangle;
 
@@ -128,5 +131,38 @@ impl Object {
             materials,
             transform,
         })
+    }
+}
+
+impl Object {
+    pub fn intersect(&self, ray: Ray) -> Option<Hit> {
+        // Transform ray into object space
+        let ray = Ray {
+            origin: self.transform.inverse_transform_point(&ray.origin),
+            direction: self.transform.inverse_transform_vector(&ray.direction),
+        };
+
+        self.triangles
+            .iter()
+            .filter_map(|t| t.intersect(ray).map(|h| (t, h)))
+            .map(|(t, (u, v, w))| {
+                let material = t.material_index.map(|i| &self.materials[i]);
+                let normal = ((t.a_normal * u) + (t.b_normal * v) + (t.c_normal * w)).normalize();
+                let point = Point3::from((t.a.coords * u) + (t.b.coords * v) + (t.c.coords * w));
+                Hit {
+                    point,
+                    normal,
+                    material,
+                }
+            })
+            .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
+            .map(|h| {
+                // Transform hit back into world space
+                Hit {
+                    point: self.transform.transform_point(&h.point),
+                    normal: self.transform.transform_vector(&h.normal),
+                    ..h
+                }
+            })
     }
 }
