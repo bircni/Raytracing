@@ -10,16 +10,20 @@
 <a href="#10" id="10">10</a>
 <a href="#11" id="11">11</a>
 <a href="#12" id="12">12</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>nalgebra::{Point3, Vector3};
+<a href="#13" id="13">13</a>
+<a href="#14" id="14">14</a>
+</pre></div><pre class="rust"><code><span class="comment">// Import necessary Rust crates and modules
+</span><span class="kw">use </span>nalgebra::{Point3, Vector3}; <span class="comment">// 3D point and vector data types from nalgebra
 
-<span class="attr">#[derive(Debug, Clone, PartialEq)]
+// Define a custom struct &#39;Triangle&#39; for representing a 3D triangle
+</span><span class="attr">#[derive(Debug, Clone, PartialEq)]
 </span><span class="kw">pub struct </span>Triangle {
-    a: Point3&lt;f32&gt;,
-    b: Point3&lt;f32&gt;,
-    c: Point3&lt;f32&gt;,
-    a_normal: Vector3&lt;f32&gt;,
-    b_normal: Vector3&lt;f32&gt;,
-    c_normal: Vector3&lt;f32&gt;,
-    material_index: usize,
-}
+    <span class="kw">pub </span>a: Point3&lt;f32&gt;,      <span class="comment">// Vertex &#39;a&#39; of the triangle
+    </span><span class="kw">pub </span>b: Point3&lt;f32&gt;,      <span class="comment">// Vertex &#39;b&#39; of the triangle
+    </span><span class="kw">pub </span>c: Point3&lt;f32&gt;,      <span class="comment">// Vertex &#39;c&#39; of the triangle
+    </span><span class="kw">pub </span>a_normal: Vector3&lt;f32&gt;, <span class="comment">// Normal vector at vertex &#39;a&#39;
+    </span><span class="kw">pub </span>b_normal: Vector3&lt;f32&gt;, <span class="comment">// Normal vector at vertex &#39;b&#39;
+    </span><span class="kw">pub </span>c_normal: Vector3&lt;f32&gt;, <span class="comment">// Normal vector at vertex &#39;c&#39;
+    </span><span class="kw">pub </span>material_index: <span class="prelude-ty">Option</span>&lt;usize&gt;, <span class="comment">// Optional material index associated with the triangle
+</span>}
 </code></pre></div></section></main></body></html>
