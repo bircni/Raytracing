@@ -1,11 +1,12 @@
-use std::ops::RangeInclusive;
-
 use egui::{CentralPanel, RichText, Slider};
+use egui_file::FileDialog;
+use std::{ops::RangeInclusive, path::PathBuf};
 
 pub struct App {
     current_tab: usize,
     rays_per_pixel: i32,
-    picked_path: Option<String>,
+    opened_file: Option<PathBuf>,
+    open_file_dialog: Option<FileDialog>,
 }
 
 impl App {
@@ -13,7 +14,8 @@ impl App {
         Self {
             current_tab: 0,
             rays_per_pixel: 0,
-            picked_path: None,
+            opened_file: None,
+            open_file_dialog: None,
         }
     }
 }
@@ -49,7 +51,6 @@ impl eframe::App for App {
 
                     egui::SidePanel::right("panel").show(ctx, |ui| {
                         ui.heading(RichText::new("Properties").size(35.0));
-                        
 
                         ui.separator();
                         ui.add_space(10.0);
@@ -67,20 +68,24 @@ impl eframe::App for App {
                         ui.label(RichText::new("FEATURE: pick file").size(20.0));
                         ui.add_space(10.0);
 
-                        if ui.button(RichText::new("Open file").size(20.0)).clicked() {
-                            if let Some(path) = rfd::FileDialog::new()
-                                .add_filter("Object", &["obj", "mtl"])
-                                .pick_file()
-                            {
-                                self.picked_path = Some(path.display().to_string());
-                                println!("picked path: {:?}", self.picked_path)
+                        if (ui.button("Open")).clicked() {
+                            let mut dialog = FileDialog::open_file(self.opened_file.clone());
+                            //dialog.filter(Box::new(|path| path.ends_with(".obj"))).open();
+                            dialog.open();
+                            self.open_file_dialog = Some(dialog);
+                        }
+
+                        if let Some(dialog) = &mut self.open_file_dialog {
+                            if dialog.show(ctx).selected() {
+                                if let Some(file) = dialog.path() {
+                                    self.opened_file = Some(file.to_path_buf());
+                                }
                             }
                         }
 
-                        if self.picked_path.is_some() {
-                            ui.label("Picked path:");
-                            ui.label(RichText::new(self.picked_path.as_ref().unwrap()).size(20.0));
-                            
+                        if self.opened_file.is_some() {
+                            ui.label("Opened file:");
+                            ui.label(self.opened_file.as_ref().unwrap().to_str().unwrap());
                         }
 
                         ui.separator();
