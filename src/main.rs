@@ -17,6 +17,7 @@ use nalgebra::Vector3;
 use simplelog::*;
 use std::fs::File;
 
+mod raytracer;
 mod scene;
 
 pub type Color = Vector3<f32>;

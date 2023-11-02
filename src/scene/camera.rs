@@ -3,10 +3,10 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Camera {
-    position: Point3<f32>,
-    direction: Vector3<f32>,
-    up: Vector3<f32>,
-    fov: f32,
+    pub position: Point3<f32>,
+    pub direction: Vector3<f32>,
+    pub up: Vector3<f32>,
+    pub fov: f32,
 }
 
 mod yaml {

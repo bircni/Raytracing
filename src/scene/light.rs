@@ -5,9 +5,9 @@ use crate::Color;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Light {
-    position: Point3<f32>,
-    color: Color,
-    intensity: f32,
+    pub position: Point3<f32>,
+    pub color: Color,
+    pub intensity: f32,
 }
 
 impl<'de> Deserialize<'de> for Light {
