@@ -48,20 +48,26 @@ impl eframe::App for App {
                     });
 
                     egui::SidePanel::right("panel").show(ctx, |ui| {
-                        ui.heading("Properties");
+                        ui.heading(RichText::new("Properties").size(35.0));
+                        
 
                         ui.separator();
+                        ui.add_space(10.0);
 
-                        ui.label("Rays per pixel:");
+                        ui.label(RichText::new("Rays per pixel:").size(20.0));
+                        ui.add_space(10.0);
 
                         ui.add(Slider::new(
                             &mut self.rays_per_pixel,
                             RangeInclusive::new(0, 100),
                         ));
 
-                        ui.label("FEATURE: pick file");
+                        ui.add_space(10.0);
 
-                        if ui.button("Open file").clicked() {
+                        ui.label(RichText::new("FEATURE: pick file").size(20.0));
+                        ui.add_space(10.0);
+
+                        if ui.button(RichText::new("Open file").size(20.0)).clicked() {
                             if let Some(path) = rfd::FileDialog::new()
                                 .add_filter("Object", &["obj", "mtl"])
                                 .pick_file()
@@ -73,13 +79,15 @@ impl eframe::App for App {
 
                         if self.picked_path.is_some() {
                             ui.label("Picked path:");
-                            ui.label(self.picked_path.as_ref().unwrap());
+                            ui.label(RichText::new(self.picked_path.as_ref().unwrap()).size(20.0));
+                            
                         }
 
                         ui.separator();
+                        ui.add_space(10.0);
 
                         ui.vertical_centered(|ui| {
-                            ui.button(RichText::new("Render").size(20.0))
+                            ui.button(RichText::new("Render").size(30.0))
                                 .clicked()
                                 .then(|| self.current_tab = 1);
                         });
