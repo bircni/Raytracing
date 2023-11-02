@@ -30,3 +30,4 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_branch: rustdoc
         publish_dir: ./target/doc
+        keep_files: true
