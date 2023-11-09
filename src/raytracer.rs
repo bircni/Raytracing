@@ -17,13 +17,13 @@ pub struct Hit<'a> {
     pub material: Option<&'a Material>,
 }
 
-pub struct Raytracer<'a> {
-    scene: &'a Scene,
+pub struct Raytracer {
+    scene: Scene,
     background_color: Color,
 }
 
-impl<'a> Raytracer<'a> {
-    pub fn new(scene: &'a Scene, background_color: Vector3<f32>) -> Raytracer<'a> {
+impl Raytracer {
+    pub fn new(scene: Scene, background_color: Vector3<f32>) -> Raytracer {
         Raytracer {
             scene,
             background_color,
@@ -38,9 +38,19 @@ impl<'a> Raytracer<'a> {
             .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
     }
 
-    pub fn render(&self, ray: Ray) -> Color {
-        self.raycast(ray)
-            .map(|_| Color::new(1.0, 0.0, 0.0))
-            .unwrap_or(self.background_color)
+    fn shade(&self, hit: Option<Hit>) -> Color {
+        hit.map(|h| {
+            h.material
+                .and_then(|m| m.kd)
+                .map(Color::from)
+                .unwrap_or(Color::new(0.9, 0.9, 0.9))
+        })
+        .unwrap_or(self.background_color)
+    }
+
+    pub fn render(&self, (x, y): (usize, usize), (width, height): (usize, usize)) -> Color {
+        let ray = self.scene.camera.ray((x, y), (width, height));
+        let hit = self.raycast(ray);
+        self.shade(hit)
     }
 }
