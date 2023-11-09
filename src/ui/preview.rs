@@ -171,7 +171,6 @@ impl Preview {
                 // clear screen
                 gl.clear_color(0.0, 0.0, 0.0, 1.0);
                 gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
-                let depth_buffer = gl.is_enabled(glow::DEPTH_TEST);
                 gl.enable(glow::DEPTH_TEST);
 
                 // draw
@@ -194,9 +193,6 @@ impl Preview {
                 gl.bind_buffer(glow::ARRAY_BUFFER, None);
                 gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
                 gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, 0, None);
-                if !depth_buffer {
-                    gl.disable(glow::DEPTH_TEST);
-                }
 
                 // flush
                 gl.flush();

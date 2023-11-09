@@ -1,26 +1,51 @@
 mod preview;
 
+use std::{borrow::BorrowMut, sync::Arc};
+
 use self::preview::Preview;
-use crate::scene::Scene;
+use crate::{raytracer::Raytracer, scene::Scene, Color};
 
 use eframe::CreationContext;
-use egui::{CentralPanel, Sense};
+use egui::{
+    load::SizedTexture, CentralPanel, Color32, ColorImage, ImageData, ImageSource, Sense,
+    TextureHandle, TextureOptions,
+};
 use nalgebra::Point3;
+use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 pub struct App {
     current_tab: usize,
     scene: Scene,
     preview: Preview,
+    render_texture: TextureHandle,
+    rendering_thread: Option<std::thread::JoinHandle<()>>,
 }
+
+const RENDER_SIZE: [usize; 2] = [2000, 1000];
 
 impl App {
     pub fn new(cc: &CreationContext, scene: Scene) -> anyhow::Result<Self> {
         let preview = Preview::from_scene(cc.gl.clone().unwrap(), &scene)?;
 
+        let render_texture = cc.egui_ctx.load_texture(
+            "render",
+            ImageData::Color(Arc::new(ColorImage {
+                size: RENDER_SIZE,
+                pixels: {
+                    let mut pixels = Vec::<Color32>::with_capacity(RENDER_SIZE[0] * RENDER_SIZE[1]);
+                    pixels.resize(RENDER_SIZE[0] * RENDER_SIZE[1], Color32::BLACK);
+                    pixels
+                },
+            })),
+            TextureOptions::default(),
+        );
+
         Ok(Self {
             current_tab: 0,
             scene,
             preview,
+            render_texture,
+            rendering_thread: None,
         })
     }
 }
@@ -94,7 +119,76 @@ impl eframe::App for App {
                                         o.triangles.len()
                                     ));
                                 }
-                            })
+
+                                ui.separator();
+
+                                let ctx = ctx.clone();
+                                let mut texture = self.render_texture.clone();
+                                let raytracer =
+                                    Raytracer::new(self.scene.clone(), Color::new(0.1, 0.1, 0.1));
+                                ui.button("Render").clicked().then(|| {
+                                    self.render_texture.set(
+                                        ImageData::Color(Arc::new(ColorImage {
+                                            size: RENDER_SIZE,
+                                            pixels: {
+                                                let mut pixels = Vec::<Color32>::with_capacity(
+                                                    RENDER_SIZE[0] * RENDER_SIZE[1],
+                                                );
+                                                pixels.resize(
+                                                    RENDER_SIZE[0] * RENDER_SIZE[1],
+                                                    Color32::BLACK,
+                                                );
+                                                pixels
+                                            },
+                                        })),
+                                        TextureOptions::default(),
+                                    );
+
+                                    self.rendering_thread = Some(std::thread::spawn(move || {
+                                        let block_size = 10;
+                                        for y_block in 0..RENDER_SIZE[1] / block_size {
+                                            for x_block in 0..RENDER_SIZE[0] / block_size {
+                                                println!(
+                                                    "Rendering block ({}, {})",
+                                                    x_block, y_block
+                                                );
+                                                let pixels = (0..block_size)
+                                                    .flat_map(|y| {
+                                                        (0..block_size).map(move |x| (x, y))
+                                                    })
+                                                    .par_bridge()
+                                                    .map(|(x, y)| {
+                                                        let color = raytracer.render(
+                                                            (
+                                                                x + (x_block * block_size),
+                                                                y + (y_block * block_size),
+                                                            ),
+                                                            (RENDER_SIZE[0], RENDER_SIZE[1]),
+                                                        );
+                                                        Color32::from_rgb(
+                                                            (color.x * 255.0) as u8,
+                                                            (color.y * 255.0) as u8,
+                                                            (color.z * 255.0) as u8,
+                                                        )
+                                                    })
+                                                    .collect::<Vec<_>>();
+
+                                                texture.borrow_mut().set_partial(
+                                                    [x_block * block_size, y_block * block_size],
+                                                    ImageData::Color(Arc::new(ColorImage {
+                                                        size: [block_size, block_size],
+                                                        pixels,
+                                                    })),
+                                                    TextureOptions::default(),
+                                                );
+
+                                                ctx.request_repaint();
+                                            }
+                                        }
+                                    }));
+                                    self.current_tab = 1;
+                                });
+                            });
                         });
 
                     egui::Frame::canvas(ui.style())
@@ -107,8 +201,18 @@ impl eframe::App for App {
                 }
 
                 1 => {
-                    ui.centered_and_justified(|ui| {
-                        ui.heading("Render will be here");
+                    self.rendering_thread
+                        .as_ref()
+                        .map(|t| t.is_finished())
+                        .unwrap_or(false)
+                        .then(|| {
+                            self.rendering_thread = None;
+                        });
+
+                    egui::ScrollArea::new([true, true]).show(ui, |ui| {
+                        ui.image(ImageSource::Texture(SizedTexture::from_handle(
+                            &self.render_texture,
+                        )));
                     });
                 }
                 n => panic!("Unknown tab: {}", n),

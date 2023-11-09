@@ -24,6 +24,7 @@ eframe = "0.23.0"
 egui = "0.23.0"
 egui_glow = "0.23.0"
 bytemuck = "1.14.0"
+rayon = "1.8.0"
 
 
 #"cargo test"
