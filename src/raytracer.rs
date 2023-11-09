@@ -1,4 +1,4 @@
-use nalgebra::{Point3, Vector2, Vector3};
+use nalgebra::{Point3, Vector3};
 use obj::Material;
 use ordered_float::OrderedFloat;
 

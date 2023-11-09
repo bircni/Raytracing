@@ -112,7 +112,7 @@ impl eframe::App for App {
 
                                 ui.separator();
 
-                                for o in self.scene.objects.iter() {
+                                for o in self.scene.objects.iter_mut() {
                                     ui.label(format!(
                                         "- Object at {}, with {} triangles",
                                         o.transform.transform_point(&Point3::origin()),

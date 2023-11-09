@@ -168,10 +168,10 @@ impl Preview {
             callback: Arc::new(CallbackFn::new(move |_, painter| unsafe {
                 let gl = painter.gl().as_ref();
 
-                // clear screen
                 gl.clear_color(0.0, 0.0, 0.0, 1.0);
                 gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
                 gl.enable(glow::DEPTH_TEST);
+                gl.disable(glow::CULL_FACE);
 
                 // draw
                 gl.use_program(Some(program));

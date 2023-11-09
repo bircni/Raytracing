@@ -29,6 +29,7 @@ fn main() -> anyhow::Result<()> {
         eframe::NativeOptions {
             initial_window_size: Some(egui::vec2(1200.0, 900.0)),
             renderer: Renderer::Glow,
+            depth_buffer: 1,
             ..Default::default()
         },
         Box::new(|cc| Box::new(ui::App::new(cc, scene).expect("Failed to create app"))),
