@@ -303,7 +303,7 @@
 </span><span class="kw">fn </span>test_load_scene() -&gt; anyhow::Result&lt;()&gt; {
     <span class="kw">let </span>scene = Scene::load(<span class="string">&quot;./res/config.yaml&quot;</span>).context(<span class="string">&quot;Failed to load scene&quot;</span>)<span class="question-mark">?</span>;
 
-    <span class="macro">assert_eq!</span>(scene.objects.len(), <span class="number">2</span>);
+    <span class="macro">assert_eq!</span>(scene.objects.len(), <span class="number">1</span>);
     <span class="macro">assert_eq!</span>(scene.lights.len(), <span class="number">2</span>);
 
     <span class="prelude-val">Ok</span>(())

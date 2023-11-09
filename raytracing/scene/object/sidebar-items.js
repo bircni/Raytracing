@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Object"]};
+window.SIDEBAR_ITEMS = {"fn":["triangulate"],"struct":["Object"]};
