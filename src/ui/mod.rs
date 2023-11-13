@@ -86,277 +86,241 @@ impl eframe::App for App {
                     egui::SidePanel::right("panel")
                         .show_separator_line(true)
                         .show_inside(ui, |ui| {
-                            ui.vertical_centered(|ui| {
-                                ui.heading("Properties");
-                                //Camera Group
-                                ui.add_space(5.0);
-                                ui.group(|ui| {
-                                    ui.vertical_centered(|ui| {
-                                        ui.label(
-                                            RichText::new("Camera")
-                                                .text_style(egui::TextStyle::Monospace),
-                                        );
-                                    });
+                            ui.heading("Properties");
+                            //Camera Group
+                            ui.add_space(5.0);
+                            ui.group(|ui| {
+                                ui.vertical_centered(|ui| {
+                                    ui.label(
+                                        RichText::new("Camera")
+                                            .text_style(egui::TextStyle::Monospace),
+                                    );
+                                });
 
-                                    ui.separator();
+                                ui.separator();
 
-                                    ui.vertical(|ui| {
-                                        ui.label("Position");
+                                ui.vertical(|ui| {
+                                    ui.label("Position");
 
-                                        ui.horizontal(|ui| {
-                                            ui.add(
-                                                egui::DragValue::new(
-                                                    &mut self.scene.camera.position.x,
-                                                )
-                                                .speed(0.1)
-                                                .prefix("x: "),
-                                            );
-                                            ui.add(
-                                                egui::DragValue::new(
-                                                    &mut self.scene.camera.position.y,
-                                                )
-                                                .speed(0.1)
-                                                .prefix("y: "),
-                                            );
-                                            ui.add(
-                                                egui::DragValue::new(
-                                                    &mut self.scene.camera.position.z,
-                                                )
-                                                .speed(0.1)
-                                                .prefix("z: "),
-                                            );
-                                        });
-
-                                        ui.label("Look at");
-
-                                        ui.horizontal(|ui| {
-                                            ui.add(
-                                                egui::DragValue::new(
-                                                    &mut self.scene.camera.look_at.x,
-                                                )
-                                                .speed(0.1)
-                                                .prefix("x: "),
-                                            );
-                                            ui.add(
-                                                egui::DragValue::new(
-                                                    &mut self.scene.camera.look_at.y,
-                                                )
-                                                .speed(0.1)
-                                                .prefix("y: "),
-                                            );
-                                            ui.add(
-                                                egui::DragValue::new(
-                                                    &mut self.scene.camera.look_at.z,
-                                                )
-                                                .speed(0.1)
-                                                .prefix("z: "),
-                                            );
-                                        });
-
-                                        ui.label("Field of View");
+                                    ui.horizontal(|ui| {
                                         ui.add(
-                                            egui::Slider::new(
-                                                &mut self.scene.camera.fov,
-                                                0.0..=std::f32::consts::PI,
-                                            )
-                                            .step_by(0.01)
-                                            .custom_formatter(|x, _| {
-                                                format!("{:.2}°", x.to_degrees())
-                                            })
-                                            .clamp_to_range(true),
+                                            egui::DragValue::new(&mut self.scene.camera.position.x)
+                                                .speed(0.1)
+                                                .prefix("x: "),
                                         );
-                                    });
-                                });
-                                ui.add_space(10.0);
-
-                                //Objects Group
-                                ui.group(|ui| {
-                                    ui.vertical_centered(|ui| {
-                                        ui.label(
-                                            RichText::new("Objects")
-                                                .text_style(egui::TextStyle::Monospace),
+                                        ui.add(
+                                            egui::DragValue::new(&mut self.scene.camera.position.y)
+                                                .speed(0.1)
+                                                .prefix("y: "),
+                                        );
+                                        ui.add(
+                                            egui::DragValue::new(&mut self.scene.camera.position.z)
+                                                .speed(0.1)
+                                                .prefix("z: "),
                                         );
                                     });
 
-                                    ui.separator();
+                                    ui.label("Look at");
 
-                                    for o in self.scene.objects.iter_mut() {
-                                        ui.label(format!(
-                                            "- Object at {}, with {} triangles",
-                                            o.transform.transform_point(&Point3::origin()),
-                                            o.triangles.len()
-                                        ));
-                                    }
-                                });
-                                ui.add_space(10.0);
-
-                                //Lighting Group
-                                ui.group(|ui| {
-                                    ui.vertical_centered(|ui| {
-                                        ui.label(
-                                            RichText::new("Lighting")
-                                                .text_style(egui::TextStyle::Monospace),
+                                    ui.horizontal(|ui| {
+                                        ui.add(
+                                            egui::DragValue::new(&mut self.scene.camera.look_at.x)
+                                                .speed(0.1)
+                                                .prefix("x: "),
+                                        );
+                                        ui.add(
+                                            egui::DragValue::new(&mut self.scene.camera.look_at.y)
+                                                .speed(0.1)
+                                                .prefix("y: "),
+                                        );
+                                        ui.add(
+                                            egui::DragValue::new(&mut self.scene.camera.look_at.z)
+                                                .speed(0.1)
+                                                .prefix("z: "),
                                         );
                                     });
-                                    //add lighting here
-                                    ui.separator();
-                                    ui.radio_value(
-                                        &mut self.lighting,
-                                        "Default".to_string(),
-                                        "Default",
+
+                                    ui.label("Field of View");
+                                    ui.add(
+                                        egui::Slider::new(
+                                            &mut self.scene.camera.fov,
+                                            0.0..=std::f32::consts::PI,
+                                        )
+                                        .step_by(0.01)
+                                        .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
+                                        .clamp_to_range(true),
                                     );
-                                    ui.radio_value(&mut self.lighting, "Warm".to_string(), "Warm");
-                                    ui.radio_value(&mut self.lighting, "Cold".to_string(), "Cold");
-                                    ui.radio_value(
-                                        &mut self.lighting,
-                                        "Custom".to_string(),
-                                        "Custom",
-                                    );
-
-                                    if self.lighting.eq("Custom") {
-                                        ui.horizontal(|ui| {
-                                            ui.label("Ambient");
-                                            ui.add(
-                                                egui::DragValue::new(&mut 12)
-                                                    .prefix("x: ")
-                                                    .speed(0.01),
-                                            );
-                                            ui.add(
-                                                egui::DragValue::new(&mut 14)
-                                                    .prefix("y: ")
-                                                    .speed(0.01),
-                                            );
-                                            ui.add(
-                                                egui::DragValue::new(&mut 33)
-                                                    .prefix("z: ")
-                                                    .speed(0.01),
-                                            );
-                                        });
-                                    }
                                 });
-                                ui.add_space(10.0);
+                            });
+                            ui.add_space(10.0);
 
-                                //File Group
-                                ui.group(|ui| {
-                                    ui.vertical_centered(|ui| {
-                                        ui.label(
-                                            RichText::new("File")
-                                                .text_style(egui::TextStyle::Monospace),
+                            //Objects Group
+                            ui.group(|ui| {
+                                ui.vertical_centered(|ui| {
+                                    ui.label(
+                                        RichText::new("Objects")
+                                            .text_style(egui::TextStyle::Monospace),
+                                    );
+                                });
+
+                                ui.separator();
+
+                                for o in self.scene.objects.iter_mut() {
+                                    ui.label(format!(
+                                        "- Object at {}, with {} triangles",
+                                        o.transform.transform_point(&Point3::origin()),
+                                        o.triangles.len()
+                                    ));
+                                }
+                            });
+                            ui.add_space(10.0);
+
+                            //Lighting Group
+                            ui.group(|ui| {
+                                ui.vertical_centered(|ui| {
+                                    ui.label(
+                                        RichText::new("Lighting")
+                                            .text_style(egui::TextStyle::Monospace),
+                                    );
+                                });
+                                //add lighting here
+                                ui.separator();
+                                ui.radio_value(
+                                    &mut self.lighting,
+                                    "Default".to_string(),
+                                    "Default",
+                                );
+                                ui.radio_value(&mut self.lighting, "Warm".to_string(), "Warm");
+                                ui.radio_value(&mut self.lighting, "Cold".to_string(), "Cold");
+                                ui.radio_value(&mut self.lighting, "Custom".to_string(), "Custom");
+
+                                if self.lighting.eq("Custom") {
+                                    ui.horizontal(|ui| {
+                                        ui.label("Ambient");
+                                        ui.add(
+                                            egui::DragValue::new(&mut 12).prefix("x: ").speed(0.01),
+                                        );
+                                        ui.add(
+                                            egui::DragValue::new(&mut 14).prefix("y: ").speed(0.01),
+                                        );
+                                        ui.add(
+                                            egui::DragValue::new(&mut 33).prefix("z: ").speed(0.01),
                                         );
                                     });
-                                    ui.separator();
-                                    if (ui.button("Open")).clicked() {
-                                        let mut dialog =
-                                            FileDialog::open_file(self.opened_file.clone());
-                                        //dialog.filter(Box::new(|path| path.ends_with(".obj"))).open();
-                                        dialog.open();
-                                        self.open_file_dialog = Some(dialog);
-                                    }
-                                    if let Some(dialog) = &mut self.open_file_dialog {
-                                        if dialog.show(ctx).selected() {
-                                            if let Some(file) = dialog.path() {
-                                                self.opened_file = Some(file.to_path_buf());
-                                            }
+                                }
+                            });
+                            ui.add_space(10.0);
+
+                            //File Group
+                            ui.group(|ui| {
+                                ui.vertical_centered(|ui| {
+                                    ui.label(
+                                        RichText::new("File")
+                                            .text_style(egui::TextStyle::Monospace),
+                                    );
+                                });
+                                ui.separator();
+                                if (ui.button("Open")).clicked() {
+                                    let mut dialog =
+                                        FileDialog::open_file(self.opened_file.clone());
+                                    //dialog.filter(Box::new(|path| path.ends_with(".obj"))).open();
+                                    dialog.open();
+                                    self.open_file_dialog = Some(dialog);
+                                }
+                                if let Some(dialog) = &mut self.open_file_dialog {
+                                    if dialog.show(ctx).selected() {
+                                        if let Some(file) = dialog.path() {
+                                            self.opened_file = Some(file.to_path_buf());
                                         }
                                     }
-                                    if self.opened_file.is_some() {
-                                        ui.label("Opened file:");
-                                        ui.label(
-                                            self.opened_file.as_ref().unwrap().to_str().unwrap(),
+                                }
+                                if self.opened_file.is_some() {
+                                    ui.label("Opened file:");
+                                    ui.label(self.opened_file.as_ref().unwrap().to_str().unwrap());
+                                }
+                            });
+                            ui.add_space(10.0);
+
+                            //Render Button
+                            let ctx = ctx.clone();
+                            let mut texture = self.render_texture.clone();
+                            let raytracer =
+                                Raytracer::new(self.scene.clone(), Color::new(0.1, 0.1, 0.1));
+
+                            ui.vertical_centered(|ui| {
+                                ui.add_sized([120., 40.], egui::Button::new("Render"))
+                                    .clicked()
+                                    .then(|| {
+                                        self.render_texture.set(
+                                            ImageData::Color(Arc::new(ColorImage {
+                                                size: RENDER_SIZE,
+                                                pixels: {
+                                                    let mut pixels = Vec::<Color32>::with_capacity(
+                                                        RENDER_SIZE[0] * RENDER_SIZE[1],
+                                                    );
+                                                    pixels.resize(
+                                                        RENDER_SIZE[0] * RENDER_SIZE[1],
+                                                        Color32::BLACK,
+                                                    );
+                                                    pixels
+                                                },
+                                            })),
+                                            TextureOptions::default(),
                                         );
-                                    }
-                                });
-                                ui.add_space(10.0);
 
-                                //Render Button
-                                let ctx = ctx.clone();
-                                let mut texture = self.render_texture.clone();
-                                let raytracer =
-                                    Raytracer::new(self.scene.clone(), Color::new(0.1, 0.1, 0.1));
-
-                                ui.vertical_centered(|ui| {
-                                    ui.add_sized([120., 40.], egui::Button::new("Render"))
-                                        .clicked()
-                                        .then(|| {
-                                            self.render_texture.set(
-                                                ImageData::Color(Arc::new(ColorImage {
-                                                    size: RENDER_SIZE,
-                                                    pixels: {
-                                                        let mut pixels =
-                                                            Vec::<Color32>::with_capacity(
-                                                                RENDER_SIZE[0] * RENDER_SIZE[1],
-                                                            );
-                                                        pixels.resize(
-                                                            RENDER_SIZE[0] * RENDER_SIZE[1],
-                                                            Color32::BLACK,
+                                        self.rendering_thread =
+                                            Some(std::thread::spawn(move || {
+                                                let block_size = 10;
+                                                for y_block in 0..RENDER_SIZE[1] / block_size {
+                                                    for x_block in 0..RENDER_SIZE[0] / block_size {
+                                                        println!(
+                                                            "Rendering block ({}, {})",
+                                                            x_block, y_block
                                                         );
-                                                        pixels
-                                                    },
-                                                })),
-                                                TextureOptions::default(),
-                                            );
+                                                        let pixels = (0..block_size)
+                                                            .flat_map(|y| {
+                                                                (0..block_size).map(move |x| (x, y))
+                                                            })
+                                                            .par_bridge()
+                                                            .map(|(x, y)| {
+                                                                let color = raytracer.render(
+                                                                    (
+                                                                        x + (x_block * block_size),
+                                                                        y + (y_block * block_size),
+                                                                    ),
+                                                                    (
+                                                                        RENDER_SIZE[0],
+                                                                        RENDER_SIZE[1],
+                                                                    ),
+                                                                );
+                                                                Color32::from_rgb(
+                                                                    (color.x * 255.0) as u8,
+                                                                    (color.y * 255.0) as u8,
+                                                                    (color.z * 255.0) as u8,
+                                                                )
+                                                            })
+                                                            .collect::<Vec<_>>();
 
-                                            self.rendering_thread =
-                                                Some(std::thread::spawn(move || {
-                                                    let block_size = 10;
-                                                    for y_block in 0..RENDER_SIZE[1] / block_size {
-                                                        for x_block in
-                                                            0..RENDER_SIZE[0] / block_size
-                                                        {
-                                                            println!(
-                                                                "Rendering block ({}, {})",
-                                                                x_block, y_block
-                                                            );
-                                                            let pixels = (0..block_size)
-                                                                .flat_map(|y| {
-                                                                    (0..block_size)
-                                                                        .map(move |x| (x, y))
-                                                                })
-                                                                .par_bridge()
-                                                                .map(|(x, y)| {
-                                                                    let color = raytracer.render(
-                                                                        (
-                                                                            x + (x_block
-                                                                                * block_size),
-                                                                            y + (y_block
-                                                                                * block_size),
-                                                                        ),
-                                                                        (
-                                                                            RENDER_SIZE[0],
-                                                                            RENDER_SIZE[1],
-                                                                        ),
-                                                                    );
-                                                                    Color32::from_rgb(
-                                                                        (color.x * 255.0) as u8,
-                                                                        (color.y * 255.0) as u8,
-                                                                        (color.z * 255.0) as u8,
-                                                                    )
-                                                                })
-                                                                .collect::<Vec<_>>();
+                                                        texture.borrow_mut().set_partial(
+                                                            [
+                                                                x_block * block_size,
+                                                                y_block * block_size,
+                                                            ],
+                                                            ImageData::Color(Arc::new(
+                                                                ColorImage {
+                                                                    size: [block_size, block_size],
+                                                                    pixels,
+                                                                },
+                                                            )),
+                                                            TextureOptions::default(),
+                                                        );
 
-                                                            texture.borrow_mut().set_partial(
-                                                                [
-                                                                    x_block * block_size,
-                                                                    y_block * block_size,
-                                                                ],
-                                                                ImageData::Color(Arc::new(
-                                                                    ColorImage {
-                                                                        size: [
-                                                                            block_size, block_size,
-                                                                        ],
-                                                                        pixels,
-                                                                    },
-                                                                )),
-                                                                TextureOptions::default(),
-                                                            );
-
-                                                            ctx.request_repaint();
-                                                        }
+                                                        ctx.request_repaint();
                                                     }
-                                                }));
-                                            self.current_tab = 1;
-                                        });
-                                });
+                                                }
+                                            }));
+                                        self.current_tab = 1;
+                                    });
                             });
                         });
 
