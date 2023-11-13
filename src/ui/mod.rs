@@ -78,8 +78,10 @@ impl eframe::App for App {
                     egui::SidePanel::right("panel")
                         .show_separator_line(true)
                         .show_inside(ui, |ui| {
+                            ui.heading("Properties");
+                            //Camera Group
                             ui.group(|ui| {
-                                ui.heading("Properties");
+                                
 
                                 ui.vertical_centered(|ui| {
                                     ui.label("Camera");
@@ -87,7 +89,7 @@ impl eframe::App for App {
 
                                 ui.separator();
 
-                                ui.horizontal(|ui| {
+                                /*ui.horizontal(|ui| {
                                     ui.label("Position");
                                     ui.add(
                                         egui::DragValue::new(&mut self.scene.camera.position.x)
@@ -103,9 +105,29 @@ impl eframe::App for App {
                                         egui::DragValue::new(&mut self.scene.camera.position.y)
                                             .prefix("z: ")
                                             .speed(0.01),
+                                    );*/
+                                ui.vertical(|ui| {
+                                    ui.label("Position");
+                                    ui.add(
+                                        egui::Slider::new(&mut self.scene.camera.position.x, -25.0..=25.0)
+                                            .prefix("x: ")
+                                            .clamp_to_range(true),
+                                    );
+                                    ui.add(
+                                        egui::Slider::new(&mut self.scene.camera.position.z, -25.0..=25.0)
+                                            .prefix("y: ")
+                                            .clamp_to_range(true),
+                                    );
+                                    ui.add(
+                                        egui::Slider::new(&mut self.scene.camera.position.y, -25.0..=25.0)
+                                            .prefix("z: ")
+                                            .clamp_to_range(true),
                                     );
                                 });
+                            });
 
+                            //Objects Group
+                            ui.group(|ui|{
                                 ui.vertical_centered(|ui| {
                                     ui.label("Objects");
                                 });
@@ -122,10 +144,39 @@ impl eframe::App for App {
 
                                 ui.separator();
 
+                            });
+
+                            //Lighting Group
+                            ui.group(|ui|{
+                                ui.vertical_centered(|ui| {
+                                    ui.label("Lighting");
+                                });
+                                //add lighting here
+                                ui.separator();
+
+                            });
+
+                            //File Group
+                            ui.group(|ui|{
+                                ui.vertical_centered(|ui| {
+                                    ui.label("File");
+                                });
+                                //add File button
+                                ui.separator();
+                                ui.button("Upload File!").clicked().then(|| {
+                                    println!("File Uploaded!");
+                                });
+
+                            });
+
+                            //Render Group
+                            ui.group(|ui|{
+
                                 let ctx = ctx.clone();
                                 let mut texture = self.render_texture.clone();
                                 let raytracer =
                                     Raytracer::new(self.scene.clone(), Color::new(0.1, 0.1, 0.1));
+
                                 ui.button("Render").clicked().then(|| {
                                     self.render_texture.set(
                                         ImageData::Color(Arc::new(ColorImage {
@@ -189,6 +240,8 @@ impl eframe::App for App {
                                     self.current_tab = 1;
                                 });
                             });
+
+                            
                         });
 
                     egui::Frame::canvas(ui.style())
