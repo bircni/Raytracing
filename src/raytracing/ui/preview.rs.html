@@ -264,6 +264,23 @@
 <a href="#264" id="264">264</a>
 <a href="#265" id="265">265</a>
 <a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>anyhow::Context;
@@ -272,12 +289,13 @@
 <span class="kw">use </span>log::debug;
 <span class="kw">use </span>nalgebra::{Isometry3, Matrix4, Perspective3};
 
-<span class="kw">use </span><span class="kw">crate</span>::scene::Scene;
+<span class="kw">use </span><span class="kw">crate</span>::scene::{light::Light, Scene};
 <span class="kw">use </span>eframe::glow;
 
 <span class="kw">pub struct </span>Preview {
     callback: Arc&lt;CallbackFn&gt;,
     view_matrix: Arc&lt;Mutex&lt;Matrix4&lt;f32&gt;&gt;&gt;,
+    lights: Arc&lt;Mutex&lt;Vec&lt;Light&gt;&gt;&gt;,
 }
 
 <span class="macro">macro_rules! </span>gl_result {
@@ -429,8 +447,10 @@
         <span class="kw">let </span>view_matrix = Arc::new(Mutex::new(Matrix4::default()));
 
         <span class="kw">let </span>view_matrix_callback = view_matrix.clone();
+        <span class="kw">let </span>lights = Arc::new(Mutex::new(scene.lights.clone()));
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             view_matrix,
+            lights: lights.clone(),
             callback: Arc::new(CallbackFn::new(<span class="kw">move </span>|<span class="kw">_</span>, painter| <span class="kw">unsafe </span>{
                 <span class="kw">let </span>gl = painter.gl().as_ref();
 
@@ -449,7 +469,19 @@
                 );
 
                 <span class="comment">// bind lights ssbo
-                </span>gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, <span class="number">0</span>, <span class="prelude-val">Some</span>(lights_ssbo));
+                </span>gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, <span class="prelude-val">Some</span>(lights_ssbo));
+                gl.buffer_data_u8_slice(
+                    glow::SHADER_STORAGE_BUFFER,
+                    lights
+                        .lock()
+                        .iter()
+                        .flat_map(bytemuck::bytes_of)
+                        .copied()
+                        .collect::&lt;Vec&lt;u8&gt;&gt;()
+                        .as_slice(),
+                    glow::STATIC_DRAW,
+                );
+                gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, <span class="number">0</span>, <span class="prelude-val">Some</span>(lights_ssbo));
 
                 gl.draw_arrays(glow::TRIANGLES, <span class="number">0</span>, vertices.len() <span class="kw">as </span>i32 / <span class="number">3</span>);
 
@@ -475,6 +507,8 @@
                     <span class="kw-2">&amp;</span>scene.camera.up,
                 )
                 .to_homogeneous();
+
+        <span class="kw-2">*</span><span class="self">self</span>.lights.lock() = scene.lights.clone();
 
         painter.add(Shape::Callback(PaintCallback {
             rect,
