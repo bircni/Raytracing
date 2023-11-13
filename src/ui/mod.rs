@@ -19,7 +19,6 @@ pub struct App {
     current_tab: usize,
     scene: Scene,
     preview: Preview,
-    lighting: String,
     render_texture: TextureHandle,
     rendering_thread: Option<std::thread::JoinHandle<()>>,
     opened_file: Option<PathBuf>,
@@ -49,7 +48,6 @@ impl App {
             current_tab: 0,
             scene,
             preview,
-            lighting: "Default".to_string(),
             render_texture,
             rendering_thread: None,
             opened_file: None,
@@ -91,16 +89,16 @@ impl eframe::App for App {
                             ui.add_space(5.0);
                             ui.group(|ui| {
                                 ui.vertical_centered(|ui| {
-                                    ui.label(
-                                        RichText::new("Camera")
-                                            .text_style(egui::TextStyle::Monospace),
-                                    );
+                                    ui.label(RichText::new("Camera").font(egui::FontId {
+                                        size: (16.0),
+                                        family: (egui::FontFamily::Proportional),
+                                    }));
                                 });
 
                                 ui.separator();
 
                                 ui.vertical(|ui| {
-                                    ui.label("Position");
+                                    ui.label("Position:");
 
                                     ui.horizontal(|ui| {
                                         ui.add(
@@ -120,7 +118,7 @@ impl eframe::App for App {
                                         );
                                     });
 
-                                    ui.label("Look at");
+                                    ui.label("Look at:");
 
                                     ui.horizontal(|ui| {
                                         ui.add(
@@ -140,7 +138,7 @@ impl eframe::App for App {
                                         );
                                     });
 
-                                    ui.label("Field of View");
+                                    ui.label("Field of View:");
                                     ui.add(
                                         egui::Slider::new(
                                             &mut self.scene.camera.fov,
@@ -154,40 +152,25 @@ impl eframe::App for App {
                             });
                             ui.add_space(10.0);
 
-                            //Objects Group
-                            ui.group(|ui| {
-                                ui.vertical_centered(|ui| {
-                                    ui.label(
-                                        RichText::new("Objects")
-                                            .text_style(egui::TextStyle::Monospace),
-                                    );
-                                });
-
-                                ui.separator();
-
-                                for o in self.scene.objects.iter_mut() {
-                                    ui.label(format!(
-                                        "- Object at {}, with {} triangles",
-                                        o.transform.transform_point(&Point3::origin()),
-                                        o.triangles.len()
-                                    ));
-                                }
-                            });
-                            ui.add_space(10.0);
-
                             //Lighting Group
                             ui.group(|ui| {
                                 ui.vertical_centered(|ui| {
-                                    ui.label(
-                                        RichText::new("Lights")
-                                            .text_style(egui::TextStyle::Monospace),
-                                    );
+                                    ui.label(RichText::new("Lights").font(egui::FontId {
+                                        size: (16.0),
+                                        family: (egui::FontFamily::Proportional),
+                                    }));
                                 });
 
                                 for (n, light) in self.scene.lights.iter_mut().enumerate() {
-                                    ui.label(format!("Light {n}"));
+                                    ui.separator();
+                                    ui.label(RichText::new(format!("Light {n}")).font(
+                                        egui::FontId {
+                                            size: (14.0),
+                                            family: (egui::FontFamily::Monospace),
+                                        },
+                                    ));
 
-                                    ui.label("Position");
+                                    ui.label("Position:");
                                     ui.horizontal(|ui| {
                                         ui.add(
                                             egui::DragValue::new(&mut light.position.x)
@@ -206,7 +189,13 @@ impl eframe::App for App {
                                         );
                                     });
 
-                                    ui.label("Color");
+                                    ui.label("Intensity:");
+                                    ui.add(
+                                        egui::Slider::new(&mut light.intensity, 0.0..=100.0)
+                                            .clamp_to_range(true),
+                                    );
+
+                                    ui.label("Color:");
                                     egui::color_picker::color_edit_button_rgb(
                                         ui,
                                         &mut light.color.as_mut(),
@@ -218,10 +207,10 @@ impl eframe::App for App {
                             //File Group
                             ui.group(|ui| {
                                 ui.vertical_centered(|ui| {
-                                    ui.label(
-                                        RichText::new("File")
-                                            .text_style(egui::TextStyle::Monospace),
-                                    );
+                                    ui.label(RichText::new("File").font(egui::FontId {
+                                        size: (16.0),
+                                        family: (egui::FontFamily::Proportional),
+                                    }));
                                 });
                                 ui.separator();
                                 if (ui.button("Open")).clicked() {
@@ -245,6 +234,35 @@ impl eframe::App for App {
                             });
                             ui.add_space(10.0);
 
+                            //Objects Group
+                            ui.group(|ui| {
+                                ui.vertical_centered(|ui| {
+                                    ui.label(
+                                        RichText::new(format!(
+                                            "Objects [{}]",
+                                            self.scene.objects.len()
+                                        ))
+                                        .font(
+                                            egui::FontId {
+                                                size: (16.0),
+                                                family: (egui::FontFamily::Proportional),
+                                            },
+                                        ),
+                                    );
+                                });
+
+                                ui.separator();
+
+                                for o in self.scene.objects.iter_mut() {
+                                    ui.label(format!(
+                                        "+ Object at {} with {} triangles",
+                                        o.transform.transform_point(&Point3::origin()),
+                                        o.triangles.len()
+                                    ));
+                                }
+                            });
+                            ui.add_space(10.0);
+
                             //Render Button
                             let ctx = ctx.clone();
                             let mut texture = self.render_texture.clone();
@@ -252,79 +270,76 @@ impl eframe::App for App {
                                 Raytracer::new(self.scene.clone(), Color::new(0.1, 0.1, 0.1));
 
                             ui.vertical_centered(|ui| {
-                                ui.add_sized([120., 40.], egui::Button::new("Render"))
-                                    .clicked()
-                                    .then(|| {
-                                        self.render_texture.set(
-                                            ImageData::Color(Arc::new(ColorImage {
-                                                size: RENDER_SIZE,
-                                                pixels: {
-                                                    let mut pixels = Vec::<Color32>::with_capacity(
-                                                        RENDER_SIZE[0] * RENDER_SIZE[1],
-                                                    );
-                                                    pixels.resize(
-                                                        RENDER_SIZE[0] * RENDER_SIZE[1],
-                                                        Color32::BLACK,
-                                                    );
-                                                    pixels
-                                                },
-                                            })),
-                                            TextureOptions::default(),
-                                        );
+                                ui.add_sized(
+                                    [120., 40.],
+                                    egui::Button::new(RichText::new("Render").font(egui::FontId {
+                                        size: (16.0),
+                                        family: (egui::FontFamily::Proportional),
+                                    })),
+                                )
+                                .clicked()
+                                .then(|| {
+                                    self.render_texture.set(
+                                        ImageData::Color(Arc::new(ColorImage {
+                                            size: RENDER_SIZE,
+                                            pixels: {
+                                                let mut pixels = Vec::<Color32>::with_capacity(
+                                                    RENDER_SIZE[0] * RENDER_SIZE[1],
+                                                );
+                                                pixels.resize(
+                                                    RENDER_SIZE[0] * RENDER_SIZE[1],
+                                                    Color32::BLACK,
+                                                );
+                                                pixels
+                                            },
+                                        })),
+                                        TextureOptions::default(),
+                                    );
 
-                                        self.rendering_thread =
-                                            Some(std::thread::spawn(move || {
-                                                let block_size = 10;
-                                                for y_block in 0..RENDER_SIZE[1] / block_size {
-                                                    for x_block in 0..RENDER_SIZE[0] / block_size {
-                                                        println!(
-                                                            "Rendering block ({}, {})",
-                                                            x_block, y_block
+                                    self.rendering_thread = Some(std::thread::spawn(move || {
+                                        let block_size = 10;
+                                        for y_block in 0..RENDER_SIZE[1] / block_size {
+                                            for x_block in 0..RENDER_SIZE[0] / block_size {
+                                                println!(
+                                                    "Rendering block ({}, {})",
+                                                    x_block, y_block
+                                                );
+                                                let pixels = (0..block_size)
+                                                    .flat_map(|y| {
+                                                        (0..block_size).map(move |x| (x, y))
+                                                    })
+                                                    .par_bridge()
+                                                    .map(|(x, y)| {
+                                                        let color = raytracer.render(
+                                                            (
+                                                                x + (x_block * block_size),
+                                                                y + (y_block * block_size),
+                                                            ),
+                                                            (RENDER_SIZE[0], RENDER_SIZE[1]),
                                                         );
-                                                        let pixels = (0..block_size)
-                                                            .flat_map(|y| {
-                                                                (0..block_size).map(move |x| (x, y))
-                                                            })
-                                                            .par_bridge()
-                                                            .map(|(x, y)| {
-                                                                let color = raytracer.render(
-                                                                    (
-                                                                        x + (x_block * block_size),
-                                                                        y + (y_block * block_size),
-                                                                    ),
-                                                                    (
-                                                                        RENDER_SIZE[0],
-                                                                        RENDER_SIZE[1],
-                                                                    ),
-                                                                );
-                                                                Color32::from_rgb(
-                                                                    (color.x * 255.0) as u8,
-                                                                    (color.y * 255.0) as u8,
-                                                                    (color.z * 255.0) as u8,
-                                                                )
-                                                            })
-                                                            .collect::<Vec<_>>();
+                                                        Color32::from_rgb(
+                                                            (color.x * 255.0) as u8,
+                                                            (color.y * 255.0) as u8,
+                                                            (color.z * 255.0) as u8,
+                                                        )
+                                                    })
+                                                    .collect::<Vec<_>>();
 
-                                                        texture.borrow_mut().set_partial(
-                                                            [
-                                                                x_block * block_size,
-                                                                y_block * block_size,
-                                                            ],
-                                                            ImageData::Color(Arc::new(
-                                                                ColorImage {
-                                                                    size: [block_size, block_size],
-                                                                    pixels,
-                                                                },
-                                                            )),
-                                                            TextureOptions::default(),
-                                                        );
+                                                texture.borrow_mut().set_partial(
+                                                    [x_block * block_size, y_block * block_size],
+                                                    ImageData::Color(Arc::new(ColorImage {
+                                                        size: [block_size, block_size],
+                                                        pixels,
+                                                    })),
+                                                    TextureOptions::default(),
+                                                );
 
-                                                        ctx.request_repaint();
-                                                    }
-                                                }
-                                            }));
-                                        self.current_tab = 1;
-                                    });
+                                                ctx.request_repaint();
+                                            }
+                                        }
+                                    }));
+                                    self.current_tab = 1;
+                                });
                             });
                         });
 
