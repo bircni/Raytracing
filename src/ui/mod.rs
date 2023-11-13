@@ -126,6 +126,11 @@ impl eframe::App for App {
                                             .prefix("z: ")
                                             .clamp_to_range(true),
                                         );
+                                        ui.label("Field of View");
+                                        ui.add(
+                                            egui::Slider::new(&mut self.scene.camera.fov, 0.0..=180.0)
+                                                .clamp_to_range(true)
+                                        )
                                     });
                                 });
                                 ui.add_space(10.0);
