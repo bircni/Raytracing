@@ -5,7 +5,7 @@ use serde_yaml::Value;
 use self::{camera::Camera, light::Light, object::Object, settings::Settings};
 
 mod camera;
-mod light;
+pub mod light;
 pub mod object;
 pub mod settings;
 mod triangle;

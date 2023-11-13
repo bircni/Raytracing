@@ -6,12 +6,13 @@ use egui_glow::{glow::HasContext, CallbackFn};
 use log::debug;
 use nalgebra::{Isometry3, Matrix4, Perspective3};
 
-use crate::scene::Scene;
+use crate::scene::{light::Light, Scene};
 use eframe::glow;
 
 pub struct Preview {
     callback: Arc<CallbackFn>,
     view_matrix: Arc<Mutex<Matrix4<f32>>>,
+    lights: Arc<Mutex<Vec<Light>>>,
 }
 
 macro_rules! gl_result {
@@ -163,8 +164,10 @@ impl Preview {
         let view_matrix = Arc::new(Mutex::new(Matrix4::default()));
 
         let view_matrix_callback = view_matrix.clone();
+        let lights = Arc::new(Mutex::new(scene.lights.clone()));
         Ok(Self {
             view_matrix,
+            lights: lights.clone(),
             callback: Arc::new(CallbackFn::new(move |_, painter| unsafe {
                 let gl = painter.gl().as_ref();
 
@@ -183,6 +186,18 @@ impl Preview {
                 );
 
                 // bind lights ssbo
+                gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, Some(lights_ssbo));
+                gl.buffer_data_u8_slice(
+                    glow::SHADER_STORAGE_BUFFER,
+                    lights
+                        .lock()
+                        .iter()
+                        .flat_map(bytemuck::bytes_of)
+                        .copied()
+                        .collect::<Vec<u8>>()
+                        .as_slice(),
+                    glow::STATIC_DRAW,
+                );
                 gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, 0, Some(lights_ssbo));
 
                 gl.draw_arrays(glow::TRIANGLES, 0, vertices.len() as i32 / 3);
@@ -209,6 +224,8 @@ impl Preview {
                     &scene.camera.up,
                 )
                 .to_homogeneous();
+
+        *self.lights.lock() = scene.lights.clone();
 
         painter.add(Shape::Callback(PaintCallback {
             rect,

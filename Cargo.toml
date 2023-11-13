@@ -9,10 +9,7 @@ edition = "2021"
 anyhow = "1.0.75"
 cargo-husky = "1.5.0"
 chrono = { version = "0.4.31", default-features = false, features = ["clock"] }
-image = { version = "0.24.7", default-features = false, features = [
-    "png",
-    "jpeg",
-] }
+image = { version = "0.24.7", default-features = false, features = ["png", "jpeg"] }
 log = "0.4.20"
 nalgebra = { version = "0.32.3", features = ["serde", "serde-serialize"] }
 obj = "0.10.2"
@@ -25,7 +22,7 @@ egui = "0.23.0"
 egui_glow = "0.23.0"
 bytemuck = "1.14.0"
 rayon = "1.8.0"
-
+egui_file = "0.11.1"
 
 #"cargo test"
 [dev-dependencies.cargo-husky]
