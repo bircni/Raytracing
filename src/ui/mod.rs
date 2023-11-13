@@ -179,34 +179,38 @@ impl eframe::App for App {
                             ui.group(|ui| {
                                 ui.vertical_centered(|ui| {
                                     ui.label(
-                                        RichText::new("Lighting")
+                                        RichText::new("Lights")
                                             .text_style(egui::TextStyle::Monospace),
                                     );
                                 });
-                                //add lighting here
-                                ui.separator();
-                                ui.radio_value(
-                                    &mut self.lighting,
-                                    "Default".to_string(),
-                                    "Default",
-                                );
-                                ui.radio_value(&mut self.lighting, "Warm".to_string(), "Warm");
-                                ui.radio_value(&mut self.lighting, "Cold".to_string(), "Cold");
-                                ui.radio_value(&mut self.lighting, "Custom".to_string(), "Custom");
 
-                                if self.lighting.eq("Custom") {
+                                for (n, light) in self.scene.lights.iter_mut().enumerate() {
+                                    ui.label(format!("Light {n}"));
+
+                                    ui.label("Position");
                                     ui.horizontal(|ui| {
-                                        ui.label("Ambient");
                                         ui.add(
-                                            egui::DragValue::new(&mut 12).prefix("x: ").speed(0.01),
+                                            egui::DragValue::new(&mut light.position.x)
+                                                .speed(0.1)
+                                                .prefix("x: "),
                                         );
                                         ui.add(
-                                            egui::DragValue::new(&mut 14).prefix("y: ").speed(0.01),
+                                            egui::DragValue::new(&mut light.position.y)
+                                                .speed(0.1)
+                                                .prefix("y: "),
                                         );
                                         ui.add(
-                                            egui::DragValue::new(&mut 33).prefix("z: ").speed(0.01),
+                                            egui::DragValue::new(&mut light.position.z)
+                                                .speed(0.1)
+                                                .prefix("z: "),
                                         );
                                     });
+
+                                    ui.label("Color");
+                                    egui::color_picker::color_edit_button_rgb(
+                                        ui,
+                                        &mut light.color.as_mut(),
+                                    );
                                 }
                             });
                             ui.add_space(10.0);
