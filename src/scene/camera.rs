@@ -13,19 +13,14 @@ pub struct Camera {
 
 impl Camera {
     /// Returns a ray from the given pixel coordinates.
-    /// (0, 0) is the top left corner of the image.
-    /// (width, height) is the bottom right corner of the image.
-    pub fn ray(&self, (x, y): (usize, usize), (width, height): (usize, usize)) -> Ray {
+    /// x and y are in the range -1..1 and represent
+    /// the relative position of the pixel in the image.
+    /// (0, 0) is the center of the image.
+    pub fn ray(&self, x: f32, y: f32) -> Ray {
         let origin = self.position;
 
-        let x = (x as f32 - (width as f32 / 2.0)) / (width as f32 / 2.0)
-            * (width as f32 / height as f32);
-        let y = (y as f32 - (height as f32 / 2.0)) / (height as f32 / 2.0);
-
-        // x and y are in the range [-1, 1]
-        // x = -1 is left, x = 1 is right
-        // y = -1 is top, y = 1 is bottom
-        // we need to scale x and y to the field of view
+        let y = (self.fov / 2.0 * y).atan();
+        let x = (self.fov / 2.0 * x).atan();
 
         let center = (self.look_at - self.position).normalize();
         let direction = Rotation3::from_axis_angle(&Unit::new_normalize(self.up.cross(&center)), y)
@@ -64,7 +59,7 @@ impl<'de> Deserialize<'de> for Camera {
             position: yaml_camera.position,
             look_at: yaml_camera.look_at,
             up: yaml_camera.up_vec,
-            fov: yaml_camera.field_of_view,
+            fov: yaml_camera.field_of_view.to_radians(),
         })
     }
 }

@@ -11,8 +11,9 @@ use egui::{
     TextureHandle, TextureOptions,
 };
 use egui_file::FileDialog;
+use log::info;
 use nalgebra::Point3;
-use rayon::prelude::{ParallelBridge, ParallelIterator};
+use rayon::{iter::IntoParallelIterator, prelude::ParallelIterator};
 use std::path::PathBuf;
 
 pub struct App {
@@ -72,22 +73,33 @@ impl App {
         let raytracer = Raytracer::new(self.scene.clone(), Color::new(0.1, 0.1, 0.1), 1e-6);
 
         self.rendering_thread = Some(std::thread::spawn(move || {
-            let block_size = 10;
+            let block_size = 100;
             for y_block in 0..RENDER_SIZE[1] / block_size {
                 for x_block in 0..RENDER_SIZE[0] / block_size {
-                    println!("Rendering block ({}, {})", x_block, y_block);
-                    let pixels = (0..block_size)
-                        .flat_map(|y| (0..block_size).map(move |x| (x, y)))
-                        .par_bridge()
-                        .map(|(x, y)| {
-                            let color = raytracer.render(
-                                (x + (x_block * block_size), y + (y_block * block_size)),
-                                (RENDER_SIZE[0], RENDER_SIZE[1]),
-                            );
+                    info!(
+                        "rendering block ({}, {}) of ({}, {}) ({:.2}%)",
+                        x_block,
+                        y_block,
+                        RENDER_SIZE[0] / block_size,
+                        RENDER_SIZE[1] / block_size,
+                        (x_block + y_block * RENDER_SIZE[0] / block_size) as f32
+                            / (RENDER_SIZE[0] / block_size * RENDER_SIZE[1] / block_size) as f32
+                            * 100.0
+                    );
+                    let pixels = (0..block_size * block_size)
+                        .into_par_iter()
+                        .map(|i| {
+                            let x = i % block_size;
+                            let y = i / block_size;
+                            let x = x_block * block_size + x;
+                            let y = y_block * block_size + y;
+                            raytracer.render((x, y), (RENDER_SIZE[0], RENDER_SIZE[1]))
+                        })
+                        .map(|c| {
                             Color32::from_rgb(
-                                (color.x * 255.0) as u8,
-                                (color.y * 255.0) as u8,
-                                (color.z * 255.0) as u8,
+                                (c.x * 255.0) as u8,
+                                (c.y * 255.0) as u8,
+                                (c.z * 255.0) as u8,
                             )
                         })
                         .collect::<Vec<_>>();
@@ -104,6 +116,8 @@ impl App {
                     ctx.request_repaint();
                 }
             }
+
+            info!("rendering finished");
         }));
     }
 }
@@ -323,14 +337,10 @@ impl eframe::App for App {
                             });
                             ui.add_space(10.0);
 
-                            //Render Button
-                            let ctx = ctx.clone();
-                            let mut texture = self.render_texture.clone();
-                            let raytracer =
-                                Raytracer::new(self.scene.clone(), Color::new(0.1, 0.1, 0.1), 1e-6);
-
+                            // Render Button
                             ui.vertical_centered(|ui| {
                                 ui.add_sized(
+                                    // TODO: wegmachen
                                     [120., 40.],
                                     egui::Button::new(RichText::new("Render").font(egui::FontId {
                                         size: (16.0),
@@ -356,48 +366,7 @@ impl eframe::App for App {
                                         TextureOptions::default(),
                                     );
 
-                                    self.rendering_thread = Some(std::thread::spawn(move || {
-                                        let block_size = 10;
-                                        for y_block in 0..RENDER_SIZE[1] / block_size {
-                                            for x_block in 0..RENDER_SIZE[0] / block_size {
-                                                println!(
-                                                    "Rendering block ({}, {})",
-                                                    x_block, y_block
-                                                );
-                                                let pixels = (0..block_size)
-                                                    .flat_map(|y| {
-                                                        (0..block_size).map(move |x| (x, y))
-                                                    })
-                                                    .par_bridge()
-                                                    .map(|(x, y)| {
-                                                        let color = raytracer.render(
-                                                            (
-                                                                x + (x_block * block_size),
-                                                                y + (y_block * block_size),
-                                                            ),
-                                                            (RENDER_SIZE[0], RENDER_SIZE[1]),
-                                                        );
-                                                        Color32::from_rgb(
-                                                            (color.x * 255.0) as u8,
-                                                            (color.y * 255.0) as u8,
-                                                            (color.z * 255.0) as u8,
-                                                        )
-                                                    })
-                                                    .collect::<Vec<_>>();
-
-                                                texture.borrow_mut().set_partial(
-                                                    [x_block * block_size, y_block * block_size],
-                                                    ImageData::Color(Arc::new(ColorImage {
-                                                        size: [block_size, block_size],
-                                                        pixels,
-                                                    })),
-                                                    TextureOptions::default(),
-                                                );
-
-                                                ctx.request_repaint();
-                                            }
-                                        }
-                                    }));
+                                    self.render(ctx.clone());
                                     self.current_tab = 1;
                                 });
                             });
