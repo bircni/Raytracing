@@ -102,35 +102,69 @@ impl eframe::App for App {
 
                                     ui.vertical(|ui| {
                                         ui.label("Position");
-                                        ui.add(
-                                            egui::Slider::new(
-                                                &mut self.scene.camera.position.x,
-                                                -25.0..=25.0,
-                                            )
-                                            .prefix("x: ")
-                                            .clamp_to_range(true),
-                                        );
-                                        ui.add(
-                                            egui::Slider::new(
-                                                &mut self.scene.camera.position.z,
-                                                -25.0..=25.0,
-                                            )
-                                            .prefix("y: ")
-                                            .clamp_to_range(true),
-                                        );
-                                        ui.add(
-                                            egui::Slider::new(
-                                                &mut self.scene.camera.position.y,
-                                                -25.0..=25.0,
-                                            )
-                                            .prefix("z: ")
-                                            .clamp_to_range(true),
-                                        );
+
+                                        ui.horizontal(|ui| {
+                                            ui.add(
+                                                egui::DragValue::new(
+                                                    &mut self.scene.camera.position.x,
+                                                )
+                                                .speed(0.1)
+                                                .prefix("x: "),
+                                            );
+                                            ui.add(
+                                                egui::DragValue::new(
+                                                    &mut self.scene.camera.position.y,
+                                                )
+                                                .speed(0.1)
+                                                .prefix("y: "),
+                                            );
+                                            ui.add(
+                                                egui::DragValue::new(
+                                                    &mut self.scene.camera.position.z,
+                                                )
+                                                .speed(0.1)
+                                                .prefix("z: "),
+                                            );
+                                        });
+
+                                        ui.label("Look at");
+
+                                        ui.horizontal(|ui| {
+                                            ui.add(
+                                                egui::DragValue::new(
+                                                    &mut self.scene.camera.look_at.x,
+                                                )
+                                                .speed(0.1)
+                                                .prefix("x: "),
+                                            );
+                                            ui.add(
+                                                egui::DragValue::new(
+                                                    &mut self.scene.camera.look_at.y,
+                                                )
+                                                .speed(0.1)
+                                                .prefix("y: "),
+                                            );
+                                            ui.add(
+                                                egui::DragValue::new(
+                                                    &mut self.scene.camera.look_at.z,
+                                                )
+                                                .speed(0.1)
+                                                .prefix("z: "),
+                                            );
+                                        });
+
                                         ui.label("Field of View");
                                         ui.add(
-                                            egui::Slider::new(&mut self.scene.camera.fov, 0.0..=180.0)
-                                                .clamp_to_range(true)
-                                        )
+                                            egui::Slider::new(
+                                                &mut self.scene.camera.fov,
+                                                0.0..=std::f32::consts::PI,
+                                            )
+                                            .step_by(0.01)
+                                            .custom_formatter(|x, _| {
+                                                format!("{:.2}°", x.to_degrees())
+                                            })
+                                            .clamp_to_range(true),
+                                        );
                                     });
                                 });
                                 ui.add_space(10.0);
