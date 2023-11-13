@@ -149,7 +149,7 @@ fn triangulate(
 }
 
 impl Object {
-    pub fn intersect(&self, ray: Ray) -> Option<Hit> {
+    pub fn intersect(&self, ray: Ray, delta: f32) -> Option<Hit> {
         // Transform ray into object space
         let ray = Ray {
             origin: self.transform.inverse_transform_point(&ray.origin),
@@ -158,7 +158,7 @@ impl Object {
 
         self.triangles
             .iter()
-            .filter_map(|t| t.intersect(ray).map(|h| (t, h)))
+            .filter_map(|t| t.intersect(ray, delta).map(|h| (t, h)))
             .map(|(t, (u, v, w))| {
                 let material = t.material_index.map(|i| &self.materials[i]);
                 let normal = ((t.a_normal * u) + (t.b_normal * v) + (t.c_normal * w)).normalize();

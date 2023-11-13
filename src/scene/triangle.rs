@@ -15,13 +15,13 @@ pub struct Triangle {
 
 impl Triangle {
     /// return barycentric coordinates if ray intersects triangle
-    pub fn intersect(&self, ray: Ray) -> Option<(f32, f32, f32)> {
+    pub fn intersect(&self, ray: Ray, delta: f32) -> Option<(f32, f32, f32)> {
         let edge1 = self.b - self.a;
         let edge2 = self.c - self.a;
         let h = ray.direction.cross(&edge2);
         let a = edge1.dot(&h);
 
-        if a.abs() < 1e-8 {
+        if a.abs() < delta {
             return None; // This ray is parallel to this triangle.
         }
 
@@ -42,7 +42,7 @@ impl Triangle {
 
         let t = f * edge2.dot(&q);
 
-        if t > 1e-8 {
+        if t > delta {
             let w = 1.0 - u - v;
 
             Some((u, v, w))

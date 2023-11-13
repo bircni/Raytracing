@@ -20,13 +20,15 @@ pub struct Hit<'a> {
 pub struct Raytracer {
     scene: Scene,
     background_color: Color,
+    delta: f32,
 }
 
 impl Raytracer {
-    pub fn new(scene: Scene, background_color: Vector3<f32>) -> Raytracer {
+    pub fn new(scene: Scene, background_color: Vector3<f32>, delta: f32) -> Raytracer {
         Raytracer {
             scene,
             background_color,
+            delta,
         }
     }
 
@@ -34,7 +36,7 @@ impl Raytracer {
         self.scene
             .objects
             .iter()
-            .filter_map(|o| o.intersect(ray))
+            .filter_map(|o| o.intersect(ray, self.delta))
             .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
     }
 
