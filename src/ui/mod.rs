@@ -1,19 +1,16 @@
 mod preview;
-
-use std::{borrow::BorrowMut, sync::Arc};
+mod properties;
+mod render;
 
 use self::preview::Preview;
-use crate::{raytracer::Raytracer, scene::Scene, Color};
-
+use crate::scene::Scene;
 use eframe::CreationContext;
-use egui::{
-    load::SizedTexture, CentralPanel, Color32, ColorImage, ImageData, ImageSource, RichText, Sense,
-    TextureHandle, TextureOptions,
-};
+use egui::{pos2, Align, CursorIcon, Frame, Layout, ProgressBar, Rect, Rounding, Stroke, Vec2};
+use egui::{CentralPanel, Color32, ColorImage, ImageData, Sense, TextureHandle, TextureOptions};
 use egui_file::FileDialog;
-use nalgebra::Point3;
-use rayon::prelude::{ParallelBridge, ParallelIterator};
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU16, Ordering};
+use std::sync::Arc;
 
 pub struct App {
     current_tab: usize,
@@ -23,21 +20,25 @@ pub struct App {
     rendering_thread: Option<std::thread::JoinHandle<()>>,
     opened_file: Option<PathBuf>,
     open_file_dialog: Option<FileDialog>,
+    render_size: [usize; 2],
+    rendering_progress: Arc<AtomicU16>,
+    preview_zoom: f32,
+    preview_position: Vec2,
 }
-
-const RENDER_SIZE: [usize; 2] = [2000, 1000];
 
 impl App {
     pub fn new(cc: &CreationContext, scene: Scene) -> anyhow::Result<Self> {
         let preview = Preview::from_scene(cc.gl.clone().unwrap(), &scene)?;
 
+        let render_size = [1920, 1080];
+
         let render_texture = cc.egui_ctx.load_texture(
             "render",
             ImageData::Color(Arc::new(ColorImage {
-                size: RENDER_SIZE,
+                size: render_size,
                 pixels: {
-                    let mut pixels = Vec::<Color32>::with_capacity(RENDER_SIZE[0] * RENDER_SIZE[1]);
-                    pixels.resize(RENDER_SIZE[0] * RENDER_SIZE[1], Color32::BLACK);
+                    let mut pixels = Vec::<Color32>::with_capacity(render_size[0] * render_size[1]);
+                    pixels.resize(render_size[0] * render_size[1], Color32::BLACK);
                     pixels
                 },
             })),
@@ -48,16 +49,28 @@ impl App {
             current_tab: 0,
             scene,
             preview,
+            preview_zoom: 0.0,
+            preview_position: Vec2::ZERO,
             render_texture,
             rendering_thread: None,
             opened_file: None,
             open_file_dialog: None,
+            render_size,
+            rendering_progress: Arc::new(AtomicU16::new(0)),
         })
     }
 }
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.rendering_thread
+            .as_ref()
+            .map(|t| t.is_finished())
+            .unwrap_or(false)
+            .then(|| {
+                self.rendering_thread = None;
+            });
+
         CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
                 if ui
@@ -73,6 +86,19 @@ impl eframe::App for App {
                 {
                     self.current_tab = 1;
                 }
+
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.add(
+                        ProgressBar::new(
+                            self.rendering_progress.load(Ordering::Relaxed) as f32
+                                / u16::MAX as f32,
+                        )
+                        .desired_width(ui.available_width() / 3.0)
+                        .show_percentage()
+                        .fill(Color32::DARK_BLUE),
+                    );
+                    ui.label("Rendering progress");
+                });
             });
 
             ui.vertical_centered(|ui| {
@@ -81,290 +107,88 @@ impl eframe::App for App {
 
             match self.current_tab {
                 0 => {
-                    egui::SidePanel::right("panel")
-                        .show_separator_line(true)
-                        .show_inside(ui, |ui| {
-                            ui.heading("Properties");
-                            //Camera Group
-                            ui.add_space(5.0);
-                            ui.group(|ui| {
-                                ui.vertical_centered(|ui| {
-                                    ui.label(RichText::new("Camera").font(egui::FontId {
-                                        size: (16.0),
-                                        family: (egui::FontFamily::Proportional),
-                                    }));
-                                });
+                    self.properties(ctx, ui);
 
-                                ui.separator();
-
-                                ui.vertical(|ui| {
-                                    ui.label("Position:");
-
-                                    ui.horizontal(|ui| {
-                                        ui.add(
-                                            egui::DragValue::new(&mut self.scene.camera.position.x)
-                                                .speed(0.1)
-                                                .prefix("x: "),
-                                        );
-                                        ui.add(
-                                            egui::DragValue::new(&mut self.scene.camera.position.y)
-                                                .speed(0.1)
-                                                .prefix("y: "),
-                                        );
-                                        ui.add(
-                                            egui::DragValue::new(&mut self.scene.camera.position.z)
-                                                .speed(0.1)
-                                                .prefix("z: "),
-                                        );
-                                    });
-
-                                    ui.label("Look at:");
-
-                                    ui.horizontal(|ui| {
-                                        ui.add(
-                                            egui::DragValue::new(&mut self.scene.camera.look_at.x)
-                                                .speed(0.1)
-                                                .prefix("x: "),
-                                        );
-                                        ui.add(
-                                            egui::DragValue::new(&mut self.scene.camera.look_at.y)
-                                                .speed(0.1)
-                                                .prefix("y: "),
-                                        );
-                                        ui.add(
-                                            egui::DragValue::new(&mut self.scene.camera.look_at.z)
-                                                .speed(0.1)
-                                                .prefix("z: "),
-                                        );
-                                    });
-
-                                    ui.label("Field of View:");
-                                    ui.add(
-                                        egui::Slider::new(
-                                            &mut self.scene.camera.fov,
-                                            0.0..=std::f32::consts::PI,
-                                        )
-                                        .step_by(0.01)
-                                        .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
-                                        .clamp_to_range(true),
-                                    );
-                                });
-                            });
-                            ui.add_space(10.0);
-
-                            //Lighting Group
-                            ui.group(|ui| {
-                                ui.vertical_centered(|ui| {
-                                    ui.label(RichText::new("Lights").font(egui::FontId {
-                                        size: (16.0),
-                                        family: (egui::FontFamily::Proportional),
-                                    }));
-                                });
-
-                                for (n, light) in self.scene.lights.iter_mut().enumerate() {
-                                    ui.separator();
-                                    ui.label(RichText::new(format!("Light {n}")).font(
-                                        egui::FontId {
-                                            size: (14.0),
-                                            family: (egui::FontFamily::Monospace),
-                                        },
-                                    ));
-
-                                    ui.label("Position:");
-                                    ui.horizontal(|ui| {
-                                        ui.add(
-                                            egui::DragValue::new(&mut light.position.x)
-                                                .speed(0.1)
-                                                .prefix("x: "),
-                                        );
-                                        ui.add(
-                                            egui::DragValue::new(&mut light.position.y)
-                                                .speed(0.1)
-                                                .prefix("y: "),
-                                        );
-                                        ui.add(
-                                            egui::DragValue::new(&mut light.position.z)
-                                                .speed(0.1)
-                                                .prefix("z: "),
-                                        );
-                                    });
-
-                                    ui.label("Intensity:");
-                                    ui.add(
-                                        egui::Slider::new(&mut light.intensity, 0.0..=100.0)
-                                            .clamp_to_range(true),
-                                    );
-
-                                    ui.label("Color:");
-                                    egui::color_picker::color_edit_button_rgb(
-                                        ui,
-                                        &mut light.color.as_mut(),
-                                    );
-                                }
-                            });
-                            ui.add_space(10.0);
-
-                            //File Group
-                            ui.group(|ui| {
-                                ui.vertical_centered(|ui| {
-                                    ui.label(RichText::new("File").font(egui::FontId {
-                                        size: (16.0),
-                                        family: (egui::FontFamily::Proportional),
-                                    }));
-                                });
-                                ui.separator();
-                                if (ui.button("Open")).clicked() {
-                                    let mut dialog =
-                                        FileDialog::open_file(self.opened_file.clone());
-                                    //dialog.filter(Box::new(|path| path.ends_with(".obj"))).open();
-                                    dialog.open();
-                                    self.open_file_dialog = Some(dialog);
-                                }
-                                if let Some(dialog) = &mut self.open_file_dialog {
-                                    if dialog.show(ctx).selected() {
-                                        if let Some(file) = dialog.path() {
-                                            self.opened_file = Some(file.to_path_buf());
-                                        }
-                                    }
-                                }
-                                if self.opened_file.is_some() {
-                                    ui.label("Opened file:");
-                                    ui.label(self.opened_file.as_ref().unwrap().to_str().unwrap());
-                                }
-                            });
-                            ui.add_space(10.0);
-
-                            //Objects Group
-                            ui.group(|ui| {
-                                ui.vertical_centered(|ui| {
-                                    ui.label(
-                                        RichText::new(format!(
-                                            "Objects [{}]",
-                                            self.scene.objects.len()
-                                        ))
-                                        .font(
-                                            egui::FontId {
-                                                size: (16.0),
-                                                family: (egui::FontFamily::Proportional),
-                                            },
-                                        ),
-                                    );
-                                });
-
-                                ui.separator();
-
-                                for o in self.scene.objects.iter_mut() {
-                                    ui.label(format!(
-                                        "+ Object at {} with {} triangles",
-                                        o.transform.transform_point(&Point3::origin()),
-                                        o.triangles.len()
-                                    ));
-                                }
-                            });
-                            ui.add_space(10.0);
-
-                            //Render Button
-                            let ctx = ctx.clone();
-                            let mut texture = self.render_texture.clone();
-                            let raytracer =
-                                Raytracer::new(self.scene.clone(), Color::new(0.1, 0.1, 0.1));
-
-                            ui.vertical_centered(|ui| {
-                                ui.add_sized(
-                                    [120., 40.],
-                                    egui::Button::new(RichText::new("Render").font(egui::FontId {
-                                        size: (16.0),
-                                        family: (egui::FontFamily::Proportional),
-                                    })),
-                                )
-                                .clicked()
-                                .then(|| {
-                                    self.render_texture.set(
-                                        ImageData::Color(Arc::new(ColorImage {
-                                            size: RENDER_SIZE,
-                                            pixels: {
-                                                let mut pixels = Vec::<Color32>::with_capacity(
-                                                    RENDER_SIZE[0] * RENDER_SIZE[1],
-                                                );
-                                                pixels.resize(
-                                                    RENDER_SIZE[0] * RENDER_SIZE[1],
-                                                    Color32::BLACK,
-                                                );
-                                                pixels
-                                            },
-                                        })),
-                                        TextureOptions::default(),
-                                    );
-
-                                    self.rendering_thread = Some(std::thread::spawn(move || {
-                                        let block_size = 10;
-                                        for y_block in 0..RENDER_SIZE[1] / block_size {
-                                            for x_block in 0..RENDER_SIZE[0] / block_size {
-                                                println!(
-                                                    "Rendering block ({}, {})",
-                                                    x_block, y_block
-                                                );
-                                                let pixels = (0..block_size)
-                                                    .flat_map(|y| {
-                                                        (0..block_size).map(move |x| (x, y))
-                                                    })
-                                                    .par_bridge()
-                                                    .map(|(x, y)| {
-                                                        let color = raytracer.render(
-                                                            (
-                                                                x + (x_block * block_size),
-                                                                y + (y_block * block_size),
-                                                            ),
-                                                            (RENDER_SIZE[0], RENDER_SIZE[1]),
-                                                        );
-                                                        Color32::from_rgb(
-                                                            (color.x * 255.0) as u8,
-                                                            (color.y * 255.0) as u8,
-                                                            (color.z * 255.0) as u8,
-                                                        )
-                                                    })
-                                                    .collect::<Vec<_>>();
-
-                                                texture.borrow_mut().set_partial(
-                                                    [x_block * block_size, y_block * block_size],
-                                                    ImageData::Color(Arc::new(ColorImage {
-                                                        size: [block_size, block_size],
-                                                        pixels,
-                                                    })),
-                                                    TextureOptions::default(),
-                                                );
-
-                                                ctx.request_repaint();
-                                            }
-                                        }
-                                    }));
-                                    self.current_tab = 1;
-                                });
-                            });
-                        });
-
-                    egui::Frame::canvas(ui.style())
-                        .outer_margin(10.0)
-                        .show(ui, |ui| {
-                            let (response, painter) =
-                                ui.allocate_painter(ui.available_size(), Sense::drag());
-                            self.preview.paint(response.rect, &painter, &self.scene);
-                        });
+                    Frame::canvas(ui.style()).outer_margin(10.0).show(ui, |ui| {
+                        let (response, painter) =
+                            ui.allocate_painter(ui.available_size(), Sense::drag());
+                        self.preview.paint(response.rect, &painter, &self.scene);
+                    });
                 }
 
                 1 => {
-                    self.rendering_thread
-                        .as_ref()
-                        .map(|t| t.is_finished())
-                        .unwrap_or(false)
-                        .then(|| {
-                            self.rendering_thread = None;
+                    Frame::canvas(ui.style()).outer_margin(10.0).show(ui, |ui| {
+                        let (response, painter) =
+                            ui.allocate_painter(ui.available_size(), Sense::drag());
+
+                        let response = response.on_hover_and_drag_cursor(CursorIcon::Grab);
+
+                        self.preview_zoom += ctx.input(|i| i.scroll_delta.y);
+                        self.preview_zoom = self.preview_zoom.clamp(
+                            -response.rect.width().min(response.rect.height()) / 4.0,
+                            std::f32::INFINITY,
+                        );
+                        self.preview_position += response.drag_delta();
+
+                        response.double_clicked().then(|| {
+                            self.preview_zoom = 0.0;
+                            self.preview_position = Vec2::ZERO;
                         });
 
-                    egui::ScrollArea::new([true, true]).show(ui, |ui| {
-                        ui.image(ImageSource::Texture(SizedTexture::from_handle(
-                            &self.render_texture,
-                        )));
+                        // paint gray grid
+                        let cell_size = 25.0;
+                        for y in 0..=response.rect.height() as usize / cell_size as usize {
+                            for x in 0..=response.rect.width() as usize / cell_size as usize {
+                                painter.rect(
+                                    Rect::from_min_size(
+                                        pos2(
+                                            response.rect.left() + x as f32 * cell_size,
+                                            response.rect.top() + y as f32 * cell_size,
+                                        ),
+                                        Vec2::splat(cell_size),
+                                    ),
+                                    Rounding::default(),
+                                    if (x + y) % 2 == 0 {
+                                        Color32::GRAY
+                                    } else {
+                                        Color32::DARK_GRAY
+                                    },
+                                    Stroke::NONE,
+                                );
+                            }
+                        }
+
+                        let render_aspect = self.render_size[0] as f32 / self.render_size[1] as f32;
+                        let rect = Rect::from_min_size(
+                            response.rect.min,
+                            // keep aspect ratio
+                            Vec2::new(
+                                response
+                                    .rect
+                                    .width()
+                                    .min(response.rect.height() * render_aspect),
+                                response
+                                    .rect
+                                    .height()
+                                    .min(response.rect.width() / render_aspect),
+                            ),
+                        );
+
+                        // center rect
+                        let rect = Rect::from_min_size(
+                            rect.min + (response.rect.size() - rect.size()) / 2.0,
+                            rect.size(),
+                        );
+
+                        painter.image(
+                            self.render_texture.id(),
+                            rect.translate(self.preview_position).expand2(Vec2::new(
+                                self.preview_zoom * render_aspect,
+                                self.preview_zoom,
+                            )),
+                            Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)),
+                            Color32::WHITE,
+                        );
                     });
                 }
                 n => panic!("Unknown tab: {}", n),

@@ -25,7 +25,7 @@ fn main() -> anyhow::Result<()> {
     let scene = Scene::load("./res/config.yaml").context("Failed to load scene")?;
 
     eframe::run_native(
-        "RayTracer!",
+        "RayTracer",
         eframe::NativeOptions {
             initial_window_size: Some(egui::vec2(1200.0, 900.0)),
             renderer: Renderer::Glow,

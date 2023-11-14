@@ -125,22 +125,37 @@ fn triangulate(
     let mut triangles = Vec::new();
 
     for i in 1..poly.0.len() - 1 {
+        let a = Point3::from(obj.data.position[poly.0[0].0]);
+        let b = Point3::from(obj.data.position[poly.0[i].0]);
+        let c = Point3::from(obj.data.position[poly.0[i + 1].0]);
+
+        let computed_normal = (b - a).cross(&(c - a)).normalize();
+
         triangles.push(Triangle {
-            a: Point3::from(obj.data.position[poly.0[0].0]),
-            b: Point3::from(obj.data.position[poly.0[i].0]),
-            c: Point3::from(obj.data.position[poly.0[i + 1].0]),
+            a,
+            b,
+            c,
             a_normal: poly.0[0]
                 .2
                 .map(|i| Vector3::from(obj.data.normal[i]))
-                .unwrap_or(Vector3::zeros()),
+                .unwrap_or_else(|| {
+                    warn!("No normal for vertex: {:?}", poly.0[0]);
+                    computed_normal
+                }),
             b_normal: poly.0[i]
                 .2
                 .map(|i| Vector3::from(obj.data.normal[i]))
-                .unwrap_or(Vector3::zeros()),
+                .unwrap_or_else(|| {
+                    warn!("No normal for vertex: {:?}", poly.0[i]);
+                    computed_normal
+                }),
             c_normal: poly.0[i + 1]
                 .2
                 .map(|i| Vector3::from(obj.data.normal[i]))
-                .unwrap_or(Vector3::zeros()),
+                .unwrap_or_else(|| {
+                    warn!("No normal for vertex: {:?}", poly.0[i + 1]);
+                    computed_normal
+                }),
             material_index,
         });
     }
@@ -149,7 +164,7 @@ fn triangulate(
 }
 
 impl Object {
-    pub fn intersect(&self, ray: Ray) -> Option<Hit> {
+    pub fn intersect(&self, ray: Ray, delta: f32) -> Option<Hit> {
         // Transform ray into object space
         let ray = Ray {
             origin: self.transform.inverse_transform_point(&ray.origin),
@@ -158,25 +173,20 @@ impl Object {
 
         self.triangles
             .iter()
-            .filter_map(|t| t.intersect(ray).map(|h| (t, h)))
+            .filter_map(|t| t.intersect(ray, delta).map(|h| (t, h)))
             .map(|(t, (u, v, w))| {
-                let material = t.material_index.map(|i| &self.materials[i]);
-                let normal = ((t.a_normal * u) + (t.b_normal * v) + (t.c_normal * w)).normalize();
-                let point = Point3::from((t.a.coords * u) + (t.b.coords * v) + (t.c.coords * w));
+                // u, v, w are barycentric coordinates of the hit point on the triangle
+                // interpolate hit point and normal
+                let point = Point3::from((t.a * u).coords + (t.b * v).coords + (t.c * w).coords);
+                let normal = (t.a_normal * u) + (t.b_normal * v) + (t.c_normal * w);
+
+                // Transform hit point and normal back into world space
                 Hit {
-                    point,
-                    normal,
-                    material,
+                    point: self.transform.transform_point(&point),
+                    normal: self.transform.transform_vector(&normal),
+                    material: t.material_index.map(|i| &self.materials[i]),
                 }
             })
             .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
-            .map(|h| {
-                // Transform hit back into world space
-                Hit {
-                    point: self.transform.transform_point(&h.point),
-                    normal: self.transform.transform_vector(&h.normal),
-                    ..h
-                }
-            })
     }
 }

@@ -1,4 +1,4 @@
-use nalgebra::{Point3, Rotation3, Unit, Vector3};
+use nalgebra::{Point3, Rotation3, Vector3};
 use serde::Deserialize;
 
 use crate::raytracer::Ray;
@@ -13,27 +13,19 @@ pub struct Camera {
 
 impl Camera {
     /// Returns a ray from the given pixel coordinates.
-    /// (0, 0) is the top left corner of the image.
-    /// (width, height) is the bottom right corner of the image.
-    pub fn ray(&self, (x, y): (usize, usize), (width, height): (usize, usize)) -> Ray {
-        let origin = self.position;
+    /// x and y are in the range -1..1 and represent
+    /// the relative position of the pixel in the image.
+    /// (0, 0) is the center of the image.
+    pub fn ray(&self, x: f32, y: f32) -> Ray {
+        // direction in coordinate system of camera
+        let direction = Vector3::new(x, -y, -1.0 / (self.fov / 2.0).tan());
 
-        let x = (x as f32 - (width as f32 / 2.0)) / (width as f32 / 2.0)
-            * (width as f32 / height as f32);
-        let y = (y as f32 - (height as f32 / 2.0)) / (height as f32 / 2.0);
-
-        // x and y are in the range [-1, 1]
-        // x = -1 is left, x = 1 is right
-        // y = -1 is top, y = 1 is bottom
-        // we need to scale x and y to the field of view
-
-        let center = (self.look_at - self.position).normalize();
-        let direction = Rotation3::from_axis_angle(&Unit::new_normalize(self.up.cross(&center)), y)
-            * Rotation3::from_axis_angle(&Unit::new_normalize(self.up), -x)
-            * center;
+        // rotate direction to world coordinate system
+        let rotation = Rotation3::look_at_rh(&(self.look_at - self.position), &self.up);
+        let direction = rotation.inverse_transform_vector(&direction);
 
         Ray {
-            origin,
+            origin: self.position,
             direction: direction.normalize(),
         }
     }
@@ -64,7 +56,7 @@ impl<'de> Deserialize<'de> for Camera {
             position: yaml_camera.position,
             look_at: yaml_camera.look_at,
             up: yaml_camera.up_vec,
-            fov: yaml_camera.field_of_view,
+            fov: yaml_camera.field_of_view.to_radians(),
         })
     }
 }

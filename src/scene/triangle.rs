@@ -15,39 +15,37 @@ pub struct Triangle {
 
 impl Triangle {
     /// return barycentric coordinates if ray intersects triangle
-    pub fn intersect(&self, ray: Ray) -> Option<(f32, f32, f32)> {
-        let edge1 = self.b - self.a;
-        let edge2 = self.c - self.a;
-        let h = ray.direction.cross(&edge2);
-        let a = edge1.dot(&h);
+    pub fn intersect(&self, ray: Ray, delta: f32) -> Option<(f32, f32, f32)> {
+        let ab = self.b - self.a;
+        let ac = self.c - self.a;
+        let normal = ab.cross(&ac).normalize();
 
-        if a.abs() < 1e-8 {
-            return None; // This ray is parallel to this triangle.
+        let t = (self.a - ray.origin).dot(&normal) / ray.direction.dot(&normal);
+
+        if t < delta {
+            return None;
         }
 
-        let f = 1.0 / a;
-        let s = ray.origin - self.a;
-        let u = f * s.dot(&h);
+        let p = ray.origin + ray.direction * t;
 
-        if u < 0.0 || u > 1.0 {
-            return None; // The intersection point is outside the triangle.
+        let ap = p - self.a;
+        let bp = p - self.b;
+        let cp = p - self.c;
+
+        let ab_ap = ab.cross(&ap);
+        let bc_bp = (self.c - self.b).cross(&bp);
+        let ca_cp = (self.a - self.c).cross(&cp);
+
+        let ab_ap_dot = ab_ap.dot(&normal);
+        let bc_bp_dot = bc_bp.dot(&normal);
+        let ca_cp_dot = ca_cp.dot(&normal);
+
+        if ab_ap_dot < 0.0 || bc_bp_dot < 0.0 || ca_cp_dot < 0.0 {
+            return None;
         }
 
-        let q = s.cross(&edge1);
-        let v = f * ray.direction.dot(&q);
+        let area = ab_ap_dot + bc_bp_dot + ca_cp_dot;
 
-        if v < 0.0 || u + v > 1.0 {
-            return None; // The intersection point is outside the triangle.
-        }
-
-        let t = f * edge2.dot(&q);
-
-        if t > 1e-8 {
-            let w = 1.0 - u - v;
-
-            Some((u, v, w))
-        } else {
-            None
-        }
+        Some((bc_bp_dot / area, ca_cp_dot / area, ab_ap_dot / area))
     }
 }
