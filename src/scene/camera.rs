@@ -1,4 +1,4 @@
-use nalgebra::{Point3, Rotation3, Unit, Vector3};
+use nalgebra::{Point3, Rotation3, Vector3};
 use serde::Deserialize;
 
 use crate::raytracer::Ray;
@@ -17,18 +17,15 @@ impl Camera {
     /// the relative position of the pixel in the image.
     /// (0, 0) is the center of the image.
     pub fn ray(&self, x: f32, y: f32) -> Ray {
-        let origin = self.position;
+        // direction in coordinate system of camera
+        let direction = Vector3::new(x, -y, -1.0 / (self.fov / 2.0).tan());
 
-        let y = (self.fov / 2.0 * y).atan();
-        let x = (self.fov / 2.0 * x).atan();
-
-        let center = (self.look_at - self.position).normalize();
-        let direction = Rotation3::from_axis_angle(&Unit::new_normalize(self.up.cross(&center)), y)
-            * Rotation3::from_axis_angle(&Unit::new_normalize(self.up), -x)
-            * center;
+        // rotate direction to world coordinate system
+        let rotation = Rotation3::look_at_rh(&(self.look_at - self.position), &self.up);
+        let direction = rotation.inverse_transform_vector(&direction);
 
         Ray {
-            origin,
+            origin: self.position,
             direction: direction.normalize(),
         }
     }
