@@ -54,6 +54,40 @@
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
 <a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>nalgebra::{Point3, Vector3};
 <span class="kw">use </span>obj::Material;
 <span class="kw">use </span>ordered_float::OrderedFloat;
@@ -76,13 +110,17 @@
 <span class="kw">pub struct </span>Raytracer {
     scene: Scene,
     background_color: Color,
+    delta: f32,
 }
 
 <span class="kw">impl </span>Raytracer {
-    <span class="kw">pub fn </span>new(scene: Scene, background_color: Vector3&lt;f32&gt;) -&gt; Raytracer {
+    <span class="kw">const </span>NO_MATERIAL_COLOR: Color = Color::new(<span class="number">0.9</span>, <span class="number">0.9</span>, <span class="number">0.9</span>);
+
+    <span class="kw">pub fn </span>new(scene: Scene, background_color: Vector3&lt;f32&gt;, delta: f32) -&gt; Raytracer {
         Raytracer {
             scene,
             background_color,
+            delta,
         }
     }
 
@@ -90,22 +128,52 @@
         <span class="self">self</span>.scene
             .objects
             .iter()
-            .filter_map(|o| o.intersect(ray))
+            .filter_map(|o| o.intersect(ray, <span class="self">self</span>.delta))
             .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
     }
 
     <span class="kw">fn </span>shade(<span class="kw-2">&amp;</span><span class="self">self</span>, hit: <span class="prelude-ty">Option</span>&lt;Hit&gt;) -&gt; Color {
-        hit.map(|h| {
-            h.material
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(hit) = hit {
+            <span class="kw">let </span>diffuse = hit
+                .material
                 .and_then(|m| m.kd)
                 .map(Color::from)
-                .unwrap_or(Color::new(<span class="number">0.9</span>, <span class="number">0.9</span>, <span class="number">0.9</span>))
-        })
-        .unwrap_or(<span class="self">self</span>.background_color)
+                .unwrap_or(<span class="self">Self</span>::NO_MATERIAL_COLOR);
+
+            <span class="kw">let </span><span class="kw-2">mut </span>color = Color::zeros();
+
+            <span class="kw">for </span>light <span class="kw">in </span><span class="self">self</span>.scene.lights.iter() {
+                <span class="kw">let </span>light_direction = (light.position - hit.point).normalize();
+                <span class="kw">let </span>light_ray = Ray {
+                    origin: hit.point + light_direction * <span class="self">self</span>.delta,
+                    direction: light_direction,
+                };
+
+                <span class="kw">let </span>shadow = <span class="self">self</span>.raycast(light_ray).is_some();
+
+                <span class="kw">if </span>!shadow {
+                    <span class="kw">let </span>light_intensity =
+                        light.intensity / (light.position - hit.point).norm_squared();
+                    <span class="kw">let </span>light_reflection = light_direction.dot(<span class="kw-2">&amp;</span>hit.normal).max(<span class="number">0.0</span>);
+                    color +=
+                        diffuse.component_mul(<span class="kw-2">&amp;</span>light.color) * light_intensity * light_reflection;
+                }
+            }
+
+            color
+        } <span class="kw">else </span>{
+            <span class="self">self</span>.background_color
+        }
     }
 
-    <span class="kw">pub fn </span>render(<span class="kw-2">&amp;</span><span class="self">self</span>, (x, y): (usize, usize), (width, height): (usize, usize)) -&gt; Color {
-        <span class="kw">let </span>ray = <span class="self">self</span>.scene.camera.ray((x, y), (width, height));
+    <span class="doccomment">/// Render a pixel at the given coordinates.
+    /// x and y are in the range 0..width and 0..height
+    /// where (0, 0) is the top left corner.
+    </span><span class="kw">pub fn </span>render(<span class="kw-2">&amp;</span><span class="self">self</span>, (x, y): (usize, usize), (width, height): (usize, usize)) -&gt; Color {
+        <span class="kw">let </span>x = ((x <span class="kw">as </span>f32 / width <span class="kw">as </span>f32) * <span class="number">2.0 </span>- <span class="number">1.0</span>) * (width <span class="kw">as </span>f32 / height <span class="kw">as </span>f32);
+        <span class="kw">let </span>y = (y <span class="kw">as </span>f32 / height <span class="kw">as </span>f32) * <span class="number">2.0 </span>- <span class="number">1.0</span>;
+
+        <span class="kw">let </span>ray = <span class="self">self</span>.scene.camera.ray(x, y);
         <span class="kw">let </span>hit = <span class="self">self</span>.raycast(ray);
         <span class="self">self</span>.shade(hit)
     }

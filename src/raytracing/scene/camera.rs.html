@@ -60,15 +60,7 @@
 <a href="#60" id="60">60</a>
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
-<a href="#63" id="63">63</a>
-<a href="#64" id="64">64</a>
-<a href="#65" id="65">65</a>
-<a href="#66" id="66">66</a>
-<a href="#67" id="67">67</a>
-<a href="#68" id="68">68</a>
-<a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>nalgebra::{Point3, Rotation3, Unit, Vector3};
+</pre></div><pre class="rust"><code><span class="kw">use </span>nalgebra::{Point3, Rotation3, Vector3};
 <span class="kw">use </span>serde::Deserialize;
 
 <span class="kw">use </span><span class="kw">crate</span>::raytracer::Ray;
@@ -83,27 +75,19 @@
 
 <span class="kw">impl </span>Camera {
     <span class="doccomment">/// Returns a ray from the given pixel coordinates.
-    /// (0, 0) is the top left corner of the image.
-    /// (width, height) is the bottom right corner of the image.
-    </span><span class="kw">pub fn </span>ray(<span class="kw-2">&amp;</span><span class="self">self</span>, (x, y): (usize, usize), (width, height): (usize, usize)) -&gt; Ray {
-        <span class="kw">let </span>origin = <span class="self">self</span>.position;
+    /// x and y are in the range -1..1 and represent
+    /// the relative position of the pixel in the image.
+    /// (0, 0) is the center of the image.
+    </span><span class="kw">pub fn </span>ray(<span class="kw-2">&amp;</span><span class="self">self</span>, x: f32, y: f32) -&gt; Ray {
+        <span class="comment">// direction in coordinate system of camera
+        </span><span class="kw">let </span>direction = Vector3::new(x, -y, -<span class="number">1.0 </span>/ (<span class="self">self</span>.fov / <span class="number">2.0</span>).tan());
 
-        <span class="kw">let </span>x = (x <span class="kw">as </span>f32 - (width <span class="kw">as </span>f32 / <span class="number">2.0</span>)) / (width <span class="kw">as </span>f32 / <span class="number">2.0</span>)
-            * (width <span class="kw">as </span>f32 / height <span class="kw">as </span>f32);
-        <span class="kw">let </span>y = (y <span class="kw">as </span>f32 - (height <span class="kw">as </span>f32 / <span class="number">2.0</span>)) / (height <span class="kw">as </span>f32 / <span class="number">2.0</span>);
-
-        <span class="comment">// x and y are in the range [-1, 1]
-        // x = -1 is left, x = 1 is right
-        // y = -1 is top, y = 1 is bottom
-        // we need to scale x and y to the field of view
-
-        </span><span class="kw">let </span>center = (<span class="self">self</span>.look_at - <span class="self">self</span>.position).normalize();
-        <span class="kw">let </span>direction = Rotation3::from_axis_angle(<span class="kw-2">&amp;</span>Unit::new_normalize(<span class="self">self</span>.up.cross(<span class="kw-2">&amp;</span>center)), y)
-            * Rotation3::from_axis_angle(<span class="kw-2">&amp;</span>Unit::new_normalize(<span class="self">self</span>.up), -x)
-            * center;
+        <span class="comment">// rotate direction to world coordinate system
+        </span><span class="kw">let </span>rotation = Rotation3::look_at_rh(<span class="kw-2">&amp;</span>(<span class="self">self</span>.look_at - <span class="self">self</span>.position), <span class="kw-2">&amp;</span><span class="self">self</span>.up);
+        <span class="kw">let </span>direction = rotation.inverse_transform_vector(<span class="kw-2">&amp;</span>direction);
 
         Ray {
-            origin,
+            origin: <span class="self">self</span>.position,
             direction: direction.normalize(),
         }
     }
@@ -134,7 +118,7 @@
             position: yaml_camera.position,
             look_at: yaml_camera.look_at,
             up: yaml_camera.up_vec,
-            fov: yaml_camera.field_of_view,
+            fov: yaml_camera.field_of_view.to_radians(),
         })
     }
 }

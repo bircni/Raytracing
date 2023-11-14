@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["RENDER_SIZE"],"mod":["preview"],"struct":["App"]};
+window.SIDEBAR_ITEMS = {"mod":["preview","properties","render"],"struct":["App"]};

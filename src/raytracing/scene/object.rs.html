@@ -180,6 +180,16 @@
 <a href="#180" id="180">180</a>
 <a href="#181" id="181">181</a>
 <a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>log::warn;
 <span class="kw">use </span>nalgebra::{Point3, Similarity3, Vector3};
@@ -307,22 +317,37 @@
     <span class="kw">let </span><span class="kw-2">mut </span>triangles = Vec::new();
 
     <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..poly.<span class="number">0</span>.len() - <span class="number">1 </span>{
+        <span class="kw">let </span>a = Point3::from(obj.data.position[poly.<span class="number">0</span>[<span class="number">0</span>].<span class="number">0</span>]);
+        <span class="kw">let </span>b = Point3::from(obj.data.position[poly.<span class="number">0</span>[i].<span class="number">0</span>]);
+        <span class="kw">let </span>c = Point3::from(obj.data.position[poly.<span class="number">0</span>[i + <span class="number">1</span>].<span class="number">0</span>]);
+
+        <span class="kw">let </span>computed_normal = (b - a).cross(<span class="kw-2">&amp;</span>(c - a)).normalize();
+
         triangles.push(Triangle {
-            a: Point3::from(obj.data.position[poly.<span class="number">0</span>[<span class="number">0</span>].<span class="number">0</span>]),
-            b: Point3::from(obj.data.position[poly.<span class="number">0</span>[i].<span class="number">0</span>]),
-            c: Point3::from(obj.data.position[poly.<span class="number">0</span>[i + <span class="number">1</span>].<span class="number">0</span>]),
+            a,
+            b,
+            c,
             a_normal: poly.<span class="number">0</span>[<span class="number">0</span>]
                 .<span class="number">2
                 </span>.map(|i| Vector3::from(obj.data.normal[i]))
-                .unwrap_or(Vector3::zeros()),
+                .unwrap_or_else(|| {
+                    <span class="macro">warn!</span>(<span class="string">&quot;No normal for vertex: {:?}&quot;</span>, poly.<span class="number">0</span>[<span class="number">0</span>]);
+                    computed_normal
+                }),
             b_normal: poly.<span class="number">0</span>[i]
                 .<span class="number">2
                 </span>.map(|i| Vector3::from(obj.data.normal[i]))
-                .unwrap_or(Vector3::zeros()),
+                .unwrap_or_else(|| {
+                    <span class="macro">warn!</span>(<span class="string">&quot;No normal for vertex: {:?}&quot;</span>, poly.<span class="number">0</span>[i]);
+                    computed_normal
+                }),
             c_normal: poly.<span class="number">0</span>[i + <span class="number">1</span>]
                 .<span class="number">2
                 </span>.map(|i| Vector3::from(obj.data.normal[i]))
-                .unwrap_or(Vector3::zeros()),
+                .unwrap_or_else(|| {
+                    <span class="macro">warn!</span>(<span class="string">&quot;No normal for vertex: {:?}&quot;</span>, poly.<span class="number">0</span>[i + <span class="number">1</span>]);
+                    computed_normal
+                }),
             material_index,
         });
     }
@@ -331,7 +356,7 @@
 }
 
 <span class="kw">impl </span>Object {
-    <span class="kw">pub fn </span>intersect(<span class="kw-2">&amp;</span><span class="self">self</span>, ray: Ray) -&gt; <span class="prelude-ty">Option</span>&lt;Hit&gt; {
+    <span class="kw">pub fn </span>intersect(<span class="kw-2">&amp;</span><span class="self">self</span>, ray: Ray, delta: f32) -&gt; <span class="prelude-ty">Option</span>&lt;Hit&gt; {
         <span class="comment">// Transform ray into object space
         </span><span class="kw">let </span>ray = Ray {
             origin: <span class="self">self</span>.transform.inverse_transform_point(<span class="kw-2">&amp;</span>ray.origin),
@@ -340,26 +365,21 @@
 
         <span class="self">self</span>.triangles
             .iter()
-            .filter_map(|t| t.intersect(ray).map(|h| (t, h)))
+            .filter_map(|t| t.intersect(ray, delta).map(|h| (t, h)))
             .map(|(t, (u, v, w))| {
-                <span class="kw">let </span>material = t.material_index.map(|i| <span class="kw-2">&amp;</span><span class="self">self</span>.materials[i]);
-                <span class="kw">let </span>normal = ((t.a_normal * u) + (t.b_normal * v) + (t.c_normal * w)).normalize();
-                <span class="kw">let </span>point = Point3::from((t.a.coords * u) + (t.b.coords * v) + (t.c.coords * w));
-                Hit {
-                    point,
-                    normal,
-                    material,
+                <span class="comment">// u, v, w are barycentric coordinates of the hit point on the triangle
+                // interpolate hit point and normal
+                </span><span class="kw">let </span>point = Point3::from((t.a * u).coords + (t.b * v).coords + (t.c * w).coords);
+                <span class="kw">let </span>normal = (t.a_normal * u) + (t.b_normal * v) + (t.c_normal * w);
+
+                <span class="comment">// Transform hit point and normal back into world space
+                </span>Hit {
+                    point: <span class="self">self</span>.transform.transform_point(<span class="kw-2">&amp;</span>point),
+                    normal: <span class="self">self</span>.transform.transform_vector(<span class="kw-2">&amp;</span>normal),
+                    material: t.material_index.map(|i| <span class="kw-2">&amp;</span><span class="self">self</span>.materials[i]),
                 }
             })
             .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
-            .map(|h| {
-                <span class="comment">// Transform hit back into world space
-                </span>Hit {
-                    point: <span class="self">self</span>.transform.transform_point(<span class="kw-2">&amp;</span>h.point),
-                    normal: <span class="self">self</span>.transform.transform_vector(<span class="kw-2">&amp;</span>h.normal),
-                    ..h
-                }
-            })
     }
 }
 </code></pre></div></section></main></body></html>
