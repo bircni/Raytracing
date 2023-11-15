@@ -42,7 +42,7 @@ You can find the generated rust documentation [here](http://bircni.me/Raytracing
 
 ## License
 
-Distributed under the GNU General Public License v3.0. See LICENSE for more information.
+Distributed under the GNU General Public License v3.0. See `LICENSE` for more information.
 
 ## Contributing
 
