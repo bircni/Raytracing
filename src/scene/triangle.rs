@@ -73,16 +73,16 @@ impl Triangle {
     }
 }
 
-impl Bounded for Triangle {
-    fn aabb(&self) -> bvh::aabb::AABB {
-        bvh::aabb::AABB::empty()
-            .grow(&Into::<[f32; 3]>::into(self.a.coords).into())
-            .grow(&Into::<[f32; 3]>::into(self.b.coords).into())
-            .grow(&Into::<[f32; 3]>::into(self.c.coords).into())
+impl Bounded<f32, 3> for Triangle {
+    fn aabb(&self) -> bvh::aabb::Aabb<f32, 3> {
+        bvh::aabb::Aabb::empty()
+            .grow(&self.a)
+            .grow(&self.b)
+            .grow(&self.c)
     }
 }
 
-impl BHShape for Triangle {
+impl BHShape<f32, 3> for Triangle {
     fn set_bh_node_index(&mut self, index: usize) {
         self.bvh_index = index;
     }

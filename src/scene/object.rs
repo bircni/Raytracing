@@ -1,7 +1,7 @@
 use anyhow::Context;
-use bvh::bvh::BVH;
+use bvh::bvh::Bvh;
 use log::warn;
-use nalgebra::{Point3, Similarity3, Vector3};
+use nalgebra::{Point3, Similarity3, Translation3, UnitQuaternion, Vector3};
 use obj::{Material, SimplePolygon};
 use ordered_float::OrderedFloat;
 
@@ -14,7 +14,7 @@ pub struct Object {
     pub triangles: Vec<Triangle>,
     pub materials: Vec<Material>,
     pub transform: Similarity3<f32>,
-    bvh: BVH,
+    bvh: Bvh<f32, 3>,
 }
 
 impl<'de> serde::Deserialize<'de> for Object {
@@ -40,8 +40,8 @@ impl<'de> serde::Deserialize<'de> for Object {
         let yaml_object = yaml::Object::deserialize(deserializer)?;
 
         let transform = Similarity3::from_parts(
-            nalgebra::Translation3::from(yaml_object.position.coords),
-            nalgebra::UnitQuaternion::from_euler_angles(
+            Translation3::from(yaml_object.position.coords),
+            UnitQuaternion::from_euler_angles(
                 yaml_object.rotation.x * std::f32::consts::PI * 2.0 / 360.0,
                 yaml_object.rotation.y * std::f32::consts::PI * 2.0 / 360.0,
                 yaml_object.rotation.z * std::f32::consts::PI * 2.0 / 360.0,
@@ -96,7 +96,7 @@ impl Object {
                     .and_then(|m| {
                         materials
                             .iter()
-                            .position(|mat: &Material| mat.name == m.name)
+                            .position(|mat| mat.name == m.name)
                             .or_else(|| {
                                 warn!("Material not found: {}", m.name);
                                 None
@@ -111,7 +111,7 @@ impl Object {
             })
             .collect::<Vec<_>>();
 
-        let bvh = BVH::build(triangles.as_mut_slice());
+        let bvh = Bvh::build(triangles.as_mut_slice());
 
         Ok(Object {
             triangles,
@@ -130,10 +130,7 @@ impl Object {
 
         self.bvh
             .traverse(
-                &bvh::ray::Ray::new(
-                    Into::<[f32; 3]>::into(ray.origin.coords).into(),
-                    Into::<[f32; 3]>::into(ray.direction).into(),
-                ),
+                &bvh::ray::Ray::new(ray.origin, ray.direction),
                 self.triangles.as_slice(),
             )
             .into_iter()
