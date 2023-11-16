@@ -19,8 +19,6 @@ impl super::App {
             TextureOptions::default(),
         );
 
-        println!("camera: {:?}", self.scene.camera);
-
         let mut texture = self.render_texture.clone();
         let raytracer = Raytracer::new(self.scene.clone(), Color::new(0.1, 0.1, 0.1), 1e-6);
 
@@ -31,6 +29,8 @@ impl super::App {
         rendering_progress.store(0, Ordering::Relaxed);
 
         self.rendering_thread = Some(std::thread::spawn(move || {
+            let start = std::time::Instant::now();
+
             for y_block in 0..render_size[1] / block_size[1] {
                 for x_block in 0..render_size[0] / block_size[0] {
                     info!(
@@ -85,7 +85,7 @@ impl super::App {
 
             rendering_progress.store(u16::MAX, Ordering::Relaxed);
 
-            info!("rendering finished");
+            info!("rendering finished: {:?}", start.elapsed());
         }));
     }
 }

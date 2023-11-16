@@ -1,3 +1,4 @@
+use bvh::{aabb::Bounded, bounding_hierarchy::BHShape};
 use nalgebra::{Point3, Vector3};
 
 use crate::raytracer::Ray;
@@ -11,9 +12,31 @@ pub struct Triangle {
     pub b_normal: Vector3<f32>,
     pub c_normal: Vector3<f32>,
     pub material_index: Option<usize>,
+    bvh_index: usize,
 }
 
 impl Triangle {
+    pub fn new(
+        a: Point3<f32>,
+        b: Point3<f32>,
+        c: Point3<f32>,
+        a_normal: Vector3<f32>,
+        b_normal: Vector3<f32>,
+        c_normal: Vector3<f32>,
+        material_index: Option<usize>,
+    ) -> Self {
+        Self {
+            a,
+            b,
+            c,
+            a_normal,
+            b_normal,
+            c_normal,
+            material_index,
+            bvh_index: 0,
+        }
+    }
+
     /// return barycentric coordinates if ray intersects triangle
     pub fn intersect(&self, ray: Ray, delta: f32) -> Option<(f32, f32, f32)> {
         let ab = self.b - self.a;
@@ -47,5 +70,24 @@ impl Triangle {
         let area = ab_ap_dot + bc_bp_dot + ca_cp_dot;
 
         Some((bc_bp_dot / area, ca_cp_dot / area, ab_ap_dot / area))
+    }
+}
+
+impl Bounded for Triangle {
+    fn aabb(&self) -> bvh::aabb::AABB {
+        bvh::aabb::AABB::empty()
+            .grow(&Into::<[f32; 3]>::into(self.a.coords).into())
+            .grow(&Into::<[f32; 3]>::into(self.b.coords).into())
+            .grow(&Into::<[f32; 3]>::into(self.c.coords).into())
+    }
+}
+
+impl BHShape for Triangle {
+    fn set_bh_node_index(&mut self, index: usize) {
+        self.bvh_index = index;
+    }
+
+    fn bh_node_index(&self) -> usize {
+        self.bvh_index
     }
 }

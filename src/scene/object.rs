@@ -1,4 +1,5 @@
 use anyhow::Context;
+use bvh::bvh::BVH;
 use log::warn;
 use nalgebra::{Point3, Similarity3, Vector3};
 use obj::{Material, SimplePolygon};
@@ -8,11 +9,12 @@ use crate::raytracer::{Hit, Ray};
 
 use super::triangle::Triangle;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Object {
     pub triangles: Vec<Triangle>,
     pub materials: Vec<Material>,
     pub transform: Similarity3<f32>,
+    bvh: BVH,
 }
 
 impl<'de> serde::Deserialize<'de> for Object {
@@ -76,7 +78,7 @@ impl Object {
             .map(|m| m.as_ref().clone())
             .collect::<Vec<_>>();
 
-        let triangles = obj
+        let mut triangles = obj
             .data
             .objects
             .iter()
@@ -109,11 +111,47 @@ impl Object {
             })
             .collect::<Vec<_>>();
 
+        let bvh = BVH::build(triangles.as_mut_slice());
+
         Ok(Object {
             triangles,
             materials,
             transform,
+            bvh,
         })
+    }
+
+    pub fn intersect(&self, ray: Ray, delta: f32) -> Option<Hit> {
+        // Transform ray into object space
+        let ray = Ray {
+            origin: self.transform.inverse_transform_point(&ray.origin),
+            direction: self.transform.inverse_transform_vector(&ray.direction),
+        };
+
+        self.bvh
+            .traverse(
+                &bvh::ray::Ray::new(
+                    Into::<[f32; 3]>::into(ray.origin.coords).into(),
+                    Into::<[f32; 3]>::into(ray.direction).into(),
+                ),
+                self.triangles.as_slice(),
+            )
+            .into_iter()
+            .filter_map(|t| t.intersect(ray, delta).map(|h| (t, h)))
+            .map(|(t, (u, v, w))| {
+                // u, v, w are barycentric coordinates of the hit point on the triangle
+                // interpolate hit point and normal
+                let point = Point3::from((t.a * u).coords + (t.b * v).coords + (t.c * w).coords);
+                let normal = (t.a_normal * u) + (t.b_normal * v) + (t.c_normal * w);
+
+                // Transform hit point and normal back into world space
+                Hit {
+                    point: self.transform.transform_point(&point),
+                    normal: self.transform.transform_vector(&normal),
+                    material: t.material_index.map(|i| &self.materials[i]),
+                }
+            })
+            .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
     }
 }
 
@@ -131,25 +169,25 @@ fn triangulate(
 
         let computed_normal = (b - a).cross(&(c - a)).normalize();
 
-        triangles.push(Triangle {
+        triangles.push(Triangle::new(
             a,
             b,
             c,
-            a_normal: poly.0[0]
+            poly.0[0]
                 .2
                 .map(|i| Vector3::from(obj.data.normal[i]))
                 .unwrap_or_else(|| {
                     warn!("No normal for vertex: {:?}", poly.0[0]);
                     computed_normal
                 }),
-            b_normal: poly.0[i]
+            poly.0[i]
                 .2
                 .map(|i| Vector3::from(obj.data.normal[i]))
                 .unwrap_or_else(|| {
                     warn!("No normal for vertex: {:?}", poly.0[i]);
                     computed_normal
                 }),
-            c_normal: poly.0[i + 1]
+            poly.0[i + 1]
                 .2
                 .map(|i| Vector3::from(obj.data.normal[i]))
                 .unwrap_or_else(|| {
@@ -157,36 +195,8 @@ fn triangulate(
                     computed_normal
                 }),
             material_index,
-        });
+        ));
     }
 
     triangles
-}
-
-impl Object {
-    pub fn intersect(&self, ray: Ray, delta: f32) -> Option<Hit> {
-        // Transform ray into object space
-        let ray = Ray {
-            origin: self.transform.inverse_transform_point(&ray.origin),
-            direction: self.transform.inverse_transform_vector(&ray.direction),
-        };
-
-        self.triangles
-            .iter()
-            .filter_map(|t| t.intersect(ray, delta).map(|h| (t, h)))
-            .map(|(t, (u, v, w))| {
-                // u, v, w are barycentric coordinates of the hit point on the triangle
-                // interpolate hit point and normal
-                let point = Point3::from((t.a * u).coords + (t.b * v).coords + (t.c * w).coords);
-                let normal = (t.a_normal * u) + (t.b_normal * v) + (t.c_normal * w);
-
-                // Transform hit point and normal back into world space
-                Hit {
-                    point: self.transform.transform_point(&point),
-                    normal: self.transform.transform_vector(&normal),
-                    material: t.material_index.map(|i| &self.materials[i]),
-                }
-            })
-            .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
-    }
 }
