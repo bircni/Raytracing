@@ -116,7 +116,7 @@ impl super::App {
                         ui.add(Slider::new(&mut light.intensity, 0.0..=100.0).clamp_to_range(true));
 
                         ui.label("Color:");
-                        color_picker::color_edit_button_rgb(ui, &mut light.color.as_mut());
+                        color_picker::color_edit_button_rgb(ui, light.color.as_mut());
                     }
                 });
 

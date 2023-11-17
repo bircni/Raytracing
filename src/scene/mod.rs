@@ -30,7 +30,7 @@ impl<'de> Deserialize<'de> for Scene {
             .ok_or(serde::de::Error::missing_field("models"))?
             .as_sequence()
             .ok_or(serde::de::Error::custom("models is not a sequence"))?
-            .into_iter()
+            .iter()
             .map(|s| serde_yaml::from_value::<Object>(s.clone()))
             .collect::<Result<Vec<_>, _>>()
             .map_err(serde::de::Error::custom)?;
@@ -40,7 +40,7 @@ impl<'de> Deserialize<'de> for Scene {
             .ok_or(serde::de::Error::missing_field("point_lights"))?
             .as_sequence()
             .ok_or(serde::de::Error::custom("point_lights is not a sequence"))?
-            .into_iter()
+            .iter()
             .map(|s| serde_yaml::from_value::<Light>(s.clone()))
             .collect::<Result<Vec<_>, _>>()
             .map_err(serde::de::Error::custom)?;
@@ -76,7 +76,7 @@ mod yaml {
         use serde::Deserialize;
 
         #[derive(serde::Deserialize)]
-        pub struct XYZ {
+        pub struct Xyz {
             x: f32,
             y: f32,
             z: f32,
@@ -86,7 +86,7 @@ mod yaml {
         where
             D: serde::Deserializer<'de>,
         {
-            let point = XYZ::deserialize(deserializer)?;
+            let point = Xyz::deserialize(deserializer)?;
             Ok(Point3::new(point.x, point.y, point.z))
         }
     }
@@ -96,7 +96,7 @@ mod yaml {
         use serde::Deserialize;
 
         #[derive(serde::Deserialize)]
-        pub struct XYZ {
+        pub struct Xyz {
             x: f32,
             y: f32,
             z: f32,
@@ -106,7 +106,7 @@ mod yaml {
         where
             D: serde::Deserializer<'de>,
         {
-            let point = XYZ::deserialize(deserializer)?;
+            let point = Xyz::deserialize(deserializer)?;
             Ok(Vector3::new(point.x, point.y, point.z))
         }
     }
@@ -117,7 +117,7 @@ mod yaml {
         use crate::Color;
 
         #[derive(serde::Deserialize)]
-        pub struct RGB {
+        pub struct Rgb {
             r: f32,
             g: f32,
             b: f32,
@@ -127,7 +127,7 @@ mod yaml {
         where
             D: serde::Deserializer<'de>,
         {
-            let color = RGB::deserialize(deserializer)?;
+            let color = Rgb::deserialize(deserializer)?;
             Ok(Color::new(color.r, color.g, color.b))
         }
     }
