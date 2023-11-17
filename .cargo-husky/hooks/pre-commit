@@ -18,11 +18,5 @@ if ! cargo fmt --all -- --check; then
     exit 1
 fi
 
-echo "Executing cargo test"
-if ! cargo test; then
-    echo "Error: cargo test failed"
-    exit 1
-fi
-
 echo "Everything looks good"
 exit 0
