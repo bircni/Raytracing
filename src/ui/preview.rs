@@ -49,8 +49,7 @@ impl Preview {
             .iter()
             .flat_map(|o| o.triangles.iter().map(|t| (t, o.transform)))
             .flat_map(|(t, m)| [t.a, t.b, t.c].map(move |p| m.transform_point(&p)))
-            .map(|p| [p.x, p.y, p.z])
-            .flatten()
+            .flat_map(|p| [p.x, p.y, p.z])
             .collect();
         debug!("Loaded {} vertices", vertices.len());
         let vertex_buffer = gl_result!(gl.create_buffer(), "Failed to create vertex buffer")?;
@@ -81,8 +80,7 @@ impl Preview {
                 .flat_map(|(t, m)| {
                     [t.a_normal, t.b_normal, t.c_normal].map(move |n| m.transform_vector(&n))
                 })
-                .map(|n| [n.x, n.y, n.z])
-                .flatten()
+                .flat_map(|n| [n.x, n.y, n.z])
                 .collect();
             debug!("Loaded {} normals", normals.len());
             let normal_buffer = gl_result!(gl.create_buffer(), "Failed to create normal buffer")?;
