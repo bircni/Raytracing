@@ -1,46 +1,49 @@
 [![Linux](https://github.com/bircni/Raytracing/actions/workflows/rust-linux.yml/badge.svg)](https://github.com/bircni/Raytracing/actions/workflows/rust-linux.yml)
 [![Windows](https://github.com/bircni/Raytracing/actions/workflows/rust-windows.yml/badge.svg)](https://github.com/bircni/Raytracing/actions/workflows/rust-windows.yml)
+<!--
 [![MacOS](https://github.com/bircni/Raytracing/actions/workflows/rust-macos.yml/badge.svg)](https://github.com/bircni/Raytracing/actions/workflows/rust-macos.yml)
+-->
 
 # Raytracing
 
 This is the main repository for the raytracing project.
 
-## `log`
+<div align="center">
+<img src="./docs/assets/window-screenshot.png" alt="Screenshot" width="800"/>
+</div>
 
-<https://crates.io/crates/log>
+## Usage
 
-> Usage:  
-> The basic use of the log crate is through the five logging macros: `error!`, `warn!`, `info!`, `debug!` and `trace!` where `error!` represents the highest-priority log messages and trace! the lowest. The log messages are filtered by configuring the log level to exclude messages with a lower priority. Each of these macros accept format strings similarly to println!.
+Feel free to download the latest release from [releases](https://github.com/bircni/Raytracing/releases) or build it yourself.
 
-## `anyhow`
+### Build
 
-<https://crates.io/crates/anyhow>
+**Requirements**:
 
-> Usage:  
-> This library provides anyhow::Error, a trait object based error type for easy idiomatic error handling in Rust applications.
+- Rust <https://www.rust-lang.org/tools/install>
+- OpenGL > 4.3
 
-Example:
+Build with:
 
-```rust
-use anyhow::Context;
-
-fn test() -> anyhow::Result<()> {
-    // watch out for the question mark operator
-
-    let file = std::fs::File::create("test.txt").context("Failed to create test file")?;
-
-    file.set_len(1234).context("Failed to set file length")?;
-
-    Ok(())
-}
+```bash
+cargo build --release
 ```
 
-If this fails the result is a fancy error message:
+and run with:
 
+```bash
+cargo run --release
 ```
-Error: Failed to create test file
 
-Caused by:
-    File exists (os error 17)
-```
+## Documentation
+
+You can find the generated rust documentation [here](http://bircni.me/Raytracing) and the wiki
+[here](https://github.com/bircni/Raytracing/wiki).
+
+## License
+
+Distributed under the GNU General Public License v3.0. See `LICENSE` for more information.
+
+## Contributing
+
+To contribute to this project, please read the [contributing guidelines](./CONTRIBUTING.md).
