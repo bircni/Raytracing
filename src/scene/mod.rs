@@ -8,9 +8,9 @@ mod camera;
 pub mod light;
 pub mod object;
 pub mod settings;
-mod triangle;
+pub mod triangle;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Scene {
     pub objects: Vec<Object>,
     pub lights: Vec<Light>,
@@ -76,7 +76,7 @@ mod yaml {
         use serde::Deserialize;
 
         #[derive(serde::Deserialize)]
-        pub struct Xyz {
+        pub struct PointXYZ {
             x: f32,
             y: f32,
             z: f32,
@@ -86,7 +86,7 @@ mod yaml {
         where
             D: serde::Deserializer<'de>,
         {
-            let point = Xyz::deserialize(deserializer)?;
+            let point = PointXYZ::deserialize(deserializer)?;
             Ok(Point3::new(point.x, point.y, point.z))
         }
     }
@@ -96,7 +96,7 @@ mod yaml {
         use serde::Deserialize;
 
         #[derive(serde::Deserialize)]
-        pub struct Xyz {
+        pub struct VectorXYZ {
             x: f32,
             y: f32,
             z: f32,
@@ -106,7 +106,7 @@ mod yaml {
         where
             D: serde::Deserializer<'de>,
         {
-            let point = Xyz::deserialize(deserializer)?;
+            let point = VectorXYZ::deserialize(deserializer)?;
             Ok(Vector3::new(point.x, point.y, point.z))
         }
     }
@@ -117,7 +117,7 @@ mod yaml {
         use crate::Color;
 
         #[derive(serde::Deserialize)]
-        pub struct Rgb {
+        pub struct ColorRGB {
             r: f32,
             g: f32,
             b: f32,
@@ -127,7 +127,7 @@ mod yaml {
         where
             D: serde::Deserializer<'de>,
         {
-            let color = Rgb::deserialize(deserializer)?;
+            let color = ColorRGB::deserialize(deserializer)?;
             Ok(Color::new(color.r, color.g, color.b))
         }
     }
