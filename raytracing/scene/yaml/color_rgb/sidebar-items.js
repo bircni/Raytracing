@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["deserialize"],"struct":["RGB"]};
+window.SIDEBAR_ITEMS = {"fn":["deserialize"],"struct":["ColorRGB"]};
