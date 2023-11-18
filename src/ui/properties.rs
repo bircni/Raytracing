@@ -1,8 +1,5 @@
-use egui::{
-    color_picker, Button, Context, DragValue, FontFamily, FontId, RichText, SidePanel, Slider, Ui,
-};
+use egui::{color_picker, Button, Context, DragValue, FontFamily, RichText, SidePanel, Slider, Ui};
 use egui_file::FileDialog;
-use nalgebra::Point3;
 
 impl super::App {
     pub fn properties(&mut self, ctx: &Context, ui: &mut Ui) {
@@ -16,10 +13,7 @@ impl super::App {
                 //Camera Group
                 ui.group(|ui| {
                     ui.vertical_centered(|ui| {
-                        ui.label(RichText::new("Camera").font(FontId {
-                            size: (16.0),
-                            family: (FontFamily::Proportional),
-                        }));
+                        ui.label(RichText::new("Camera").size(16.0));
                     });
 
                     ui.separator();
@@ -80,18 +74,19 @@ impl super::App {
                 //Lighting Group
                 ui.group(|ui| {
                     ui.vertical_centered(|ui| {
-                        ui.label(RichText::new("Lights").font(FontId {
-                            size: (16.0),
-                            family: (FontFamily::Proportional),
-                        }));
+                        ui.label(
+                            RichText::new(format!("Lights ({})", self.scene.lights.len()))
+                                .size(16.0),
+                        );
                     });
 
                     for (n, light) in self.scene.lights.iter_mut().enumerate() {
                         ui.separator();
-                        ui.label(RichText::new(format!("Light {n}")).font(FontId {
-                            size: (14.0),
-                            family: (FontFamily::Monospace),
-                        }));
+                        ui.label(
+                            RichText::new(format!("Light {n}"))
+                                .size(14.0)
+                                .family(FontFamily::Monospace),
+                        );
 
                         ui.label("Position:");
                         ui.horizontal(|ui| {
@@ -122,13 +117,100 @@ impl super::App {
 
                 ui.add_space(10.0);
 
+                //Objects Group
+                ui.group(|ui| {
+                    ui.vertical_centered(|ui| {
+                        ui.label(
+                            RichText::new(format!("Objects ({})", self.scene.objects.len()))
+                                .size(16.0),
+                        );
+                    });
+
+                    for o in self.scene.objects.iter_mut() {
+                        ui.separator();
+
+                        ui.label(
+                            RichText::new(format!("Object with {} triangles", o.triangles.len()))
+                                .size(14.0)
+                                .family(FontFamily::Monospace),
+                        );
+
+                        ui.label("Position");
+                        ui.horizontal(|ui| {
+                            ui.add(
+                                DragValue::new(&mut o.transform.isometry.translation.x)
+                                    .speed(0.1)
+                                    .prefix("x: "),
+                            );
+                            ui.add(
+                                DragValue::new(&mut o.transform.isometry.translation.y)
+                                    .speed(0.1)
+                                    .prefix("y: "),
+                            );
+                            ui.add(
+                                DragValue::new(&mut o.transform.isometry.translation.z)
+                                    .speed(0.1)
+                                    .prefix("z: "),
+                            );
+                        });
+
+                        ui.label("Rotation");
+                        ui.horizontal(|ui| {
+                            let (mut x, mut y, mut z) =
+                                o.transform.isometry.rotation.euler_angles();
+
+                            ui.add(
+                                DragValue::new(&mut x)
+                                    .speed(0.01)
+                                    .clamp_range(
+                                        -std::f32::consts::FRAC_PI_2..=std::f32::consts::FRAC_PI_2,
+                                    )
+                                    .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
+                                    .prefix("x: "),
+                            )
+                            .changed()
+                            .then(|| {
+                                o.transform.isometry.rotation =
+                                    nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
+                            });
+                            ui.add(
+                                DragValue::new(&mut y)
+                                    .speed(0.01)
+                                    .clamp_range(
+                                        -std::f32::consts::FRAC_PI_2..=std::f32::consts::FRAC_PI_2,
+                                    )
+                                    .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
+                                    .prefix("y: "),
+                            )
+                            .changed()
+                            .then(|| {
+                                o.transform.isometry.rotation =
+                                    nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
+                            });
+                            ui.add(
+                                DragValue::new(&mut z)
+                                    .speed(0.01)
+                                    .clamp_range(
+                                        -std::f32::consts::FRAC_PI_2..=std::f32::consts::FRAC_PI_2,
+                                    )
+                                    .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
+                                    .prefix("z: "),
+                            )
+                            .changed()
+                            .then(|| {
+                                o.transform.isometry.rotation =
+                                    nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
+                            });
+                        });
+                    }
+                });
+
+                ui.add_space(10.0);
+
                 //File Group
                 ui.group(|ui| {
                     ui.vertical_centered(|ui| {
-                        ui.label(RichText::new("File").font(FontId {
-                            size: (16.0),
-                            family: (FontFamily::Proportional),
-                        }));
+                        ui.label(RichText::new("File").size(16.0));
                     });
                     ui.separator();
                     if (ui.button("Open")).clicked() {
@@ -152,42 +234,13 @@ impl super::App {
 
                 ui.add_space(10.0);
 
-                //Objects Group
-                ui.group(|ui| {
-                    ui.vertical_centered(|ui| {
-                        ui.label(
-                            RichText::new(format!("Objects [{}]", self.scene.objects.len())).font(
-                                FontId {
-                                    size: (16.0),
-                                    family: (FontFamily::Proportional),
-                                },
-                            ),
-                        );
-                    });
-
-                    ui.separator();
-
-                    for o in self.scene.objects.iter_mut() {
-                        ui.label(format!(
-                            "+ Object at {} with {} triangles",
-                            o.transform.transform_point(&Point3::origin()),
-                            o.triangles.len()
-                        ));
-                    }
-                });
-
-                ui.add_space(10.0);
-
                 // Render Button
                 ui.vertical_centered(|ui| {
                     ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
                         ui.add_sized(
                             // TODO: wegmachen
                             [120., 40.],
-                            Button::new(RichText::new("Render").font(FontId {
-                                size: (16.0),
-                                family: (FontFamily::Proportional),
-                            })),
+                            Button::new(RichText::new("Render").size(16.0)),
                         )
                         .clicked()
                         .then(|| {

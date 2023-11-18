@@ -28,7 +28,7 @@ pub struct App {
 
 impl App {
     pub fn new(cc: &CreationContext, scene: Scene) -> anyhow::Result<Self> {
-        let preview = Preview::from_scene(cc.gl.clone().unwrap(), &scene)?;
+        let preview = Preview::new(cc.gl.as_ref().unwrap().clone())?;
 
         let render_size = [1920, 1080];
 
@@ -112,7 +112,10 @@ impl eframe::App for App {
                     Frame::canvas(ui.style()).outer_margin(10.0).show(ui, |ui| {
                         let (response, painter) =
                             ui.allocate_painter(ui.available_size(), Sense::drag());
-                        self.preview.paint(response.rect, &painter, &self.scene);
+
+                        self.preview
+                            .paint(response.rect, &painter, &self.scene)
+                            .expect("Painting failed");
                     });
                 }
 

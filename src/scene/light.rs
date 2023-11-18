@@ -41,5 +41,7 @@ impl<'de> Deserialize<'de> for Light {
     }
 }
 
+#[allow(unsafe_code)]
 unsafe impl Zeroable for Light {}
+#[allow(unsafe_code)]
 unsafe impl Pod for Light {}

@@ -21,7 +21,6 @@ nalgebra = { version = "0.32.3", features = [
 ] }
 obj = "0.10.2"
 ordered-float = "4.1.1"
-simplelog = "0.12.1"
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9.27"
 eframe = "0.23.0"
@@ -32,9 +31,12 @@ rayon = "1.8.0"
 egui_file = "0.11.1"
 # mal schauen wann die version auch auf crates.io ist
 bvh = { git = "https://github.com/svenstaro/bvh.git" }
+simplelog = "0.12.1"
 
-#"cargo test"
-[dev-dependencies.cargo-husky]
-version = "1.5.0"
-default-features = false
-features = ["user-hooks"]
+[dev-dependencies]
+cargo-husky = { version = "1.5.0", default-features = false, features = [
+    "user-hooks",
+] }
+
+[lints.rust]
+unsafe_code = "deny"

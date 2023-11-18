@@ -11,6 +11,16 @@ models:
       y: 0.0
       z: 0.0 # in degree
     scale: 1
+  - file_path: "./res/test.obj"
+    position:
+      x: 5.0
+      y: 0.0
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0 # in degree
+    scale: 1
 
 point_lights:
   - position:
