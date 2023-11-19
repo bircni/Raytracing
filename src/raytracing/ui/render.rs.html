@@ -95,7 +95,7 @@
 };
 
 <span class="kw">use </span>egui::{Color32, ColorImage, ImageData, TextureOptions};
-<span class="kw">use </span>log::info;
+<span class="kw">use </span>log::{debug, info};
 <span class="kw">use </span>rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 <span class="kw">use crate</span>::{raytracer::Raytracer, Color};
@@ -124,7 +124,7 @@
 
             <span class="kw">for </span>y_block <span class="kw">in </span><span class="number">0</span>..render_size[<span class="number">1</span>] / block_size[<span class="number">1</span>] {
                 <span class="kw">for </span>x_block <span class="kw">in </span><span class="number">0</span>..render_size[<span class="number">0</span>] / block_size[<span class="number">0</span>] {
-                    <span class="macro">info!</span>(
+                    <span class="macro">debug!</span>(
                         <span class="string">&quot;rendering block ({}, {}) of ({}, {}) ({:.2}%)&quot;</span>,
                         x_block,
                         y_block,

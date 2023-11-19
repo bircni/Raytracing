@@ -196,6 +196,9 @@
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>preview;
 <span class="kw">mod </span>properties;
 <span class="kw">mod </span>render;
@@ -226,7 +229,7 @@
 
 <span class="kw">impl </span>App {
     <span class="kw">pub fn </span>new(cc: <span class="kw-2">&amp;</span>CreationContext, scene: Scene) -&gt; anyhow::Result&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>preview = Preview::from_scene(cc.gl.clone().unwrap(), <span class="kw-2">&amp;</span>scene)<span class="question-mark">?</span>;
+        <span class="kw">let </span>preview = Preview::new(cc.gl.as_ref().unwrap().clone())<span class="question-mark">?</span>;
 
         <span class="kw">let </span>render_size = [<span class="number">1920</span>, <span class="number">1080</span>];
 
@@ -310,7 +313,10 @@
                     Frame::canvas(ui.style()).outer_margin(<span class="number">10.0</span>).show(ui, |ui| {
                         <span class="kw">let </span>(response, painter) =
                             ui.allocate_painter(ui.available_size(), Sense::drag());
-                        <span class="self">self</span>.preview.paint(response.rect, <span class="kw-2">&amp;</span>painter, <span class="kw-2">&amp;</span><span class="self">self</span>.scene);
+
+                        <span class="self">self</span>.preview
+                            .paint(response.rect, <span class="kw-2">&amp;</span>painter, <span class="kw-2">&amp;</span><span class="self">self</span>.scene)
+                            .expect(<span class="string">&quot;Painting failed&quot;</span>);
                     });
                 }
 

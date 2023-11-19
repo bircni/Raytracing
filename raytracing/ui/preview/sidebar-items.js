@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["compile_program"],"macro":["gl","gl_result"],"struct":["Preview"]};
+window.SIDEBAR_ITEMS = {"fn":["compile_program","gl_log"],"macro":["gl","gl_result"],"struct":["Preview"]};
