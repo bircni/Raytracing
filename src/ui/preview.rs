@@ -70,6 +70,7 @@ impl Preview {
         )?;
         gl!(gl.bind_buffer(glow::ARRAY_BUFFER, Some(transform_index_buffer)));
         gl!(gl.vertex_attrib_pointer_i32(3, 1, glow::UNSIGNED_INT, 0, 0));
+        gl!(gl.enable_vertex_attrib_array(3));
 
         let lights_ssbo = gl_result!(gl.create_buffer(), "Failed to create lights SSBO")?;
 
@@ -80,10 +81,6 @@ impl Preview {
 
         gl!(gl.enable(glow::DEBUG_OUTPUT));
         gl!(gl.debug_message_callback(gl_log));
-
-        if gl!(gl.get_error()) != glow::NO_ERROR {
-            return Err(anyhow::anyhow!("OpenGL error"));
-        }
 
         Ok(Self {
             gl,
