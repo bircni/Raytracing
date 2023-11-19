@@ -4,7 +4,7 @@ use std::{
 };
 
 use egui::{Color32, ColorImage, ImageData, TextureOptions};
-use log::info;
+use log::{debug, info};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{raytracer::Raytracer, Color};
@@ -33,7 +33,7 @@ impl super::App {
 
             for y_block in 0..render_size[1] / block_size[1] {
                 for x_block in 0..render_size[0] / block_size[0] {
-                    info!(
+                    debug!(
                         "rendering block ({}, {}) of ({}, {}) ({:.2}%)",
                         x_block,
                         y_block,

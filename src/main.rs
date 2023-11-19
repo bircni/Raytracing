@@ -13,7 +13,10 @@ type Color = Vector3<f32>;
 
 fn main() -> anyhow::Result<()> {
     simplelog::TermLogger::init(
+        #[cfg(debug_assertions)]
         LevelFilter::Trace,
+        #[cfg(not(debug_assertions))]
+        LevelFilter::Info,
         ConfigBuilder::new()
             .add_filter_allow_str("raytracing")
             .build(),

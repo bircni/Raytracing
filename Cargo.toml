@@ -33,8 +33,10 @@ egui_file = "0.11.1"
 # mal schauen wann die version auch auf crates.io ist
 bvh = { git = "https://github.com/svenstaro/bvh.git" }
 
-#"cargo test"
-[dev-dependencies.cargo-husky]
-version = "1.5.0"
-default-features = false
-features = ["user-hooks"]
+[dev-dependencies]
+cargo-husky = { version = "1.5.0", default-features = false, features = [
+    "user-hooks",
+] }
+
+[lints.rust]
+unsafe_code = "deny"
