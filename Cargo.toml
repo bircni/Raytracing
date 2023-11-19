@@ -14,7 +14,11 @@ image = { version = "0.24.7", default-features = false, features = [
     "jpeg",
 ] }
 log = "0.4.20"
-nalgebra = { version = "0.32.3", features = ["serde", "serde-serialize"] }
+nalgebra = { version = "0.32.3", features = [
+    "serde",
+    "serde-serialize",
+    "glam022",
+] }
 obj = "0.10.2"
 ordered-float = "4.1.1"
 simplelog = "0.12.1"
