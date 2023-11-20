@@ -1,4 +1,3 @@
-use bytemuck::{Pod, Zeroable};
 use nalgebra::Point3;
 use serde::Deserialize;
 
@@ -40,8 +39,3 @@ impl<'de> Deserialize<'de> for Light {
         })
     }
 }
-
-#[allow(unsafe_code)]
-unsafe impl Zeroable for Light {}
-#[allow(unsafe_code)]
-unsafe impl Pod for Light {}

@@ -31,8 +31,9 @@ fn main() -> anyhow::Result<()> {
         "RayTracer",
         eframe::NativeOptions {
             initial_window_size: Some(egui::vec2(1200.0, 900.0)),
-            renderer: Renderer::Glow,
+            renderer: Renderer::Wgpu,
             depth_buffer: 1,
+            icon_data: None,
             ..Default::default()
         },
         Box::new(|cc| Box::new(ui::App::new(cc, scene).expect("Failed to create app"))),

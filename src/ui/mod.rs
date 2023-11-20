@@ -4,6 +4,7 @@ mod render;
 
 use self::preview::Preview;
 use crate::scene::Scene;
+use anyhow::Context;
 use eframe::CreationContext;
 use egui::{pos2, Align, CursorIcon, Frame, Layout, ProgressBar, Rect, Rounding, Stroke, Vec2};
 use egui::{CentralPanel, Color32, ColorImage, ImageData, Sense, TextureHandle, TextureOptions};
@@ -28,7 +29,13 @@ pub struct App {
 
 impl App {
     pub fn new(cc: &CreationContext, scene: Scene) -> anyhow::Result<Self> {
-        let preview = Preview::new(cc.gl.as_ref().unwrap().clone())?;
+        let preview = Preview::new(
+            cc.wgpu_render_state
+                .as_ref()
+                .context("Failed to get wgpu context")?,
+            &scene,
+        )
+        .context("Failed to create preview")?;
 
         let render_size = [1920, 1080];
 
@@ -113,9 +120,7 @@ impl eframe::App for App {
                         let (response, painter) =
                             ui.allocate_painter(ui.available_size(), Sense::drag());
 
-                        self.preview
-                            .paint(response.rect, &painter, &self.scene)
-                            .expect("Painting failed");
+                        painter.add(self.preview.paint(response.rect, &self.scene));
                     });
                 }
 

@@ -6,30 +6,61 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.75"
+# git hooks
 cargo-husky = "1.5.0"
+
+# error handling
+anyhow = "1.0.75"
+
+# time
 chrono = { version = "0.4.31", default-features = false, features = ["clock"] }
+
+# image loading and saving
 image = { version = "0.24.7", default-features = false, features = [
     "png",
     "jpeg",
 ] }
+
+# logging
 log = "0.4.20"
+simplelog = "0.12.1"
+
+# linear algebra
 nalgebra = { version = "0.32.3", features = [
     "serde",
     "serde-serialize",
     "glam022",
 ] }
+
+# obj file loading
 obj = "0.10.2"
+
+# automatic parallelization
+rayon = "1.8.0"
+
+# byte serialization
+bytemuck = "1.14.0"
+
+# total order for floats
 ordered-float = "4.1.1"
-simplelog = "0.12.1"
+
+# generic serialization / deserialization
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9.27"
-eframe = "0.23.0"
-egui = "0.23.0"
-egui_glow = "0.23.0"
-bytemuck = "1.14.0"
-rayon = "1.8.0"
+
+# GUI
+eframe = { version = "0.23.0", features = [
+    "wgpu",
+    "accesskit",
+    "default_fonts",
+    "wayland",
+    "x11",
+], default-features = false }
+egui = { version = "0.23.0", features = ["log"] }
+egui-wgpu = { version = "0.23.0" }
 egui_file = "0.11.1"
+
+# BVH
 # mal schauen wann die version auch auf crates.io ist
 bvh = { git = "https://github.com/svenstaro/bvh.git" }
 
