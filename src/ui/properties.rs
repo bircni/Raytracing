@@ -84,7 +84,7 @@ impl super::App {
                             );
                         });
 
-                        let mut to_remove = Vec::new();
+                        let mut lights_to_remove = Vec::new();
 
                         for (n, light) in self.scene.lights.iter_mut().enumerate() {
                             ui.separator();
@@ -108,7 +108,7 @@ impl super::App {
                                         )
                                         .clicked()
                                     {
-                                        to_remove.push(n);
+                                        lights_to_remove.push(n);
                                     }
                                 });
                             });
@@ -141,7 +141,7 @@ impl super::App {
                             color_picker::color_edit_button_rgb(ui, light.color.as_mut());
                         }
 
-                        for n in to_remove {
+                        for n in lights_to_remove {
                             self.scene.lights.remove(n);
                             log::info!("Removed light {}", n);
                         }
@@ -168,17 +168,36 @@ impl super::App {
                             );
                         });
 
-                        for o in self.scene.objects.iter_mut() {
+                        let mut objects_to_remove = Vec::new();
+
+                        for (n, o) in self.scene.objects.iter_mut().enumerate() {
                             ui.separator();
 
-                            ui.label(
-                                RichText::new(format!(
-                                    "Object with {} triangles",
-                                    o.triangles.len()
-                                ))
-                                .size(14.0)
-                                .family(FontFamily::Monospace),
-                            );
+                            ui.horizontal(|ui| {
+                                ui.label(
+                                    //"Object with {} triangles"
+                                    RichText::new(format!("Object ({} ▲)", o.triangles.len()))
+                                        .size(14.0)
+                                        .family(FontFamily::Monospace),
+                                );
+                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                    if ui
+                                        .add_sized(
+                                            [20., 20.],
+                                            Button::new(
+                                                RichText::new("x")
+                                                    .size(14.0)
+                                                    .family(FontFamily::Monospace),
+                                            )
+                                            .frame(false)
+                                            .small(),
+                                        )
+                                        .clicked()
+                                    {
+                                        objects_to_remove.push(n);
+                                    }
+                                });
+                            });
 
                             ui.label("Position");
                             ui.horizontal(|ui| {
@@ -251,6 +270,12 @@ impl super::App {
                                 });
                             });
                         }
+
+                        for o in objects_to_remove {
+                            self.scene.objects.remove(o);
+                            log::info!("Removed object");
+                        }
+
                         ui.separator();
                         ui.vertical_centered(|ui| {
                             if ui
