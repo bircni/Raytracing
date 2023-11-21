@@ -103,7 +103,6 @@ impl eframe::App for App {
                     {
                         log::info!("Exporting image");
                         //Export the shown image to a file
-                        //let pixels = self.render_texture.
                     }
                     ui.add(
                         ProgressBar::new(
