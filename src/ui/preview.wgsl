@@ -1,8 +1,8 @@
 struct VertexOut {
     @builtin(position) result: vec4<f32>,
-    @location(0) position: vec4<f32>,
+    @location(0) position: vec3<f32>,
     @location(1) normal: vec3<f32>,
-    @location(2) color: vec4<f32>,
+    @location(2) color: vec3<f32>,
 }
 
 struct Uniforms {
@@ -13,22 +13,6 @@ struct Uniforms {
 @group(0) @binding(0)
 var<uniform> uniforms: Uniforms;
 
-@vertex
-fn vs_main(
-    @location(0) position: vec3<f32>,
-    @location(1) normal: vec3<f32>,
-    @location(2) color: vec3<f32>,
-) -> VertexOut {
-    var out: VertexOut;
-
-    out.result = uniforms.view * vec4<f32>(position, 1.0);
-    out.position = vec4<f32>(position, 1.0);
-    out.normal = normal;
-    out.color = vec4<f32>(color, 1.0);
-
-    return out;
-}
-
 struct Light {
     position: vec3<f32>,
     color: vec3<f32>,
@@ -38,17 +22,39 @@ struct Light {
 @group(0) @binding(1)
 var<storage, read> lights: array<Light>;
 
+@group(0) @binding(2)
+var<storage, read> transforms: array<mat4x4<f32>>;
+
+@vertex
+fn vs_main(
+    @location(0) position: vec3<f32>,
+    @location(1) normal: vec3<f32>,
+    @location(2) color: vec3<f32>,
+    @location(3) transform_index: u32,
+) -> VertexOut {
+    var out: VertexOut;
+
+    var transform: mat4x4<f32> = transforms[transform_index];
+
+    out.result = uniforms.view * transform * vec4<f32>(position, 1.0);
+    out.position = (transform * vec4<f32>(position, 1.0)).xyz;
+    out.normal = (transform * vec4<f32>(normal, 0.0)).xyz;
+    out.color = color;
+
+    return out;
+}
+
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     var AMBIENT_STRENGTH: f32 = 0.1;
 
-    var color: vec3<f32> = in.color.xyz * AMBIENT_STRENGTH;
+    var color: vec3<f32> = in.color * AMBIENT_STRENGTH;
 
     for (var i = 0u; i < uniforms.lights_count; i = i + 1u) {
         var light: Light = lights[i];
         var light_dir: vec3<f32> = normalize(light.position - in.position.xyz);
         var diff: f32 = max(dot(in.normal, light_dir), 0.0);
-        color = color + light.color * diff * light.intensity / pow(length(light.position - in.position.xyz), 2.0);
+        color = color + in.color * light.color * diff * light.intensity / pow(length(light.position - in.position.xyz), 2.0);
     }
 
     return vec4<f32>(color, 1.0);

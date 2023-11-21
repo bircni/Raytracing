@@ -21,6 +21,7 @@ use nalgebra::{Isometry3, Perspective3};
 use crate::scene::Scene;
 
 const MAX_LIGHTS: usize = 255;
+const MAX_OBJECTS: usize = 255;
 
 pub struct Preview {}
 
@@ -56,6 +57,16 @@ impl Preview {
                     },
                     count: None,
                 },
+                BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: ShaderStages::VERTEX,
+                    ty: BindingType::Buffer {
+                        ty: BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
             ],
         });
 
@@ -72,8 +83,8 @@ impl Preview {
                 module: &shader,
                 entry_point: "vs_main",
                 buffers: &[VertexBufferLayout {
-                    // 3x f32 for position, 3x f32 for normal, 3x f32 for color
-                    array_stride: std::mem::size_of::<f32>() as u64 * (3 + 3 + 3),
+                    // 3x f32 for position, 3x f32 for normal, 3x f32 for color, 1x u32 for transform index
+                    array_stride: std::mem::size_of::<f32>() as u64 * (3 + 3 + 3 + 1),
                     step_mode: VertexStepMode::Vertex,
                     attributes: &[
                         // position
@@ -93,6 +104,12 @@ impl Preview {
                             format: VertexFormat::Float32x3,
                             offset: std::mem::size_of::<f32>() as u64 * 6,
                             shader_location: 2,
+                        },
+                        // transform index
+                        VertexAttribute {
+                            format: VertexFormat::Uint32,
+                            offset: std::mem::size_of::<f32>() as u64 * 9,
+                            shader_location: 3,
                         },
                     ],
                 }],
@@ -140,6 +157,13 @@ impl Preview {
             mapped_at_creation: false,
         });
 
+        let transforms_buffer = device.create_buffer(&BufferDescriptor {
+            label: Some("preview transforms buffer"),
+            usage: BufferUsages::STORAGE | BufferUsages::COPY_DST,
+            size: std::mem::size_of::<[[f32; 4]; 4]>() as u64 * MAX_OBJECTS as u64,
+            mapped_at_creation: false,
+        });
+
         let bind_group = device.create_bind_group(&BindGroupDescriptor {
             label: Some("preview bind group"),
             layout: &bind_group_layout,
@@ -152,30 +176,39 @@ impl Preview {
                     binding: 1,
                     resource: lights_buffer.as_entire_binding(),
                 },
+                BindGroupEntry {
+                    binding: 2,
+                    resource: transforms_buffer.as_entire_binding(),
+                },
             ],
         });
 
         let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("preview vertex buffer"),
-            contents: bytemuck::cast_slice(
-                scene
-                    .objects
+            contents: scene
+                .objects
+                .iter()
+                .enumerate()
+                .flat_map(|(i, o)| o.triangles.iter().map(move |t| (i, o, t)))
+                .map(|(i, o, t)| (i, t.material_index.and_then(|i| o.materials.get(i)), t))
+                .flat_map(|(i, m, t)| {
+                    let color = m.as_ref().and_then(|m| m.kd).unwrap_or([0.9; 3]);
+                    [
+                        bytemuck::bytes_of(&[t.a.into(), t.a_normal.into(), color]),
+                        bytemuck::bytes_of(&(i as u32)),
+                        bytemuck::bytes_of(&[t.b.into(), t.b_normal.into(), color]),
+                        bytemuck::bytes_of(&(i as u32)),
+                        bytemuck::bytes_of(&[t.c.into(), t.c_normal.into(), color]),
+                        bytemuck::bytes_of(&(i as u32)),
+                    ]
                     .iter()
-                    .flat_map(|o| o.triangles.iter().map(move |t| (o, t)))
-                    .map(|(o, t)| (t.material_index.and_then(|i| o.materials.get(i)), t))
-                    .flat_map(|(m, t)| -> [[[f32; 3]; 3]; 3] {
-                        let color = m.as_ref().and_then(|m| m.kd).unwrap_or([0.9; 3]);
-                        [
-                            [t.a.into(), t.a_normal.into(), color],
-                            [t.b.into(), t.b_normal.into(), color],
-                            [t.c.into(), t.c_normal.into(), color],
-                        ]
-                    })
+                    .copied()
                     .flatten()
-                    .flatten()
-                    .collect::<Vec<f32>>()
-                    .as_slice(),
-            ),
+                    .copied()
+                    .collect::<Vec<u8>>()
+                })
+                .collect::<Vec<u8>>()
+                .as_slice(),
             usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         });
 
@@ -185,6 +218,7 @@ impl Preview {
             vertex_buffer,
             uniform_buffer,
             lights_buffer,
+            transforms_buffer,
         };
 
         render_state
@@ -213,6 +247,7 @@ struct PreviewResources {
     vertex_buffer: Buffer,
     uniform_buffer: Buffer,
     lights_buffer: Buffer,
+    transforms_buffer: Buffer,
 }
 
 struct PreviewRenderer {
@@ -286,6 +321,20 @@ impl CallbackTrait for PreviewRenderer {
                 .chain(std::iter::repeat(ShaderLight::default()))
                 .take(MAX_LIGHTS)
                 .flat_map(|x| bytemuck::bytes_of(&x).to_vec())
+                .collect::<Vec<u8>>()
+                .as_slice(),
+        );
+
+        queue.write_buffer(
+            &resources.transforms_buffer,
+            0,
+            self.scene
+                .objects
+                .iter()
+                .map(|o| o.transform.to_homogeneous())
+                .chain(std::iter::repeat(Isometry3::identity().to_homogeneous()))
+                .take(MAX_OBJECTS)
+                .flat_map(|m| bytemuck::cast_slice(m.as_slice()).to_vec())
                 .collect::<Vec<u8>>()
                 .as_slice(),
         );
