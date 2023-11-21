@@ -6,7 +6,6 @@ use crate::Color;
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct Light {
     pub position: Point3<f32>,
-    _padding: u32,
     pub color: Color,
     pub intensity: f32,
 }
@@ -35,7 +34,6 @@ impl<'de> Deserialize<'de> for Light {
             position: yaml_light.position,
             color: yaml_light.ke.normalize(),
             intensity: yaml_light.ke.norm(),
-            ..Default::default()
         })
     }
 }

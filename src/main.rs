@@ -32,7 +32,7 @@ fn main() -> anyhow::Result<()> {
         eframe::NativeOptions {
             initial_window_size: Some(egui::vec2(1200.0, 900.0)),
             renderer: Renderer::Wgpu,
-            depth_buffer: 1,
+            depth_buffer: 32,
             icon_data: None,
             ..Default::default()
         },

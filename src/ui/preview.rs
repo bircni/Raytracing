@@ -1,18 +1,17 @@
-#![allow(unsafe_code)]
+use std::borrow::Cow;
 
-use std::{borrow::Cow, sync::Arc};
-
-use egui::{mutex::Mutex, Rect, Shape};
+use egui::{Rect, Shape};
 use egui_wgpu::{
     wgpu::{
         self,
         util::{BufferInitDescriptor, DeviceExt},
         BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-        BindGroupLayoutEntry, BindingType, Buffer, BufferBindingType, BufferUsages,
-        ColorTargetState, ColorWrites, FragmentState, MultisampleState, PipelineLayoutDescriptor,
-        PrimitiveState, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor,
-        ShaderSource, ShaderStages, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState,
-        VertexStepMode,
+        BindGroupLayoutEntry, BindingType, Buffer, BufferBindingType, BufferDescriptor,
+        BufferUsages, ColorTargetState, ColorWrites, CompareFunction, DepthBiasState,
+        DepthStencilState, FragmentState, FrontFace, MultisampleState, PipelineLayoutDescriptor,
+        PolygonMode, PrimitiveState, PrimitiveTopology, RenderPipeline, RenderPipelineDescriptor,
+        ShaderModuleDescriptor, ShaderSource, ShaderStages, StencilState, TextureFormat,
+        VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
     },
     Callback, CallbackTrait,
 };
@@ -20,6 +19,8 @@ use log::debug;
 use nalgebra::{Isometry3, Perspective3};
 
 use crate::scene::Scene;
+
+const MAX_LIGHTS: usize = 255;
 
 pub struct Preview {}
 
@@ -34,16 +35,28 @@ impl Preview {
 
         let bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
             label: Some("preview bind group layout"),
-            entries: &[BindGroupLayoutEntry {
-                binding: 0,
-                visibility: ShaderStages::VERTEX,
-                ty: BindingType::Buffer {
-                    ty: BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
+            entries: &[
+                BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: ShaderStages::VERTEX_FRAGMENT,
+                    ty: BindingType::Buffer {
+                        ty: BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
                 },
-                count: None,
-            }],
+                BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: ShaderStages::FRAGMENT,
+                    ty: BindingType::Buffer {
+                        ty: BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+            ],
         });
 
         let pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
@@ -59,10 +72,9 @@ impl Preview {
                 module: &shader,
                 entry_point: "vs_main",
                 buffers: &[VertexBufferLayout {
-                    // 3x f32 for position, 3x f32 for color
-                    array_stride: std::mem::size_of::<f32>() as u64 * (3 + 3),
+                    // 3x f32 for position, 3x f32 for normal, 3x f32 for color
+                    array_stride: std::mem::size_of::<f32>() as u64 * (3 + 3 + 3),
                     step_mode: VertexStepMode::Vertex,
-
                     attributes: &[
                         // position
                         VertexAttribute {
@@ -70,11 +82,17 @@ impl Preview {
                             offset: 0,
                             shader_location: 0,
                         },
-                        // color
+                        // normal
                         VertexAttribute {
                             format: VertexFormat::Float32x3,
                             offset: std::mem::size_of::<f32>() as u64 * 3,
                             shader_location: 1,
+                        },
+                        // color
+                        VertexAttribute {
+                            format: VertexFormat::Float32x3,
+                            offset: std::mem::size_of::<f32>() as u64 * 6,
+                            shader_location: 2,
                         },
                     ],
                 }],
@@ -88,34 +106,53 @@ impl Preview {
                     write_mask: ColorWrites::ALL,
                 })],
             }),
-            primitive: PrimitiveState::default(),
-            depth_stencil: None,
+            primitive: PrimitiveState {
+                topology: PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: FrontFace::Ccw,
+                cull_mode: None,
+                unclipped_depth: false,
+                polygon_mode: PolygonMode::Fill,
+                conservative: false,
+            },
+            depth_stencil: Some(DepthStencilState {
+                format: TextureFormat::Depth32Float,
+                depth_write_enabled: true,
+                depth_compare: CompareFunction::Less,
+                stencil: StencilState::default(),
+                bias: DepthBiasState::default(),
+            }),
             multisample: MultisampleState::default(),
             multiview: None,
         });
 
-        let uniform_buffer = device.create_buffer_init(&BufferInitDescriptor {
+        let uniform_buffer = device.create_buffer(&BufferDescriptor {
             label: Some("preview uniform buffer"),
-            contents: bytemuck::cast_slice(
-                (Perspective3::new(16.0 / 9.0, scene.camera.fov, 0.1, 1000.0).to_homogeneous()
-                    * Isometry3::look_at_rh(
-                        &scene.camera.position,
-                        &scene.camera.look_at,
-                        &scene.camera.up,
-                    )
-                    .to_homogeneous())
-                .as_slice(),
-            ),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+            size: std::mem::size_of::<ShaderUniforms>() as u64,
+            mapped_at_creation: false,
+        });
+
+        let lights_buffer = device.create_buffer(&BufferDescriptor {
+            label: Some("preview lights buffer"),
+            usage: BufferUsages::STORAGE | BufferUsages::COPY_DST,
+            size: std::mem::size_of::<ShaderLight>() as u64 * MAX_LIGHTS as u64,
+            mapped_at_creation: false,
         });
 
         let bind_group = device.create_bind_group(&BindGroupDescriptor {
             label: Some("preview bind group"),
             layout: &bind_group_layout,
-            entries: &[BindGroupEntry {
-                binding: 0,
-                resource: uniform_buffer.as_entire_binding(),
-            }],
+            entries: &[
+                BindGroupEntry {
+                    binding: 0,
+                    resource: uniform_buffer.as_entire_binding(),
+                },
+                BindGroupEntry {
+                    binding: 1,
+                    resource: lights_buffer.as_entire_binding(),
+                },
+            ],
         });
 
         let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
@@ -126,10 +163,15 @@ impl Preview {
                     .iter()
                     .flat_map(|o| o.triangles.iter().map(move |t| (o, t)))
                     .map(|(o, t)| (t.material_index.and_then(|i| o.materials.get(i)), t))
-                    .flat_map(|(m, t)| -> [[f32; 3]; 6] {
-                        let color = m.as_ref().and_then(|m| m.kd).unwrap_or([0.0; 3]);
-                        [t.a.into(), color, t.b.into(), color, t.c.into(), color]
+                    .flat_map(|(m, t)| -> [[[f32; 3]; 3]; 3] {
+                        let color = m.as_ref().and_then(|m| m.kd).unwrap_or([0.9; 3]);
+                        [
+                            [t.a.into(), t.a_normal.into(), color],
+                            [t.b.into(), t.b_normal.into(), color],
+                            [t.c.into(), t.c_normal.into(), color],
+                        ]
                     })
+                    .flatten()
                     .flatten()
                     .collect::<Vec<f32>>()
                     .as_slice(),
@@ -142,6 +184,7 @@ impl Preview {
             pipeline,
             vertex_buffer,
             uniform_buffer,
+            lights_buffer,
         };
 
         render_state
@@ -169,6 +212,7 @@ struct PreviewResources {
     pipeline: RenderPipeline,
     vertex_buffer: Buffer,
     uniform_buffer: Buffer,
+    lights_buffer: Buffer,
 }
 
 struct PreviewRenderer {
@@ -177,6 +221,23 @@ struct PreviewRenderer {
 }
 
 struct VertexCount(usize);
+
+#[repr(C, align(16))]
+#[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
+struct ShaderUniforms {
+    view: [[f32; 4]; 4],
+    lights_count: u32,
+    _pad: [u32; 3],
+}
+
+#[repr(C, align(16))]
+#[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
+struct ShaderLight {
+    position: [f32; 3],
+    _pad: [f32; 1],
+    color: [f32; 3],
+    intensity: f32,
+}
 
 impl CallbackTrait for PreviewRenderer {
     fn prepare(
@@ -195,8 +256,8 @@ impl CallbackTrait for PreviewRenderer {
         queue.write_buffer(
             &resources.uniform_buffer,
             0,
-            bytemuck::cast_slice(
-                (Perspective3::new(self.aspect_ratio, self.scene.camera.fov, 0.1, 1000.0)
+            bytemuck::cast_slice(&[ShaderUniforms {
+                view: (Perspective3::new(self.aspect_ratio, self.scene.camera.fov, 0.1, 1000.0)
                     .to_homogeneous()
                     * Isometry3::look_at_rh(
                         &self.scene.camera.position,
@@ -204,8 +265,29 @@ impl CallbackTrait for PreviewRenderer {
                         &self.scene.camera.up,
                     )
                     .to_homogeneous())
+                .into(),
+                lights_count: self.scene.lights.len() as u32,
+                ..Default::default()
+            }]),
+        );
+
+        queue.write_buffer(
+            &resources.lights_buffer,
+            0,
+            self.scene
+                .lights
+                .iter()
+                .map(|l| ShaderLight {
+                    position: l.position.into(),
+                    color: l.color.into(),
+                    intensity: l.intensity,
+                    ..Default::default()
+                })
+                .chain(std::iter::repeat(ShaderLight::default()))
+                .take(MAX_LIGHTS)
+                .flat_map(|x| bytemuck::bytes_of(&x).to_vec())
+                .collect::<Vec<u8>>()
                 .as_slice(),
-            ),
         );
 
         callback_resources.insert(VertexCount(
