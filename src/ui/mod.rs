@@ -96,15 +96,16 @@ impl eframe::App for App {
                 }
 
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ui
-                        .add_enabled(self.current_tab == 0, Button::new("Render"))
-                        .on_hover_text("Start rendering")
-                        .clicked()
-                    {
-                        self.render(ctx.clone());
-                        self.current_tab = 1;
-                    }
-                    if self.rendering_progress.load(Ordering::Relaxed) == u16::MAX
+                    if self.current_tab == 0 {
+                        if ui
+                            .add(Button::new("Render"))
+                            .on_hover_text("Start rendering")
+                            .clicked()
+                        {
+                            self.render(ctx.clone());
+                            self.current_tab = 1;
+                        }
+                    } else if self.rendering_progress.load(Ordering::Relaxed) == u16::MAX
                         && ui.button("Export").clicked()
                     {
                         log::info!("Exporting image");
