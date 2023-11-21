@@ -385,391 +385,429 @@
 <a href="#385" id="385">385</a>
 <a href="#386" id="386">386</a>
 <a href="#387" id="387">387</a>
-</pre></div><pre class="rust"><code><span class="attr">#![allow(unsafe_code)]
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::borrow::Cow;
 
-</span><span class="kw">use </span>std::sync::Arc;
-
-<span class="kw">use </span>anyhow::Context;
-<span class="kw">use </span>egui::{PaintCallback, PaintCallbackInfo, Painter, Rect, Shape};
-<span class="kw">use </span>egui_glow::{glow::HasContext, CallbackFn};
+<span class="kw">use </span>egui::{Rect, Shape};
+<span class="kw">use </span>egui_wgpu::{
+    wgpu::{
+        <span class="self">self</span>,
+        util::{BufferInitDescriptor, DeviceExt},
+        BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+        BindGroupLayoutEntry, BindingType, Buffer, BufferBindingType, BufferDescriptor,
+        BufferUsages, ColorTargetState, ColorWrites, CompareFunction, DepthBiasState,
+        DepthStencilState, FragmentState, FrontFace, MultisampleState, PipelineLayoutDescriptor,
+        PolygonMode, PrimitiveState, PrimitiveTopology, RenderPipeline, RenderPipelineDescriptor,
+        ShaderModuleDescriptor, ShaderSource, ShaderStages, StencilState, TextureFormat,
+        VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    },
+    Callback, CallbackTrait,
+};
 <span class="kw">use </span>log::debug;
 <span class="kw">use </span>nalgebra::{Isometry3, Perspective3};
 
 <span class="kw">use </span><span class="kw">crate</span>::scene::Scene;
-<span class="kw">use </span>eframe::glow;
 
-<span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>Preview {
-    gl: Arc&lt;glow::Context&gt;,
-    program: glow::NativeProgram,
-    vertex_array: glow::NativeVertexArray,
-    position_buffer: glow::NativeBuffer,
-    normal_buffer: glow::NativeBuffer,
-    color_buffer: glow::NativeBuffer,
-    transform_index_buffer: glow::NativeBuffer,
-    lights_ssbo: glow::NativeBuffer,
-    transform_ssbo: glow::NativeBuffer,
-}
+<span class="kw">const </span>MAX_LIGHTS: usize = <span class="number">255</span>;
+<span class="kw">const </span>MAX_OBJECTS: usize = <span class="number">255</span>;
 
-<span class="macro">macro_rules! </span>gl_result {
-    (<span class="macro-nonterminal">$expr</span>: expr, <span class="macro-nonterminal">$err</span>: expr) =&gt; {
-        <span class="kw">unsafe </span>{ <span class="macro-nonterminal">$expr </span>}
-            .map_err(|e| <span class="macro">anyhow::anyhow!</span>(e))
-            .context(<span class="macro-nonterminal">$err</span>)
-    };
-}
-
-<span class="macro">macro_rules! </span>gl {
-    (<span class="macro-nonterminal">$expr</span>: expr) =&gt; {
-        <span class="kw">unsafe </span>{ <span class="macro-nonterminal">$expr </span>}
-    };
-}
+<span class="kw">pub struct </span>Preview {}
 
 <span class="kw">impl </span>Preview {
-    <span class="kw">pub fn </span>new(gl: Arc&lt;glow::Context&gt;) -&gt; anyhow::Result&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>program = compile_program(
-            <span class="kw-2">&amp;</span>gl,
-            <span class="macro">include_str!</span>(<span class="string">&quot;preview.vertex.glsl&quot;</span>),
-            <span class="macro">include_str!</span>(<span class="string">&quot;preview.fragment.glsl&quot;</span>),
-        )<span class="question-mark">?</span>;
+    <span class="kw">pub fn </span>new(render_state: <span class="kw-2">&amp;</span>egui_wgpu::RenderState) -&gt; anyhow::Result&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">let </span>device = <span class="kw-2">&amp;</span>render_state.device;
 
-        <span class="kw">let </span>vertex_array = <span class="macro">gl_result!</span>(gl.create_vertex_array(), <span class="string">&quot;Failed to create vertex array&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">gl!</span>(gl.bind_vertex_array(<span class="prelude-val">Some</span>(vertex_array)));
+        <span class="kw">let </span>shader = device.create_shader_module(ShaderModuleDescriptor {
+            label: <span class="prelude-val">Some</span>(<span class="string">&quot;preview vertex shader&quot;</span>),
+            source: ShaderSource::Wgsl(Cow::from(<span class="macro">include_str!</span>(<span class="string">&quot;preview.wgsl&quot;</span>))),
+        });
 
-        <span class="kw">let </span>position_buffer = <span class="macro">gl_result!</span>(gl.create_buffer(), <span class="string">&quot;Failed to create vertex buffer&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">gl!</span>(gl.bind_buffer(glow::ARRAY_BUFFER, <span class="prelude-val">Some</span>(position_buffer)));
-        <span class="macro">gl!</span>(gl.vertex_attrib_pointer_f32(<span class="number">0</span>, <span class="number">3</span>, glow::FLOAT, <span class="bool-val">false</span>, <span class="number">0</span>, <span class="number">0</span>));
-        <span class="macro">gl!</span>(gl.enable_vertex_attrib_array(<span class="number">0</span>));
+        <span class="kw">let </span>bind_group_layout = device.create_bind_group_layout(<span class="kw-2">&amp;</span>BindGroupLayoutDescriptor {
+            label: <span class="prelude-val">Some</span>(<span class="string">&quot;preview bind group layout&quot;</span>),
+            entries: <span class="kw-2">&amp;</span>[
+                BindGroupLayoutEntry {
+                    binding: <span class="number">0</span>,
+                    visibility: ShaderStages::VERTEX_FRAGMENT,
+                    ty: BindingType::Buffer {
+                        ty: BufferBindingType::Uniform,
+                        has_dynamic_offset: <span class="bool-val">false</span>,
+                        min_binding_size: <span class="prelude-val">None</span>,
+                    },
+                    count: <span class="prelude-val">None</span>,
+                },
+                BindGroupLayoutEntry {
+                    binding: <span class="number">1</span>,
+                    visibility: ShaderStages::FRAGMENT,
+                    ty: BindingType::Buffer {
+                        ty: BufferBindingType::Storage { read_only: <span class="bool-val">true </span>},
+                        has_dynamic_offset: <span class="bool-val">false</span>,
+                        min_binding_size: <span class="prelude-val">None</span>,
+                    },
+                    count: <span class="prelude-val">None</span>,
+                },
+                BindGroupLayoutEntry {
+                    binding: <span class="number">2</span>,
+                    visibility: ShaderStages::VERTEX,
+                    ty: BindingType::Buffer {
+                        ty: BufferBindingType::Storage { read_only: <span class="bool-val">true </span>},
+                        has_dynamic_offset: <span class="bool-val">false</span>,
+                        min_binding_size: <span class="prelude-val">None</span>,
+                    },
+                    count: <span class="prelude-val">None</span>,
+                },
+            ],
+        });
 
-        <span class="kw">let </span>normal_buffer = <span class="macro">gl_result!</span>(gl.create_buffer(), <span class="string">&quot;Failed to create normal buffer&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">gl!</span>(gl.bind_buffer(glow::ARRAY_BUFFER, <span class="prelude-val">Some</span>(normal_buffer)));
-        <span class="macro">gl!</span>(gl.vertex_attrib_pointer_f32(<span class="number">1</span>, <span class="number">3</span>, glow::FLOAT, <span class="bool-val">false</span>, <span class="number">0</span>, <span class="number">0</span>));
-        <span class="macro">gl!</span>(gl.enable_vertex_attrib_array(<span class="number">1</span>));
+        <span class="kw">let </span>pipeline_layout = device.create_pipeline_layout(<span class="kw-2">&amp;</span>PipelineLayoutDescriptor {
+            label: <span class="prelude-val">Some</span>(<span class="string">&quot;preview pipeline layout&quot;</span>),
+            bind_group_layouts: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>bind_group_layout],
+            push_constant_ranges: <span class="kw-2">&amp;</span>[],
+        });
 
-        <span class="kw">let </span>color_buffer = <span class="macro">gl_result!</span>(gl.create_buffer(), <span class="string">&quot;Failed to create color buffer&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">gl!</span>(gl.bind_buffer(glow::ARRAY_BUFFER, <span class="prelude-val">Some</span>(color_buffer)));
-        <span class="macro">gl!</span>(gl.vertex_attrib_pointer_f32(<span class="number">2</span>, <span class="number">3</span>, glow::FLOAT, <span class="bool-val">false</span>, <span class="number">0</span>, <span class="number">0</span>));
-        <span class="macro">gl!</span>(gl.enable_vertex_attrib_array(<span class="number">2</span>));
+        <span class="kw">let </span>pipeline = device.create_render_pipeline(<span class="kw-2">&amp;</span>RenderPipelineDescriptor {
+            label: <span class="prelude-val">Some</span>(<span class="string">&quot;preview pipeline&quot;</span>),
+            layout: <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>pipeline_layout),
+            vertex: VertexState {
+                module: <span class="kw-2">&amp;</span>shader,
+                entry_point: <span class="string">&quot;vs_main&quot;</span>,
+                buffers: <span class="kw-2">&amp;</span>[VertexBufferLayout {
+                    <span class="comment">// 3x f32 for position, 3x f32 for normal, 3x f32 for color, 1x u32 for transform index
+                    </span>array_stride: std::mem::size_of::&lt;f32&gt;() <span class="kw">as </span>u64 * (<span class="number">3 </span>+ <span class="number">3 </span>+ <span class="number">3 </span>+ <span class="number">1</span>),
+                    step_mode: VertexStepMode::Vertex,
+                    attributes: <span class="kw-2">&amp;</span>[
+                        <span class="comment">// position
+                        </span>VertexAttribute {
+                            format: VertexFormat::Float32x3,
+                            offset: <span class="number">0</span>,
+                            shader_location: <span class="number">0</span>,
+                        },
+                        <span class="comment">// normal
+                        </span>VertexAttribute {
+                            format: VertexFormat::Float32x3,
+                            offset: std::mem::size_of::&lt;f32&gt;() <span class="kw">as </span>u64 * <span class="number">3</span>,
+                            shader_location: <span class="number">1</span>,
+                        },
+                        <span class="comment">// color
+                        </span>VertexAttribute {
+                            format: VertexFormat::Float32x3,
+                            offset: std::mem::size_of::&lt;f32&gt;() <span class="kw">as </span>u64 * <span class="number">6</span>,
+                            shader_location: <span class="number">2</span>,
+                        },
+                        <span class="comment">// transform index
+                        </span>VertexAttribute {
+                            format: VertexFormat::Uint32,
+                            offset: std::mem::size_of::&lt;f32&gt;() <span class="kw">as </span>u64 * <span class="number">9</span>,
+                            shader_location: <span class="number">3</span>,
+                        },
+                    ],
+                }],
+            },
+            fragment: <span class="prelude-val">Some</span>(FragmentState {
+                module: <span class="kw-2">&amp;</span>shader,
+                entry_point: <span class="string">&quot;fs_main&quot;</span>,
+                targets: <span class="kw-2">&amp;</span>[<span class="prelude-val">Some</span>(ColorTargetState {
+                    format: render_state.target_format,
+                    blend: <span class="prelude-val">None</span>,
+                    write_mask: ColorWrites::ALL,
+                })],
+            }),
+            primitive: PrimitiveState {
+                topology: PrimitiveTopology::TriangleList,
+                strip_index_format: <span class="prelude-val">None</span>,
+                front_face: FrontFace::Ccw,
+                cull_mode: <span class="prelude-val">None</span>,
+                unclipped_depth: <span class="bool-val">false</span>,
+                polygon_mode: PolygonMode::Fill,
+                conservative: <span class="bool-val">false</span>,
+            },
+            depth_stencil: <span class="prelude-val">Some</span>(DepthStencilState {
+                format: TextureFormat::Depth32Float,
+                depth_write_enabled: <span class="bool-val">true</span>,
+                depth_compare: CompareFunction::Less,
+                stencil: StencilState::default(),
+                bias: DepthBiasState::default(),
+            }),
+            multisample: MultisampleState::default(),
+            multiview: <span class="prelude-val">None</span>,
+        });
 
-        <span class="kw">let </span>transform_index_buffer = <span class="macro">gl_result!</span>(
-            gl.create_buffer(),
-            <span class="string">&quot;Failed to create transform index buffer&quot;
-        </span>)<span class="question-mark">?</span>;
-        <span class="macro">gl!</span>(gl.bind_buffer(glow::ARRAY_BUFFER, <span class="prelude-val">Some</span>(transform_index_buffer)));
-        <span class="macro">gl!</span>(gl.vertex_attrib_pointer_i32(<span class="number">3</span>, <span class="number">1</span>, glow::UNSIGNED_INT, <span class="number">0</span>, <span class="number">0</span>));
-        <span class="macro">gl!</span>(gl.enable_vertex_attrib_array(<span class="number">3</span>));
+        <span class="kw">let </span>uniform_buffer = device.create_buffer(<span class="kw-2">&amp;</span>BufferDescriptor {
+            label: <span class="prelude-val">Some</span>(<span class="string">&quot;preview uniform buffer&quot;</span>),
+            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+            size: std::mem::size_of::&lt;ShaderUniforms&gt;() <span class="kw">as </span>u64,
+            mapped_at_creation: <span class="bool-val">false</span>,
+        });
 
-        <span class="kw">let </span>lights_ssbo = <span class="macro">gl_result!</span>(gl.create_buffer(), <span class="string">&quot;Failed to create lights SSBO&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>lights_buffer = device.create_buffer(<span class="kw-2">&amp;</span>BufferDescriptor {
+            label: <span class="prelude-val">Some</span>(<span class="string">&quot;preview lights buffer&quot;</span>),
+            usage: BufferUsages::STORAGE | BufferUsages::COPY_DST,
+            size: std::mem::size_of::&lt;ShaderLight&gt;() <span class="kw">as </span>u64 * MAX_LIGHTS <span class="kw">as </span>u64,
+            mapped_at_creation: <span class="bool-val">false</span>,
+        });
 
-        <span class="kw">let </span>transform_ssbo = <span class="macro">gl_result!</span>(gl.create_buffer(), <span class="string">&quot;Failed to create transform SSBO&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>transforms_buffer = device.create_buffer(<span class="kw-2">&amp;</span>BufferDescriptor {
+            label: <span class="prelude-val">Some</span>(<span class="string">&quot;preview transforms buffer&quot;</span>),
+            usage: BufferUsages::STORAGE | BufferUsages::COPY_DST,
+            size: std::mem::size_of::&lt;[[f32; <span class="number">4</span>]; <span class="number">4</span>]&gt;() <span class="kw">as </span>u64 * MAX_OBJECTS <span class="kw">as </span>u64,
+            mapped_at_creation: <span class="bool-val">false</span>,
+        });
 
-        <span class="macro">gl!</span>(gl.bind_vertex_array(<span class="prelude-val">None</span>));
-        <span class="macro">gl!</span>(gl.bind_buffer(glow::ARRAY_BUFFER, <span class="prelude-val">None</span>));
+        <span class="kw">let </span>bind_group = device.create_bind_group(<span class="kw-2">&amp;</span>BindGroupDescriptor {
+            label: <span class="prelude-val">Some</span>(<span class="string">&quot;preview bind group&quot;</span>),
+            layout: <span class="kw-2">&amp;</span>bind_group_layout,
+            entries: <span class="kw-2">&amp;</span>[
+                BindGroupEntry {
+                    binding: <span class="number">0</span>,
+                    resource: uniform_buffer.as_entire_binding(),
+                },
+                BindGroupEntry {
+                    binding: <span class="number">1</span>,
+                    resource: lights_buffer.as_entire_binding(),
+                },
+                BindGroupEntry {
+                    binding: <span class="number">2</span>,
+                    resource: transforms_buffer.as_entire_binding(),
+                },
+            ],
+        });
 
-        <span class="macro">gl!</span>(gl.enable(glow::DEBUG_OUTPUT));
-        <span class="macro">gl!</span>(gl.debug_message_callback(gl_log));
+        <span class="kw">let </span>vertex_buffer = device.create_buffer(<span class="kw-2">&amp;</span>BufferDescriptor {
+            label: <span class="prelude-val">Some</span>(<span class="string">&quot;preview vertex buffer&quot;</span>),
+            usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
+            size: <span class="number">0</span>,
+            mapped_at_creation: <span class="bool-val">false</span>,
+        });
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            gl,
-            program,
-            vertex_array,
-            position_buffer,
-            normal_buffer,
-            color_buffer,
-            transform_index_buffer,
-            lights_ssbo,
-            transform_ssbo,
-        })
+        <span class="kw">let </span>resources = PreviewResources {
+            bind_group,
+            pipeline,
+            vertex_buffer,
+            uniform_buffer,
+            lights_buffer,
+            transforms_buffer,
+        };
+
+        render_state
+            .renderer
+            .write()
+            .callback_resources
+            .insert(resources);
+
+        render_state
+            .renderer
+            .write()
+            .callback_resources
+            .insert(VertexCount(<span class="number">0</span>));
+
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{})
     }
 
-    <span class="kw">fn </span>callback(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        triangle_count: usize,
-    ) -&gt; <span class="kw">impl </span>Fn(PaintCallbackInfo, <span class="kw-2">&amp;</span>egui_glow::Painter) + Sync + Send + <span class="lifetime">&#39;static </span>{
-        <span class="kw">let </span>program = <span class="self">self</span>.program;
-        <span class="kw">let </span>vertex_array = <span class="self">self</span>.vertex_array;
-        <span class="kw">let </span>lights_ssbo = <span class="self">self</span>.lights_ssbo;
-        <span class="kw">let </span>transform_ssbo = <span class="self">self</span>.transform_ssbo;
-
-        <span class="kw">move </span>|_info, painter| <span class="kw">unsafe </span>{
-            <span class="kw">let </span>gl = painter.gl().as_ref();
-
-            <span class="comment">// setup
-            </span>gl.use_program(<span class="prelude-val">Some</span>(program));
-            gl.enable(glow::DEPTH_TEST);
-            gl.disable(glow::CULL_FACE);
-
-            <span class="comment">// clear
-            </span>gl.clear_color(<span class="number">0.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>, <span class="number">1.0</span>);
-            gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
-
-            <span class="comment">// bind lights ssbo
-            </span>gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, <span class="prelude-val">Some</span>(lights_ssbo));
-            gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, <span class="number">0</span>, <span class="prelude-val">Some</span>(lights_ssbo));
-
-            <span class="comment">// bind transform ssbo
-            </span>gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, <span class="prelude-val">Some</span>(transform_ssbo));
-            gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, <span class="number">1</span>, <span class="prelude-val">Some</span>(transform_ssbo));
-
-            <span class="comment">// draw
-            </span>gl.bind_vertex_array(<span class="prelude-val">Some</span>(vertex_array));
-            gl.draw_arrays(glow::TRIANGLES, <span class="number">0</span>, triangle_count <span class="kw">as </span>i32 * <span class="number">3</span>);
-
-            <span class="comment">// unbind
-            </span>gl.use_program(<span class="prelude-val">None</span>);
-            gl.bind_vertex_array(<span class="prelude-val">None</span>);
-            gl.bind_buffer(glow::ARRAY_BUFFER, <span class="prelude-val">None</span>);
-            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, <span class="prelude-val">None</span>);
-            gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, <span class="prelude-val">None</span>);
-            gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, <span class="number">0</span>, <span class="prelude-val">None</span>);
-            gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, <span class="number">1</span>, <span class="prelude-val">None</span>);
-
-            <span class="comment">// flush
-            </span>gl.flush();
-        }
-    }
-
-    <span class="kw">fn </span>upload_scene(<span class="kw-2">&amp;</span><span class="self">self</span>, rect: Rect, scene: <span class="kw-2">&amp;</span>Scene) -&gt; anyhow::Result&lt;usize&gt; {
-        <span class="macro">gl!</span>(<span class="self">self</span>.gl.use_program(<span class="prelude-val">Some</span>(<span class="self">self</span>.program)));
-
-        <span class="kw">let </span>view_matrix_uniform = <span class="macro">gl!</span>(<span class="self">self</span>.gl.get_uniform_location(<span class="self">self</span>.program, <span class="string">&quot;view&quot;</span>))
-            .context(<span class="string">&quot;Failed to get uniform location for view_matrix&quot;</span>)<span class="question-mark">?</span>;
-
-        <span class="comment">// set view matrix
-        </span><span class="macro">gl!</span>(<span class="self">self</span>.gl.uniform_matrix_4_f32_slice(
-            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>view_matrix_uniform),
-            <span class="bool-val">false</span>,
-            (Perspective3::new(rect.aspect_ratio(), scene.camera.fov, <span class="number">0.1</span>, <span class="number">1000.0</span>)
-                .to_homogeneous()
-                * Isometry3::look_at_rh(
-                    <span class="kw-2">&amp;</span>scene.camera.position,
-                    <span class="kw-2">&amp;</span>scene.camera.look_at,
-                    <span class="kw-2">&amp;</span>scene.camera.up,
-                )
-                .to_homogeneous())
-            .as_slice()
-        ));
-
-        <span class="comment">// upload positions
-        </span><span class="kw">let </span>positions = scene
-            .objects
-            .iter()
-            .flat_map(|o| o.triangles.iter())
-            .flat_map(|t| [t.a, t.b, t.c])
-            .flat_map(|v| [v.x, v.y, v.z])
-            .collect::&lt;Vec&lt;f32&gt;&gt;();
-        <span class="macro">gl!</span>(<span class="self">self
-            </span>.gl
-            .bind_buffer(glow::ARRAY_BUFFER, <span class="prelude-val">Some</span>(<span class="self">self</span>.position_buffer)));
-        <span class="macro">gl!</span>(<span class="self">self</span>.gl.buffer_data_u8_slice(
-            glow::ARRAY_BUFFER,
-            bytemuck::cast_slice(positions.as_slice()),
-            glow::STATIC_DRAW
-        ));
-        <span class="macro">debug!</span>(<span class="string">&quot;Uploaded {} positions&quot;</span>, positions.len() / <span class="number">3</span>);
-
-        <span class="comment">// upload normals
-        </span><span class="kw">let </span>normals = scene
-            .objects
-            .iter()
-            .flat_map(|o| o.triangles.iter())
-            .flat_map(|t| [t.a_normal, t.b_normal, t.c_normal])
-            .flat_map(|v| [v.x, v.y, v.z])
-            .collect::&lt;Vec&lt;f32&gt;&gt;();
-        <span class="macro">gl!</span>(<span class="self">self
-            </span>.gl
-            .bind_buffer(glow::ARRAY_BUFFER, <span class="prelude-val">Some</span>(<span class="self">self</span>.normal_buffer)));
-        <span class="macro">gl!</span>(<span class="self">self</span>.gl.buffer_data_u8_slice(
-            glow::ARRAY_BUFFER,
-            bytemuck::cast_slice(normals.as_slice()),
-            glow::STATIC_DRAW
-        ));
-        <span class="macro">debug!</span>(<span class="string">&quot;Uploaded {} normals&quot;</span>, normals.len() / <span class="number">3</span>);
-
-        <span class="comment">// upload colors
-        </span><span class="kw">let </span>colors = scene
-            .objects
-            .iter()
-            .flat_map(|o| o.triangles.iter().map(<span class="kw">move </span>|t| (o, t)))
-            .map(|(o, t)| {
-                t.material_index
-                    .and_then(|i| o.materials.get(i))
-                    .and_then(|m| m.kd)
-                    .unwrap_or([<span class="number">1.0</span>, <span class="number">1.0</span>, <span class="number">1.0</span>])
-            })
-            .flat_map(|c| [c, c, c])
-            .flatten()
-            .collect::&lt;Vec&lt;f32&gt;&gt;();
-        <span class="macro">gl!</span>(<span class="self">self
-            </span>.gl
-            .bind_buffer(glow::ARRAY_BUFFER, <span class="prelude-val">Some</span>(<span class="self">self</span>.color_buffer)));
-        <span class="macro">gl!</span>(<span class="self">self</span>.gl.buffer_data_u8_slice(
-            glow::ARRAY_BUFFER,
-            bytemuck::cast_slice(colors.as_slice()),
-            glow::STATIC_DRAW
-        ));
-        <span class="macro">debug!</span>(<span class="string">&quot;Uploaded {} colors&quot;</span>, colors.len() / <span class="number">3</span>);
-
-        <span class="comment">// upload transform indices
-        </span><span class="kw">let </span>transform_indices = scene
-            .objects
-            .iter()
-            .enumerate()
-            .flat_map(|(i, o)| std::iter::repeat(i <span class="kw">as </span>u32).take(o.triangles.len() * <span class="number">3</span>))
-            .collect::&lt;Vec&lt;u32&gt;&gt;();
-        <span class="macro">gl!</span>(<span class="self">self
-            </span>.gl
-            .bind_buffer(glow::ARRAY_BUFFER, <span class="prelude-val">Some</span>(<span class="self">self</span>.transform_index_buffer)));
-        <span class="macro">gl!</span>(<span class="self">self</span>.gl.buffer_data_u8_slice(
-            glow::ARRAY_BUFFER,
-            bytemuck::cast_slice(transform_indices.as_slice()),
-            glow::STATIC_DRAW
-        ));
-        <span class="macro">debug!</span>(<span class="string">&quot;Uploaded {} transform indices&quot;</span>, transform_indices.len());
-
-        <span class="comment">// upload lights
-        </span><span class="macro">gl!</span>(<span class="self">self
-            </span>.gl
-            .bind_buffer(glow::SHADER_STORAGE_BUFFER, <span class="prelude-val">Some</span>(<span class="self">self</span>.lights_ssbo)));
-        <span class="macro">gl!</span>(<span class="self">self</span>.gl.buffer_data_u8_slice(
-            glow::SHADER_STORAGE_BUFFER,
-            bytemuck::cast_slice(scene.lights.as_slice()),
-            glow::STATIC_DRAW
-        ));
-        <span class="macro">debug!</span>(<span class="string">&quot;Uploaded {} lights&quot;</span>, scene.lights.len());
-
-        <span class="comment">// upload transforms
-        </span><span class="kw">let </span>transforms = scene
-            .objects
-            .iter()
-            .flat_map(|o| o.transform.to_homogeneous().as_slice().to_vec())
-            .collect::&lt;Vec&lt;f32&gt;&gt;();
-        <span class="macro">gl!</span>(<span class="self">self
-            </span>.gl
-            .bind_buffer(glow::SHADER_STORAGE_BUFFER, <span class="prelude-val">Some</span>(<span class="self">self</span>.transform_ssbo)));
-        <span class="macro">gl!</span>(<span class="self">self</span>.gl.buffer_data_u8_slice(
-            glow::SHADER_STORAGE_BUFFER,
-            bytemuck::cast_slice(transforms.as_slice()),
-            glow::STATIC_DRAW
-        ));
-        <span class="macro">debug!</span>(<span class="string">&quot;Uploaded {} transforms&quot;</span>, transforms.len() / <span class="number">16</span>);
-
-        <span class="macro">gl!</span>(<span class="self">self</span>.gl.bind_buffer(glow::ARRAY_BUFFER, <span class="prelude-val">None</span>));
-        <span class="macro">gl!</span>(<span class="self">self</span>.gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, <span class="prelude-val">None</span>));
-        <span class="macro">gl!</span>(<span class="self">self</span>.gl.use_program(<span class="prelude-val">None</span>));
-
-        <span class="prelude-val">Ok</span>(scene.objects.iter().map(|o| o.triangles.len()).sum())
-    }
-
-    <span class="kw">pub fn </span>paint(<span class="kw-2">&amp;</span><span class="self">self</span>, rect: Rect, painter: <span class="kw-2">&amp;</span>Painter, scene: <span class="kw-2">&amp;</span>Scene) -&gt; anyhow::Result&lt;()&gt; {
-        <span class="kw">let </span>triangle_count = <span class="self">self</span>.upload_scene(rect, scene)<span class="question-mark">?</span>;
-        <span class="macro">debug!</span>(<span class="string">&quot;Uploaded {} triangles&quot;</span>, triangle_count);
-
-        painter.add(Shape::Callback(PaintCallback {
+    <span class="kw">pub fn </span>paint(<span class="kw-2">&amp;</span><span class="self">self</span>, rect: Rect, scene: <span class="kw-2">&amp;</span>Scene) -&gt; egui::Shape {
+        Shape::Callback(Callback::new_paint_callback(
             rect,
-            callback: Arc::new(CallbackFn::new(<span class="self">self</span>.callback(triangle_count))),
-        }));
+            PreviewRenderer {
+                aspect_ratio: rect.aspect_ratio(),
+                scene: scene.clone(),
+            },
+        ))
+    }
+}
 
-        <span class="prelude-val">Ok</span>(())
+<span class="kw">struct </span>PreviewResources {
+    bind_group: BindGroup,
+    pipeline: RenderPipeline,
+    vertex_buffer: Buffer,
+    uniform_buffer: Buffer,
+    lights_buffer: Buffer,
+    transforms_buffer: Buffer,
+}
+
+<span class="kw">struct </span>PreviewRenderer {
+    scene: Scene,
+    aspect_ratio: f32,
+}
+
+<span class="kw">struct </span>VertexCount(usize);
+
+<span class="attr">#[repr(C, align(<span class="number">16</span>))]
+#[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
+</span><span class="kw">struct </span>ShaderUniforms {
+    view: [[f32; <span class="number">4</span>]; <span class="number">4</span>],
+    lights_count: u32,
+    _pad: [u32; <span class="number">3</span>],
+}
+
+<span class="attr">#[repr(C, align(<span class="number">16</span>))]
+#[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
+</span><span class="kw">struct </span>ShaderLight {
+    position: [f32; <span class="number">3</span>],
+    _pad: [f32; <span class="number">1</span>],
+    color: [f32; <span class="number">3</span>],
+    intensity: f32,
+}
+
+<span class="kw">impl </span>CallbackTrait <span class="kw">for </span>PreviewRenderer {
+    <span class="kw">fn </span>prepare(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        device: <span class="kw-2">&amp;</span>wgpu::Device,
+        queue: <span class="kw-2">&amp;</span>wgpu::Queue,
+        _egui_encoder: <span class="kw-2">&amp;mut </span>wgpu::CommandEncoder,
+        callback_resources: <span class="kw-2">&amp;mut </span>egui_wgpu::CallbackResources,
+    ) -&gt; Vec&lt;wgpu::CommandBuffer&gt; {
+        <span class="macro">debug!</span>(<span class="string">&quot;Preparing preview renderer&quot;</span>);
+
+        <span class="kw">let </span>vertex_count = callback_resources.get::&lt;VertexCount&gt;().unwrap();
+
+        <span class="kw">let </span>vertices = <span class="self">self
+            </span>.scene
+            .objects
+            .iter()
+            .map(|o| o.triangles.len())
+            .sum::&lt;usize&gt;()
+            * <span class="number">3</span>;
+
+        <span class="kw">if </span>vertex_count.<span class="number">0 </span>!= vertices {
+            <span class="macro">debug!</span>(<span class="string">&quot;New vertex buffer from {} to {}&quot;</span>, vertex_count.<span class="number">0</span>, vertices);
+
+            <span class="kw">let </span>resources = callback_resources
+                .get_mut::&lt;PreviewResources&gt;()
+                .expect(<span class="string">&quot;Failed to get preview resources&quot;</span>);
+
+            resources.vertex_buffer.destroy();
+
+            resources.vertex_buffer = device.create_buffer_init(<span class="kw-2">&amp;</span>BufferInitDescriptor {
+                label: <span class="prelude-val">Some</span>(<span class="string">&quot;preview vertex buffer&quot;</span>),
+                usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
+                contents: <span class="self">self
+                    </span>.scene
+                    .objects
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(i, o)| o.triangles.iter().map(<span class="kw">move </span>|t| (i, o, t)))
+                    .map(|(i, o, t)| (i, t.material_index.and_then(|i| o.materials.get(i)), t))
+                    .flat_map(|(i, m, t)| {
+                        <span class="kw">let </span>color = m.as_ref().and_then(|m| m.kd).unwrap_or([<span class="number">0.9</span>; <span class="number">3</span>]);
+                        [
+                            bytemuck::bytes_of(<span class="kw-2">&amp;</span>[t.a.into(), t.a_normal.into(), color]),
+                            bytemuck::bytes_of(<span class="kw-2">&amp;</span>(i <span class="kw">as </span>u32)),
+                            bytemuck::bytes_of(<span class="kw-2">&amp;</span>[t.b.into(), t.b_normal.into(), color]),
+                            bytemuck::bytes_of(<span class="kw-2">&amp;</span>(i <span class="kw">as </span>u32)),
+                            bytemuck::bytes_of(<span class="kw-2">&amp;</span>[t.c.into(), t.c_normal.into(), color]),
+                            bytemuck::bytes_of(<span class="kw-2">&amp;</span>(i <span class="kw">as </span>u32)),
+                        ]
+                        .into_iter()
+                        .flatten()
+                        .copied()
+                        .collect::&lt;Vec&lt;u8&gt;&gt;()
+                    })
+                    .collect::&lt;Vec&lt;u8&gt;&gt;()
+                    .as_slice(),
+            });
+
+            callback_resources.insert(VertexCount(vertices));
+        }
+
+        <span class="kw">let </span>resources = callback_resources
+            .get::&lt;PreviewResources&gt;()
+            .expect(<span class="string">&quot;Failed to get preview resources&quot;</span>);
+
+        queue.write_buffer(
+            <span class="kw-2">&amp;</span>resources.uniform_buffer,
+            <span class="number">0</span>,
+            bytemuck::cast_slice(<span class="kw-2">&amp;</span>[ShaderUniforms {
+                view: (Perspective3::new(<span class="self">self</span>.aspect_ratio, <span class="self">self</span>.scene.camera.fov, <span class="number">0.1</span>, <span class="number">1000.0</span>)
+                    .to_homogeneous()
+                    * Isometry3::look_at_rh(
+                        <span class="kw-2">&amp;</span><span class="self">self</span>.scene.camera.position,
+                        <span class="kw-2">&amp;</span><span class="self">self</span>.scene.camera.look_at,
+                        <span class="kw-2">&amp;</span><span class="self">self</span>.scene.camera.up,
+                    )
+                    .to_homogeneous())
+                .into(),
+                lights_count: <span class="self">self</span>.scene.lights.len() <span class="kw">as </span>u32,
+                ..Default::default()
+            }]),
+        );
+
+        queue.write_buffer(
+            <span class="kw-2">&amp;</span>resources.lights_buffer,
+            <span class="number">0</span>,
+            <span class="self">self</span>.scene
+                .lights
+                .iter()
+                .map(|l| ShaderLight {
+                    position: l.position.into(),
+                    color: l.color.into(),
+                    intensity: l.intensity,
+                    ..Default::default()
+                })
+                .chain(std::iter::repeat(ShaderLight::default()))
+                .take(MAX_LIGHTS)
+                .flat_map(|x| bytemuck::bytes_of(<span class="kw-2">&amp;</span>x).to_vec())
+                .collect::&lt;Vec&lt;u8&gt;&gt;()
+                .as_slice(),
+        );
+
+        queue.write_buffer(
+            <span class="kw-2">&amp;</span>resources.transforms_buffer,
+            <span class="number">0</span>,
+            <span class="self">self</span>.scene
+                .objects
+                .iter()
+                .map(|o| o.transform.to_homogeneous())
+                .chain(std::iter::repeat(Isometry3::identity().to_homogeneous()))
+                .take(MAX_OBJECTS)
+                .flat_map(|m| bytemuck::cast_slice(m.as_slice()).to_vec())
+                .collect::&lt;Vec&lt;u8&gt;&gt;()
+                .as_slice(),
+        );
+
+        Vec::new()
+    }
+
+    <span class="kw">fn </span>paint&lt;<span class="lifetime">&#39;a</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
+        _info: egui::PaintCallbackInfo,
+        render_pass: <span class="kw-2">&amp;mut </span>wgpu::RenderPass&lt;<span class="lifetime">&#39;a</span>&gt;,
+        callback_resources: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>egui_wgpu::CallbackResources,
+    ) {
+        <span class="macro">debug!</span>(<span class="string">&quot;Painting preview renderer&quot;</span>);
+
+        <span class="kw">let </span>resources = callback_resources
+            .get::&lt;PreviewResources&gt;()
+            .expect(<span class="string">&quot;Failed to get preview resources&quot;</span>);
+
+        <span class="kw">let </span>vertex_count = callback_resources
+            .get::&lt;VertexCount&gt;()
+            .expect(<span class="string">&quot;Failed to get vertex count&quot;</span>)
+            .<span class="number">0</span>;
+
+        render_pass.set_pipeline(<span class="kw-2">&amp;</span>resources.pipeline);
+        render_pass.set_bind_group(<span class="number">0</span>, <span class="kw-2">&amp;</span>resources.bind_group, <span class="kw-2">&amp;</span>[]);
+        render_pass.set_vertex_buffer(<span class="number">0</span>, resources.vertex_buffer.slice(..));
+        render_pass.draw(<span class="number">0</span>..vertex_count <span class="kw">as </span>u32, <span class="number">0</span>..<span class="number">1</span>);
     }
 }
 
 <span class="kw">impl </span>Drop <span class="kw">for </span>Preview {
-    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">unsafe </span>{
-            <span class="self">self</span>.gl.delete_program(<span class="self">self</span>.program);
-            <span class="self">self</span>.gl.delete_vertex_array(<span class="self">self</span>.vertex_array);
-            <span class="self">self</span>.gl.delete_buffer(<span class="self">self</span>.position_buffer);
-            <span class="self">self</span>.gl.delete_buffer(<span class="self">self</span>.normal_buffer);
-            <span class="self">self</span>.gl.delete_buffer(<span class="self">self</span>.color_buffer);
-            <span class="self">self</span>.gl.delete_buffer(<span class="self">self</span>.transform_index_buffer);
-            <span class="self">self</span>.gl.delete_buffer(<span class="self">self</span>.lights_ssbo);
-            <span class="self">self</span>.gl.delete_buffer(<span class="self">self</span>.transform_ssbo);
-        }
-    }
-}
-
-<span class="kw">fn </span>compile_program(
-    gl: <span class="kw-2">&amp;</span>glow::Context,
-    vertex_shader_src: <span class="kw-2">&amp;</span>str,
-    fragment_shader_src: <span class="kw-2">&amp;</span>str,
-) -&gt; anyhow::Result&lt;glow::Program&gt; {
-    <span class="comment">// create shader
-    </span><span class="kw">let </span>vertex_shader = <span class="macro">gl_result!</span>(
-        gl.create_shader(glow::VERTEX_SHADER),
-        <span class="string">&quot;Failed to create vertex shader&quot;
-    </span>)<span class="question-mark">?</span>;
-    <span class="macro">gl!</span>(gl.shader_source(vertex_shader, vertex_shader_src));
-    <span class="macro">gl!</span>(gl.compile_shader(vertex_shader));
-    <span class="kw">if </span>!<span class="macro">gl!</span>(gl.get_shader_compile_status(vertex_shader)) {
-        <span class="kw">let </span>log = <span class="macro">gl!</span>(gl.get_shader_info_log(vertex_shader));
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;Failed to compile vertex shader: {}&quot;</span>, log));
-    }
-
-    <span class="kw">let </span>fragment_shader = <span class="macro">gl_result!</span>(
-        gl.create_shader(glow::FRAGMENT_SHADER),
-        <span class="string">&quot;Failed to create fragment shader&quot;
-    </span>)<span class="question-mark">?</span>;
-    <span class="macro">gl!</span>(gl.shader_source(fragment_shader, fragment_shader_src));
-    <span class="macro">gl!</span>(gl.compile_shader(fragment_shader));
-    <span class="kw">if </span>!<span class="macro">gl!</span>(gl.get_shader_compile_status(fragment_shader)) {
-        <span class="kw">let </span>log = <span class="macro">gl!</span>(gl.get_shader_info_log(fragment_shader));
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow::anyhow!</span>(
-            <span class="string">&quot;Failed to compile fragment shader: {}&quot;</span>,
-            log
-        ));
-    }
-
-    <span class="comment">// create program
-    </span><span class="kw">let </span>program = <span class="macro">gl_result!</span>(gl.create_program(), <span class="string">&quot;Failed to create program&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">gl!</span>(gl.attach_shader(program, vertex_shader));
-    <span class="macro">gl!</span>(gl.attach_shader(program, fragment_shader));
-    <span class="macro">gl!</span>(gl.link_program(program));
-    <span class="kw">if </span>!<span class="macro">gl!</span>(gl.get_program_link_status(program)) {
-        <span class="kw">let </span>log = <span class="macro">gl!</span>(gl.get_program_info_log(program));
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;Failed to link program: {}&quot;</span>, log));
-    }
-
-    <span class="comment">// delete shaders
-    </span><span class="macro">gl!</span>(gl.delete_shader(vertex_shader));
-    <span class="macro">gl!</span>(gl.delete_shader(fragment_shader));
-
-    <span class="prelude-val">Ok</span>(program)
-}
-
-<span class="kw">fn </span>gl_log(source: u32, type_: u32, id: u32, severity: u32, msg: <span class="kw-2">&amp;</span>str) {
-    <span class="macro">log::log!</span>(
-        <span class="kw">match </span>severity {
-            glow::DEBUG_SEVERITY_HIGH =&gt; log::Level::Error,
-            glow::DEBUG_SEVERITY_MEDIUM =&gt; log::Level::Warn,
-            glow::DEBUG_SEVERITY_LOW =&gt; log::Level::Info,
-            glow::DEBUG_SEVERITY_NOTIFICATION =&gt; log::Level::Debug,
-            <span class="kw">_ </span>=&gt; log::Level::Trace,
-        },
-        <span class="string">&quot;[OpenGL] {} {} {} {}&quot;</span>,
-        <span class="kw">match </span>source {
-            glow::DEBUG_SOURCE_API =&gt; <span class="string">&quot;API&quot;</span>,
-            glow::DEBUG_SOURCE_WINDOW_SYSTEM =&gt; <span class="string">&quot;Window System&quot;</span>,
-            glow::DEBUG_SOURCE_SHADER_COMPILER =&gt; <span class="string">&quot;Shader Compiler&quot;</span>,
-            glow::DEBUG_SOURCE_THIRD_PARTY =&gt; <span class="string">&quot;Third Party&quot;</span>,
-            glow::DEBUG_SOURCE_APPLICATION =&gt; <span class="string">&quot;Application&quot;</span>,
-            glow::DEBUG_SOURCE_OTHER =&gt; <span class="string">&quot;Other&quot;</span>,
-            <span class="kw">_ </span>=&gt; <span class="string">&quot;Unknown&quot;</span>,
-        },
-        <span class="kw">match </span>type_ {
-            glow::DEBUG_TYPE_ERROR =&gt; <span class="string">&quot;Error&quot;</span>,
-            glow::DEBUG_TYPE_DEPRECATED_BEHAVIOR =&gt; <span class="string">&quot;Deprecated Behavior&quot;</span>,
-            glow::DEBUG_TYPE_UNDEFINED_BEHAVIOR =&gt; <span class="string">&quot;Undefined Behavior&quot;</span>,
-            glow::DEBUG_TYPE_PORTABILITY =&gt; <span class="string">&quot;Portability&quot;</span>,
-            glow::DEBUG_TYPE_PERFORMANCE =&gt; <span class="string">&quot;Performance&quot;</span>,
-            glow::DEBUG_TYPE_MARKER =&gt; <span class="string">&quot;Marker&quot;</span>,
-            glow::DEBUG_TYPE_PUSH_GROUP =&gt; <span class="string">&quot;Push Group&quot;</span>,
-            glow::DEBUG_TYPE_POP_GROUP =&gt; <span class="string">&quot;Pop Group&quot;</span>,
-            glow::DEBUG_TYPE_OTHER =&gt; <span class="string">&quot;Other&quot;</span>,
-            <span class="kw">_ </span>=&gt; <span class="string">&quot;Unknown&quot;</span>,
-        },
-        id,
-        msg
-    );
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {}
 }
 </code></pre></div></section></main></body></html>

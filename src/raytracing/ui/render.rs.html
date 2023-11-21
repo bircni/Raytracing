@@ -89,14 +89,21 @@
 <a href="#89" id="89">89</a>
 <a href="#90" id="90">90</a>
 <a href="#91" id="91">91</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{
-    borrow::BorrowMut,
-    sync::{atomic::Ordering, Arc},
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::{
+    atomic::{AtomicUsize, Ordering},
+    Arc,
 };
 
 <span class="kw">use </span>egui::{Color32, ColorImage, ImageData, TextureOptions};
 <span class="kw">use </span>log::{debug, info};
-<span class="kw">use </span>rayon::iter::{IntoParallelIterator, ParallelIterator};
+<span class="kw">use </span>rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 
 <span class="kw">use crate</span>::{raytracer::Raytracer, Color};
 
@@ -110,8 +117,8 @@
             TextureOptions::default(),
         );
 
-        <span class="kw">let </span><span class="kw-2">mut </span>texture = <span class="self">self</span>.render_texture.clone();
-        <span class="kw">let </span>raytracer = Raytracer::new(<span class="self">self</span>.scene.clone(), Color::new(<span class="number">0.1</span>, <span class="number">0.1</span>, <span class="number">0.1</span>), <span class="number">1e-6</span>);
+        <span class="kw">let </span>texture = <span class="self">self</span>.render_texture.clone();
+        <span class="kw">let </span>raytracer = Raytracer::new(<span class="self">self</span>.scene.clone(), Color::new(<span class="number">0.1</span>, <span class="number">0.1</span>, <span class="number">0.1</span>), <span class="number">1e-5</span>);
 
         <span class="kw">let </span>render_size = <span class="self">self</span>.render_size;
         <span class="kw">let </span>block_size = [render_size[<span class="number">0</span>] / <span class="number">10</span>, render_size[<span class="number">1</span>] / <span class="number">10</span>];
@@ -122,8 +129,13 @@
         <span class="self">self</span>.rendering_thread = <span class="prelude-val">Some</span>(std::thread::spawn(<span class="kw">move </span>|| {
             <span class="kw">let </span>start = std::time::Instant::now();
 
-            <span class="kw">for </span>y_block <span class="kw">in </span><span class="number">0</span>..render_size[<span class="number">1</span>] / block_size[<span class="number">1</span>] {
-                <span class="kw">for </span>x_block <span class="kw">in </span><span class="number">0</span>..render_size[<span class="number">0</span>] / block_size[<span class="number">0</span>] {
+            <span class="kw">let </span>blocks = AtomicUsize::new(<span class="number">0</span>);
+            (<span class="number">0</span>..render_size[<span class="number">1</span>] / block_size[<span class="number">1</span>])
+                .flat_map(|y_block| {
+                    (<span class="number">0</span>..render_size[<span class="number">0</span>] / block_size[<span class="number">0</span>]).map(<span class="kw">move </span>|x_block| (x_block, y_block))
+                })
+                .par_bridge()
+                .map(|(x_block, y_block)| {
                     <span class="macro">debug!</span>(
                         <span class="string">&quot;rendering block ({}, {}) of ({}, {}) ({:.2}%)&quot;</span>,
                         x_block,
@@ -152,7 +164,19 @@
                         })
                         .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-                    texture.borrow_mut().set_partial(
+                    rendering_progress.store(
+                        ((blocks.fetch_add(<span class="number">1</span>, Ordering::Relaxed) <span class="kw">as </span>f32)
+                            / (render_size[<span class="number">0</span>] / block_size[<span class="number">0</span>] * render_size[<span class="number">1</span>] / block_size[<span class="number">1</span>])
+                                <span class="kw">as </span>f32
+                            * u16::MAX <span class="kw">as </span>f32)
+                            .round() <span class="kw">as </span>u16,
+                        Ordering::Relaxed,
+                    );
+
+                    (pixels, x_block, y_block)
+                })
+                .for_each_with(texture, |texture, (pixels, x_block, y_block)| {
+                    texture.set_partial(
                         [x_block * block_size[<span class="number">0</span>], y_block * block_size[<span class="number">1</span>]],
                         ImageData::Color(Arc::new(ColorImage {
                             size: block_size,
@@ -161,18 +185,8 @@
                         TextureOptions::default(),
                     );
 
-                    rendering_progress.store(
-                        (((x_block + y_block * render_size[<span class="number">0</span>] / block_size[<span class="number">0</span>]) <span class="kw">as </span>f32
-                            / (render_size[<span class="number">0</span>] / block_size[<span class="number">0</span>] * render_size[<span class="number">1</span>] / block_size[<span class="number">1</span>])
-                                <span class="kw">as </span>f32)
-                            * u16::MAX <span class="kw">as </span>f32)
-                            .round() <span class="kw">as </span>u16,
-                        Ordering::Relaxed,
-                    );
-
                     ctx.request_repaint();
-                }
-            }
+                });
 
             rendering_progress.store(u16::MAX, Ordering::Relaxed);
 

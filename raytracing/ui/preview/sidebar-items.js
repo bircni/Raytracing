@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["compile_program","gl_log"],"macro":["gl","gl_result"],"struct":["Preview"]};
+window.SIDEBAR_ITEMS = {"constant":["MAX_LIGHTS","MAX_OBJECTS"],"struct":["Preview","PreviewRenderer","PreviewResources","ShaderLight","ShaderUniforms","VertexCount"]};

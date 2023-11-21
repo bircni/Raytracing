@@ -44,7 +44,6 @@
 <a href="#44" id="44">44</a>
 <a href="#45" id="45">45</a>
 <a href="#46" id="46">46</a>
-<a href="#47" id="47">47</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>eframe::{IconData, Renderer};
 <span class="kw">use </span>log::LevelFilter;
@@ -78,11 +77,10 @@
         <span class="string">&quot;RayTracer&quot;</span>,
         eframe::NativeOptions {
             initial_window_size: <span class="prelude-val">Some</span>(egui::vec2(<span class="number">1200.0</span>, <span class="number">900.0</span>)),
-            renderer: Renderer::Glow,
-            depth_buffer: <span class="number">1</span>,
+            renderer: Renderer::Wgpu,
+            depth_buffer: <span class="number">32</span>,
             icon_data: IconData::try_from_png_bytes(<span class="macro">include_bytes!</span>(<span class="string">&quot;../res/icon.png&quot;</span>)).ok(),
             app_id: <span class="prelude-val">Some</span>(<span class="string">&quot;raytracer&quot;</span>.to_owned()),
-            hardware_acceleration: eframe::HardwareAcceleration::Preferred,
             follow_system_theme: <span class="bool-val">true</span>,
             centered: <span class="bool-val">true</span>,
             ..Default::default()

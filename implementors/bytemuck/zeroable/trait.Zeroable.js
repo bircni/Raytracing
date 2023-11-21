@@ -1,3 +1,3 @@
 (function() {var implementors = {
-"raytracing":[["impl Zeroable for <a class=\"struct\" href=\"raytracing/scene/light/struct.Light.html\" title=\"struct raytracing::scene::light::Light\">Light</a>"]]
+"raytracing":[["impl Zeroable for <a class=\"struct\" href=\"raytracing/ui/preview/struct.ShaderUniforms.html\" title=\"struct raytracing::ui::preview::ShaderUniforms\">ShaderUniforms</a>"],["impl Zeroable for <a class=\"struct\" href=\"raytracing/ui/preview/struct.ShaderLight.html\" title=\"struct raytracing::ui::preview::ShaderLight\">ShaderLight</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

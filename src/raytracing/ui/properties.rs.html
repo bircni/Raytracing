@@ -314,6 +314,10 @@
     SidePanel, Slider, Ui,
 };
 <span class="kw">use </span>egui_file::FileDialog;
+<span class="kw">use </span>log::warn;
+<span class="kw">use </span>nalgebra::Similarity3;
+
+<span class="kw">use </span><span class="kw">crate</span>::scene::object::Object;
 
 <span class="kw">impl </span><span class="kw">super</span>::App {
     <span class="kw">pub fn </span>properties(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>Context, ui: <span class="kw-2">&amp;mut </span>Ui) {
@@ -454,7 +458,6 @@
 
                         <span class="kw">for </span>n <span class="kw">in </span>lights_to_remove {
                             <span class="self">self</span>.scene.lights.remove(n);
-                            <span class="macro">log::info!</span>(<span class="string">&quot;Removed light {}&quot;</span>, n);
                         }
 
                         ui.separator();
@@ -463,7 +466,6 @@
                                 .clicked()
                                 .then(|| {
                                     <span class="self">self</span>.scene.lights.push(Default::default());
-                                    <span class="macro">log::info!</span>(<span class="string">&quot;Added light&quot;</span>);
                                 });
                         });
                     });
@@ -584,7 +586,6 @@
 
                         <span class="kw">for </span>o <span class="kw">in </span>objects_to_remove {
                             <span class="self">self</span>.scene.objects.remove(o);
-                            <span class="macro">log::info!</span>(<span class="string">&quot;Removed object&quot;</span>);
                         }
 
                         ui.separator();
@@ -593,26 +594,25 @@
                                 .add(Button::new(RichText::new(<span class="string">&quot;+ Add Object&quot;</span>)).frame(<span class="bool-val">false</span>))
                                 .clicked()
                             {
-                                <span class="kw">let </span>dialog = FileDialog::open_file(<span class="self">self</span>.opened_file.clone());
-                                <span class="comment">//dialog.filter(Box::new(|path| path.ends_with(&quot;.obj&quot;))).open();
-                                </span><span class="kw">let </span><span class="kw-2">mut </span>dialog = dialog.filter(Box::new(|path| {
-                                    path.extension().is_some_and(|ext| ext == <span class="string">&quot;obj&quot;</span>)
-                                }));
+                                <span class="kw">let </span><span class="kw-2">mut </span>dialog = FileDialog::open_file(<span class="self">self</span>.opened_file.clone())
+                                    .filter(Box::new(|path| {
+                                        path.extension().is_some_and(|ext| ext == <span class="string">&quot;obj&quot;</span>)
+                                    }));
                                 dialog.open();
                                 <span class="self">self</span>.open_file_dialog = <span class="prelude-val">Some</span>(dialog);
-                                <span class="macro">log::info!</span>(<span class="string">&quot;Added object&quot;</span>);
                             }
+
                             <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.open_file_dialog {
                                 <span class="kw">if </span>dialog.show(ctx).selected() {
                                     <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = dialog.path() {
-                                        <span class="self">self</span>.opened_file = <span class="prelude-val">Some</span>(file.to_path_buf());
+                                        <span class="kw">match </span>Object::from_obj(file, Similarity3::identity()) {
+                                            <span class="prelude-val">Ok</span>(object) =&gt; {
+                                                <span class="self">self</span>.scene.objects.push(object);
+                                            }
+                                            <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;Failed to load object: {}&quot;</span>, e),
+                                        }
                                     }
                                 }
-                            }
-                            <span class="kw">if </span><span class="self">self</span>.opened_file.is_some() {
-                                ui.separator();
-                                ui.label(<span class="string">&quot;Opened object:&quot;</span>);
-                                ui.label(<span class="self">self</span>.opened_file.as_ref().unwrap().to_str().unwrap());
                             }
                         });
                     });

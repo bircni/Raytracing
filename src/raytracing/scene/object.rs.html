@@ -258,7 +258,7 @@
 }
 
 <span class="kw">impl </span>Object {
-    <span class="kw">fn </span>from_obj&lt;P: AsRef&lt;std::path::Path&gt;&gt;(
+    <span class="kw">pub fn </span>from_obj&lt;P: AsRef&lt;std::path::Path&gt;&gt;(
         path: P,
         transform: Similarity3&lt;f32&gt;,
     ) -&gt; anyhow::Result&lt;Object&gt; {

@@ -215,12 +215,17 @@
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>preview;
 <span class="kw">mod </span>properties;
 <span class="kw">mod </span>render;
 
 <span class="kw">use </span><span class="self">self</span>::preview::Preview;
 <span class="kw">use </span><span class="kw">crate</span>::scene::Scene;
+<span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>eframe::CreationContext;
 <span class="kw">use </span>egui::{
     pos2, Align, Button, CursorIcon, Frame, Layout, ProgressBar, Rect, Rounding, Stroke, Vec2,
@@ -247,7 +252,12 @@
 
 <span class="kw">impl </span>App {
     <span class="kw">pub fn </span>new(cc: <span class="kw-2">&amp;</span>CreationContext, scene: Scene) -&gt; anyhow::Result&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>preview = Preview::new(cc.gl.as_ref().unwrap().clone())<span class="question-mark">?</span>;
+        <span class="kw">let </span>preview = Preview::new(
+            cc.wgpu_render_state
+                .as_ref()
+                .context(<span class="string">&quot;Failed to get wgpu context&quot;</span>)<span class="question-mark">?</span>,
+        )
+        .context(<span class="string">&quot;Failed to create preview&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>render_size = [<span class="number">1920</span>, <span class="number">1080</span>];
 
@@ -346,9 +356,7 @@
                         <span class="kw">let </span>(response, painter) =
                             ui.allocate_painter(ui.available_size(), Sense::drag());
 
-                        <span class="self">self</span>.preview
-                            .paint(response.rect, <span class="kw-2">&amp;</span>painter, <span class="kw-2">&amp;</span><span class="self">self</span>.scene)
-                            .expect(<span class="string">&quot;Painting failed&quot;</span>);
+                        painter.add(<span class="self">self</span>.preview.paint(response.rect, <span class="kw-2">&amp;</span><span class="self">self</span>.scene));
                     });
                 }
 
