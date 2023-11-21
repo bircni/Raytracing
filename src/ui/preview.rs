@@ -1,387 +1,406 @@
-#![allow(unsafe_code)]
+use std::borrow::Cow;
 
-use std::sync::Arc;
-
-use anyhow::Context;
-use egui::{PaintCallback, PaintCallbackInfo, Painter, Rect, Shape};
-use egui_glow::{glow::HasContext, CallbackFn};
+use egui::{Rect, Shape};
+use egui_wgpu::{
+    wgpu::{
+        self,
+        util::{BufferInitDescriptor, DeviceExt},
+        BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+        BindGroupLayoutEntry, BindingType, Buffer, BufferBindingType, BufferDescriptor,
+        BufferUsages, ColorTargetState, ColorWrites, CompareFunction, DepthBiasState,
+        DepthStencilState, FragmentState, FrontFace, MultisampleState, PipelineLayoutDescriptor,
+        PolygonMode, PrimitiveState, PrimitiveTopology, RenderPipeline, RenderPipelineDescriptor,
+        ShaderModuleDescriptor, ShaderSource, ShaderStages, StencilState, TextureFormat,
+        VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    },
+    Callback, CallbackTrait,
+};
 use log::debug;
 use nalgebra::{Isometry3, Perspective3};
 
 use crate::scene::Scene;
-use eframe::glow;
 
-#[derive(Debug)]
-pub struct Preview {
-    gl: Arc<glow::Context>,
-    program: glow::NativeProgram,
-    vertex_array: glow::NativeVertexArray,
-    position_buffer: glow::NativeBuffer,
-    normal_buffer: glow::NativeBuffer,
-    color_buffer: glow::NativeBuffer,
-    transform_index_buffer: glow::NativeBuffer,
-    lights_ssbo: glow::NativeBuffer,
-    transform_ssbo: glow::NativeBuffer,
-}
+const MAX_LIGHTS: usize = 255;
+const MAX_OBJECTS: usize = 255;
 
-macro_rules! gl_result {
-    ($expr: expr, $err: expr) => {
-        unsafe { $expr }
-            .map_err(|e| anyhow::anyhow!(e))
-            .context($err)
-    };
-}
-
-macro_rules! gl {
-    ($expr: expr) => {
-        unsafe { $expr }
-    };
-}
+pub struct Preview {}
 
 impl Preview {
-    pub fn new(gl: Arc<glow::Context>) -> anyhow::Result<Self> {
-        let program = compile_program(
-            &gl,
-            include_str!("preview.vertex.glsl"),
-            include_str!("preview.fragment.glsl"),
-        )?;
+    pub fn new(render_state: &egui_wgpu::RenderState) -> anyhow::Result<Self> {
+        let device = &render_state.device;
 
-        let vertex_array = gl_result!(gl.create_vertex_array(), "Failed to create vertex array")?;
-        gl!(gl.bind_vertex_array(Some(vertex_array)));
+        let shader = device.create_shader_module(ShaderModuleDescriptor {
+            label: Some("preview vertex shader"),
+            source: ShaderSource::Wgsl(Cow::from(include_str!("preview.wgsl"))),
+        });
 
-        let position_buffer = gl_result!(gl.create_buffer(), "Failed to create vertex buffer")?;
-        gl!(gl.bind_buffer(glow::ARRAY_BUFFER, Some(position_buffer)));
-        gl!(gl.vertex_attrib_pointer_f32(0, 3, glow::FLOAT, false, 0, 0));
-        gl!(gl.enable_vertex_attrib_array(0));
+        let bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+            label: Some("preview bind group layout"),
+            entries: &[
+                BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: ShaderStages::VERTEX_FRAGMENT,
+                    ty: BindingType::Buffer {
+                        ty: BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: ShaderStages::FRAGMENT,
+                    ty: BindingType::Buffer {
+                        ty: BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: ShaderStages::VERTEX,
+                    ty: BindingType::Buffer {
+                        ty: BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+            ],
+        });
 
-        let normal_buffer = gl_result!(gl.create_buffer(), "Failed to create normal buffer")?;
-        gl!(gl.bind_buffer(glow::ARRAY_BUFFER, Some(normal_buffer)));
-        gl!(gl.vertex_attrib_pointer_f32(1, 3, glow::FLOAT, false, 0, 0));
-        gl!(gl.enable_vertex_attrib_array(1));
+        let pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
+            label: Some("preview pipeline layout"),
+            bind_group_layouts: &[&bind_group_layout],
+            push_constant_ranges: &[],
+        });
 
-        let color_buffer = gl_result!(gl.create_buffer(), "Failed to create color buffer")?;
-        gl!(gl.bind_buffer(glow::ARRAY_BUFFER, Some(color_buffer)));
-        gl!(gl.vertex_attrib_pointer_f32(2, 3, glow::FLOAT, false, 0, 0));
-        gl!(gl.enable_vertex_attrib_array(2));
+        let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
+            label: Some("preview pipeline"),
+            layout: Some(&pipeline_layout),
+            vertex: VertexState {
+                module: &shader,
+                entry_point: "vs_main",
+                buffers: &[VertexBufferLayout {
+                    // 3x f32 for position, 3x f32 for normal, 3x f32 for color, 1x u32 for transform index
+                    array_stride: std::mem::size_of::<f32>() as u64 * (3 + 3 + 3 + 1),
+                    step_mode: VertexStepMode::Vertex,
+                    attributes: &[
+                        // position
+                        VertexAttribute {
+                            format: VertexFormat::Float32x3,
+                            offset: 0,
+                            shader_location: 0,
+                        },
+                        // normal
+                        VertexAttribute {
+                            format: VertexFormat::Float32x3,
+                            offset: std::mem::size_of::<f32>() as u64 * 3,
+                            shader_location: 1,
+                        },
+                        // color
+                        VertexAttribute {
+                            format: VertexFormat::Float32x3,
+                            offset: std::mem::size_of::<f32>() as u64 * 6,
+                            shader_location: 2,
+                        },
+                        // transform index
+                        VertexAttribute {
+                            format: VertexFormat::Uint32,
+                            offset: std::mem::size_of::<f32>() as u64 * 9,
+                            shader_location: 3,
+                        },
+                    ],
+                }],
+            },
+            fragment: Some(FragmentState {
+                module: &shader,
+                entry_point: "fs_main",
+                targets: &[Some(ColorTargetState {
+                    format: render_state.target_format,
+                    blend: None,
+                    write_mask: ColorWrites::ALL,
+                })],
+            }),
+            primitive: PrimitiveState {
+                topology: PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: FrontFace::Ccw,
+                cull_mode: None,
+                unclipped_depth: false,
+                polygon_mode: PolygonMode::Fill,
+                conservative: false,
+            },
+            depth_stencil: Some(DepthStencilState {
+                format: TextureFormat::Depth32Float,
+                depth_write_enabled: true,
+                depth_compare: CompareFunction::Less,
+                stencil: StencilState::default(),
+                bias: DepthBiasState::default(),
+            }),
+            multisample: MultisampleState::default(),
+            multiview: None,
+        });
 
-        let transform_index_buffer = gl_result!(
-            gl.create_buffer(),
-            "Failed to create transform index buffer"
-        )?;
-        gl!(gl.bind_buffer(glow::ARRAY_BUFFER, Some(transform_index_buffer)));
-        gl!(gl.vertex_attrib_pointer_i32(3, 1, glow::UNSIGNED_INT, 0, 0));
-        gl!(gl.enable_vertex_attrib_array(3));
+        let uniform_buffer = device.create_buffer(&BufferDescriptor {
+            label: Some("preview uniform buffer"),
+            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+            size: std::mem::size_of::<ShaderUniforms>() as u64,
+            mapped_at_creation: false,
+        });
 
-        let lights_ssbo = gl_result!(gl.create_buffer(), "Failed to create lights SSBO")?;
+        let lights_buffer = device.create_buffer(&BufferDescriptor {
+            label: Some("preview lights buffer"),
+            usage: BufferUsages::STORAGE | BufferUsages::COPY_DST,
+            size: std::mem::size_of::<ShaderLight>() as u64 * MAX_LIGHTS as u64,
+            mapped_at_creation: false,
+        });
 
-        let transform_ssbo = gl_result!(gl.create_buffer(), "Failed to create transform SSBO")?;
+        let transforms_buffer = device.create_buffer(&BufferDescriptor {
+            label: Some("preview transforms buffer"),
+            usage: BufferUsages::STORAGE | BufferUsages::COPY_DST,
+            size: std::mem::size_of::<[[f32; 4]; 4]>() as u64 * MAX_OBJECTS as u64,
+            mapped_at_creation: false,
+        });
 
-        gl!(gl.bind_vertex_array(None));
-        gl!(gl.bind_buffer(glow::ARRAY_BUFFER, None));
+        let bind_group = device.create_bind_group(&BindGroupDescriptor {
+            label: Some("preview bind group"),
+            layout: &bind_group_layout,
+            entries: &[
+                BindGroupEntry {
+                    binding: 0,
+                    resource: uniform_buffer.as_entire_binding(),
+                },
+                BindGroupEntry {
+                    binding: 1,
+                    resource: lights_buffer.as_entire_binding(),
+                },
+                BindGroupEntry {
+                    binding: 2,
+                    resource: transforms_buffer.as_entire_binding(),
+                },
+            ],
+        });
 
-        gl!(gl.enable(glow::DEBUG_OUTPUT));
-        gl!(gl.debug_message_callback(gl_log));
+        let vertex_buffer = device.create_buffer(&BufferDescriptor {
+            label: Some("preview vertex buffer"),
+            usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
+            size: 0,
+            mapped_at_creation: false,
+        });
 
-        Ok(Self {
-            gl,
-            program,
-            vertex_array,
-            position_buffer,
-            normal_buffer,
-            color_buffer,
-            transform_index_buffer,
-            lights_ssbo,
-            transform_ssbo,
-        })
+        let resources = PreviewResources {
+            bind_group,
+            pipeline,
+            vertex_buffer,
+            uniform_buffer,
+            lights_buffer,
+            transforms_buffer,
+        };
+
+        render_state
+            .renderer
+            .write()
+            .callback_resources
+            .insert(resources);
+
+        render_state
+            .renderer
+            .write()
+            .callback_resources
+            .insert(VertexCount(0));
+
+        Ok(Self {})
     }
 
-    fn callback(
-        &self,
-        triangle_count: usize,
-    ) -> impl Fn(PaintCallbackInfo, &egui_glow::Painter) + Sync + Send + 'static {
-        let program = self.program;
-        let vertex_array = self.vertex_array;
-        let lights_ssbo = self.lights_ssbo;
-        let transform_ssbo = self.transform_ssbo;
-
-        move |_info, painter| unsafe {
-            let gl = painter.gl().as_ref();
-
-            // setup
-            gl.use_program(Some(program));
-            gl.enable(glow::DEPTH_TEST);
-            gl.disable(glow::CULL_FACE);
-
-            // clear
-            gl.clear_color(0.0, 0.0, 0.0, 1.0);
-            gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
-
-            // bind lights ssbo
-            gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, Some(lights_ssbo));
-            gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, 0, Some(lights_ssbo));
-
-            // bind transform ssbo
-            gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, Some(transform_ssbo));
-            gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, 1, Some(transform_ssbo));
-
-            // draw
-            gl.bind_vertex_array(Some(vertex_array));
-            gl.draw_arrays(glow::TRIANGLES, 0, triangle_count as i32 * 3);
-
-            // unbind
-            gl.use_program(None);
-            gl.bind_vertex_array(None);
-            gl.bind_buffer(glow::ARRAY_BUFFER, None);
-            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
-            gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, None);
-            gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, 0, None);
-            gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, 1, None);
-
-            // flush
-            gl.flush();
-        }
-    }
-
-    fn upload_scene(&self, rect: Rect, scene: &Scene) -> anyhow::Result<usize> {
-        gl!(self.gl.use_program(Some(self.program)));
-
-        let view_matrix_uniform = gl!(self.gl.get_uniform_location(self.program, "view"))
-            .context("Failed to get uniform location for view_matrix")?;
-
-        // set view matrix
-        gl!(self.gl.uniform_matrix_4_f32_slice(
-            Some(&view_matrix_uniform),
-            false,
-            (Perspective3::new(rect.aspect_ratio(), scene.camera.fov, 0.1, 1000.0)
-                .to_homogeneous()
-                * Isometry3::look_at_rh(
-                    &scene.camera.position,
-                    &scene.camera.look_at,
-                    &scene.camera.up,
-                )
-                .to_homogeneous())
-            .as_slice()
-        ));
-
-        // upload positions
-        let positions = scene
-            .objects
-            .iter()
-            .flat_map(|o| o.triangles.iter())
-            .flat_map(|t| [t.a, t.b, t.c])
-            .flat_map(|v| [v.x, v.y, v.z])
-            .collect::<Vec<f32>>();
-        gl!(self
-            .gl
-            .bind_buffer(glow::ARRAY_BUFFER, Some(self.position_buffer)));
-        gl!(self.gl.buffer_data_u8_slice(
-            glow::ARRAY_BUFFER,
-            bytemuck::cast_slice(positions.as_slice()),
-            glow::STATIC_DRAW
-        ));
-        debug!("Uploaded {} positions", positions.len() / 3);
-
-        // upload normals
-        let normals = scene
-            .objects
-            .iter()
-            .flat_map(|o| o.triangles.iter())
-            .flat_map(|t| [t.a_normal, t.b_normal, t.c_normal])
-            .flat_map(|v| [v.x, v.y, v.z])
-            .collect::<Vec<f32>>();
-        gl!(self
-            .gl
-            .bind_buffer(glow::ARRAY_BUFFER, Some(self.normal_buffer)));
-        gl!(self.gl.buffer_data_u8_slice(
-            glow::ARRAY_BUFFER,
-            bytemuck::cast_slice(normals.as_slice()),
-            glow::STATIC_DRAW
-        ));
-        debug!("Uploaded {} normals", normals.len() / 3);
-
-        // upload colors
-        let colors = scene
-            .objects
-            .iter()
-            .flat_map(|o| o.triangles.iter().map(move |t| (o, t)))
-            .map(|(o, t)| {
-                t.material_index
-                    .and_then(|i| o.materials.get(i))
-                    .and_then(|m| m.kd)
-                    .unwrap_or([1.0, 1.0, 1.0])
-            })
-            .flat_map(|c| [c, c, c])
-            .flatten()
-            .collect::<Vec<f32>>();
-        gl!(self
-            .gl
-            .bind_buffer(glow::ARRAY_BUFFER, Some(self.color_buffer)));
-        gl!(self.gl.buffer_data_u8_slice(
-            glow::ARRAY_BUFFER,
-            bytemuck::cast_slice(colors.as_slice()),
-            glow::STATIC_DRAW
-        ));
-        debug!("Uploaded {} colors", colors.len() / 3);
-
-        // upload transform indices
-        let transform_indices = scene
-            .objects
-            .iter()
-            .enumerate()
-            .flat_map(|(i, o)| std::iter::repeat(i as u32).take(o.triangles.len() * 3))
-            .collect::<Vec<u32>>();
-        gl!(self
-            .gl
-            .bind_buffer(glow::ARRAY_BUFFER, Some(self.transform_index_buffer)));
-        gl!(self.gl.buffer_data_u8_slice(
-            glow::ARRAY_BUFFER,
-            bytemuck::cast_slice(transform_indices.as_slice()),
-            glow::STATIC_DRAW
-        ));
-        debug!("Uploaded {} transform indices", transform_indices.len());
-
-        // upload lights
-        gl!(self
-            .gl
-            .bind_buffer(glow::SHADER_STORAGE_BUFFER, Some(self.lights_ssbo)));
-        gl!(self.gl.buffer_data_u8_slice(
-            glow::SHADER_STORAGE_BUFFER,
-            bytemuck::cast_slice(scene.lights.as_slice()),
-            glow::STATIC_DRAW
-        ));
-        debug!("Uploaded {} lights", scene.lights.len());
-
-        // upload transforms
-        let transforms = scene
-            .objects
-            .iter()
-            .flat_map(|o| o.transform.to_homogeneous().as_slice().to_vec())
-            .collect::<Vec<f32>>();
-        gl!(self
-            .gl
-            .bind_buffer(glow::SHADER_STORAGE_BUFFER, Some(self.transform_ssbo)));
-        gl!(self.gl.buffer_data_u8_slice(
-            glow::SHADER_STORAGE_BUFFER,
-            bytemuck::cast_slice(transforms.as_slice()),
-            glow::STATIC_DRAW
-        ));
-        debug!("Uploaded {} transforms", transforms.len() / 16);
-
-        gl!(self.gl.bind_buffer(glow::ARRAY_BUFFER, None));
-        gl!(self.gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, None));
-        gl!(self.gl.use_program(None));
-
-        Ok(scene.objects.iter().map(|o| o.triangles.len()).sum())
-    }
-
-    pub fn paint(&self, rect: Rect, painter: &Painter, scene: &Scene) -> anyhow::Result<()> {
-        let triangle_count = self.upload_scene(rect, scene)?;
-        debug!("Uploaded {} triangles", triangle_count);
-
-        painter.add(Shape::Callback(PaintCallback {
+    pub fn paint(&self, rect: Rect, scene: &Scene) -> egui::Shape {
+        Shape::Callback(Callback::new_paint_callback(
             rect,
-            callback: Arc::new(CallbackFn::new(self.callback(triangle_count))),
-        }));
+            PreviewRenderer {
+                aspect_ratio: rect.aspect_ratio(),
+                scene: scene.clone(),
+            },
+        ))
+    }
+}
 
-        Ok(())
+struct PreviewResources {
+    bind_group: BindGroup,
+    pipeline: RenderPipeline,
+    vertex_buffer: Buffer,
+    uniform_buffer: Buffer,
+    lights_buffer: Buffer,
+    transforms_buffer: Buffer,
+}
+
+struct PreviewRenderer {
+    scene: Scene,
+    aspect_ratio: f32,
+}
+
+struct VertexCount(usize);
+
+#[repr(C, align(16))]
+#[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
+struct ShaderUniforms {
+    view: [[f32; 4]; 4],
+    lights_count: u32,
+    _pad: [u32; 3],
+}
+
+#[repr(C, align(16))]
+#[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
+struct ShaderLight {
+    position: [f32; 3],
+    _pad: [f32; 1],
+    color: [f32; 3],
+    intensity: f32,
+}
+
+impl CallbackTrait for PreviewRenderer {
+    fn prepare(
+        &self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        _egui_encoder: &mut wgpu::CommandEncoder,
+        callback_resources: &mut egui_wgpu::CallbackResources,
+    ) -> Vec<wgpu::CommandBuffer> {
+        debug!("Preparing preview renderer");
+
+        let vertex_count = callback_resources.get::<VertexCount>().unwrap();
+
+        let vertices = self
+            .scene
+            .objects
+            .iter()
+            .map(|o| o.triangles.len())
+            .sum::<usize>()
+            * 3;
+
+        if vertex_count.0 != vertices {
+            debug!("New vertex buffer from {} to {}", vertex_count.0, vertices);
+
+            let resources = callback_resources
+                .get_mut::<PreviewResources>()
+                .expect("Failed to get preview resources");
+
+            resources.vertex_buffer.destroy();
+
+            resources.vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
+                label: Some("preview vertex buffer"),
+                usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
+                contents: self
+                    .scene
+                    .objects
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(i, o)| o.triangles.iter().map(move |t| (i, o, t)))
+                    .map(|(i, o, t)| (i, t.material_index.and_then(|i| o.materials.get(i)), t))
+                    .flat_map(|(i, m, t)| {
+                        let color = m.as_ref().and_then(|m| m.kd).unwrap_or([0.9; 3]);
+                        [
+                            bytemuck::bytes_of(&[t.a.into(), t.a_normal.into(), color]),
+                            bytemuck::bytes_of(&(i as u32)),
+                            bytemuck::bytes_of(&[t.b.into(), t.b_normal.into(), color]),
+                            bytemuck::bytes_of(&(i as u32)),
+                            bytemuck::bytes_of(&[t.c.into(), t.c_normal.into(), color]),
+                            bytemuck::bytes_of(&(i as u32)),
+                        ]
+                        .into_iter()
+                        .flatten()
+                        .copied()
+                        .collect::<Vec<u8>>()
+                    })
+                    .collect::<Vec<u8>>()
+                    .as_slice(),
+            });
+
+            callback_resources.insert(VertexCount(vertices));
+        }
+
+        let resources = callback_resources
+            .get::<PreviewResources>()
+            .expect("Failed to get preview resources");
+
+        queue.write_buffer(
+            &resources.uniform_buffer,
+            0,
+            bytemuck::cast_slice(&[ShaderUniforms {
+                view: (Perspective3::new(self.aspect_ratio, self.scene.camera.fov, 0.1, 1000.0)
+                    .to_homogeneous()
+                    * Isometry3::look_at_rh(
+                        &self.scene.camera.position,
+                        &self.scene.camera.look_at,
+                        &self.scene.camera.up,
+                    )
+                    .to_homogeneous())
+                .into(),
+                lights_count: self.scene.lights.len() as u32,
+                ..Default::default()
+            }]),
+        );
+
+        queue.write_buffer(
+            &resources.lights_buffer,
+            0,
+            self.scene
+                .lights
+                .iter()
+                .map(|l| ShaderLight {
+                    position: l.position.into(),
+                    color: l.color.into(),
+                    intensity: l.intensity,
+                    ..Default::default()
+                })
+                .chain(std::iter::repeat(ShaderLight::default()))
+                .take(MAX_LIGHTS)
+                .flat_map(|x| bytemuck::bytes_of(&x).to_vec())
+                .collect::<Vec<u8>>()
+                .as_slice(),
+        );
+
+        queue.write_buffer(
+            &resources.transforms_buffer,
+            0,
+            self.scene
+                .objects
+                .iter()
+                .map(|o| o.transform.to_homogeneous())
+                .chain(std::iter::repeat(Isometry3::identity().to_homogeneous()))
+                .take(MAX_OBJECTS)
+                .flat_map(|m| bytemuck::cast_slice(m.as_slice()).to_vec())
+                .collect::<Vec<u8>>()
+                .as_slice(),
+        );
+
+        Vec::new()
+    }
+
+    fn paint<'a>(
+        &'a self,
+        _info: egui::PaintCallbackInfo,
+        render_pass: &mut wgpu::RenderPass<'a>,
+        callback_resources: &'a egui_wgpu::CallbackResources,
+    ) {
+        debug!("Painting preview renderer");
+
+        let resources = callback_resources
+            .get::<PreviewResources>()
+            .expect("Failed to get preview resources");
+
+        let vertex_count = callback_resources
+            .get::<VertexCount>()
+            .expect("Failed to get vertex count")
+            .0;
+
+        render_pass.set_pipeline(&resources.pipeline);
+        render_pass.set_bind_group(0, &resources.bind_group, &[]);
+        render_pass.set_vertex_buffer(0, resources.vertex_buffer.slice(..));
+        render_pass.draw(0..vertex_count as u32, 0..1);
     }
 }
 
 impl Drop for Preview {
-    fn drop(&mut self) {
-        unsafe {
-            self.gl.delete_program(self.program);
-            self.gl.delete_vertex_array(self.vertex_array);
-            self.gl.delete_buffer(self.position_buffer);
-            self.gl.delete_buffer(self.normal_buffer);
-            self.gl.delete_buffer(self.color_buffer);
-            self.gl.delete_buffer(self.transform_index_buffer);
-            self.gl.delete_buffer(self.lights_ssbo);
-            self.gl.delete_buffer(self.transform_ssbo);
-        }
-    }
-}
-
-fn compile_program(
-    gl: &glow::Context,
-    vertex_shader_src: &str,
-    fragment_shader_src: &str,
-) -> anyhow::Result<glow::Program> {
-    // create shader
-    let vertex_shader = gl_result!(
-        gl.create_shader(glow::VERTEX_SHADER),
-        "Failed to create vertex shader"
-    )?;
-    gl!(gl.shader_source(vertex_shader, vertex_shader_src));
-    gl!(gl.compile_shader(vertex_shader));
-    if !gl!(gl.get_shader_compile_status(vertex_shader)) {
-        let log = gl!(gl.get_shader_info_log(vertex_shader));
-        return Err(anyhow::anyhow!("Failed to compile vertex shader: {}", log));
-    }
-
-    let fragment_shader = gl_result!(
-        gl.create_shader(glow::FRAGMENT_SHADER),
-        "Failed to create fragment shader"
-    )?;
-    gl!(gl.shader_source(fragment_shader, fragment_shader_src));
-    gl!(gl.compile_shader(fragment_shader));
-    if !gl!(gl.get_shader_compile_status(fragment_shader)) {
-        let log = gl!(gl.get_shader_info_log(fragment_shader));
-        return Err(anyhow::anyhow!(
-            "Failed to compile fragment shader: {}",
-            log
-        ));
-    }
-
-    // create program
-    let program = gl_result!(gl.create_program(), "Failed to create program")?;
-    gl!(gl.attach_shader(program, vertex_shader));
-    gl!(gl.attach_shader(program, fragment_shader));
-    gl!(gl.link_program(program));
-    if !gl!(gl.get_program_link_status(program)) {
-        let log = gl!(gl.get_program_info_log(program));
-        return Err(anyhow::anyhow!("Failed to link program: {}", log));
-    }
-
-    // delete shaders
-    gl!(gl.delete_shader(vertex_shader));
-    gl!(gl.delete_shader(fragment_shader));
-
-    Ok(program)
-}
-
-fn gl_log(source: u32, type_: u32, id: u32, severity: u32, msg: &str) {
-    log::log!(
-        match severity {
-            glow::DEBUG_SEVERITY_HIGH => log::Level::Error,
-            glow::DEBUG_SEVERITY_MEDIUM => log::Level::Warn,
-            glow::DEBUG_SEVERITY_LOW => log::Level::Info,
-            glow::DEBUG_SEVERITY_NOTIFICATION => log::Level::Debug,
-            _ => log::Level::Trace,
-        },
-        "[OpenGL] {} {} {} {}",
-        match source {
-            glow::DEBUG_SOURCE_API => "API",
-            glow::DEBUG_SOURCE_WINDOW_SYSTEM => "Window System",
-            glow::DEBUG_SOURCE_SHADER_COMPILER => "Shader Compiler",
-            glow::DEBUG_SOURCE_THIRD_PARTY => "Third Party",
-            glow::DEBUG_SOURCE_APPLICATION => "Application",
-            glow::DEBUG_SOURCE_OTHER => "Other",
-            _ => "Unknown",
-        },
-        match type_ {
-            glow::DEBUG_TYPE_ERROR => "Error",
-            glow::DEBUG_TYPE_DEPRECATED_BEHAVIOR => "Deprecated Behavior",
-            glow::DEBUG_TYPE_UNDEFINED_BEHAVIOR => "Undefined Behavior",
-            glow::DEBUG_TYPE_PORTABILITY => "Portability",
-            glow::DEBUG_TYPE_PERFORMANCE => "Performance",
-            glow::DEBUG_TYPE_MARKER => "Marker",
-            glow::DEBUG_TYPE_PUSH_GROUP => "Push Group",
-            glow::DEBUG_TYPE_POP_GROUP => "Pop Group",
-            glow::DEBUG_TYPE_OTHER => "Other",
-            _ => "Unknown",
-        },
-        id,
-        msg
-    );
+    fn drop(&mut self) {}
 }

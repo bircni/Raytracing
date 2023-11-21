@@ -1,11 +1,11 @@
-use std::{
-    borrow::BorrowMut,
-    sync::{atomic::Ordering, Arc},
+use std::sync::{
+    atomic::{AtomicUsize, Ordering},
+    Arc,
 };
 
 use egui::{Color32, ColorImage, ImageData, TextureOptions};
 use log::{debug, info};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 
 use crate::{raytracer::Raytracer, Color};
 
@@ -19,8 +19,8 @@ impl super::App {
             TextureOptions::default(),
         );
 
-        let mut texture = self.render_texture.clone();
-        let raytracer = Raytracer::new(self.scene.clone(), Color::new(0.1, 0.1, 0.1), 1e-6);
+        let texture = self.render_texture.clone();
+        let raytracer = Raytracer::new(self.scene.clone(), Color::new(0.1, 0.1, 0.1), 1e-5);
 
         let render_size = self.render_size;
         let block_size = [render_size[0] / 10, render_size[1] / 10];
@@ -31,8 +31,13 @@ impl super::App {
         self.rendering_thread = Some(std::thread::spawn(move || {
             let start = std::time::Instant::now();
 
-            for y_block in 0..render_size[1] / block_size[1] {
-                for x_block in 0..render_size[0] / block_size[0] {
+            let blocks = AtomicUsize::new(0);
+            (0..render_size[1] / block_size[1])
+                .flat_map(|y_block| {
+                    (0..render_size[0] / block_size[0]).map(move |x_block| (x_block, y_block))
+                })
+                .par_bridge()
+                .map(|(x_block, y_block)| {
                     debug!(
                         "rendering block ({}, {}) of ({}, {}) ({:.2}%)",
                         x_block,
@@ -61,7 +66,19 @@ impl super::App {
                         })
                         .collect::<Vec<_>>();
 
-                    texture.borrow_mut().set_partial(
+                    rendering_progress.store(
+                        ((blocks.fetch_add(1, Ordering::Relaxed) as f32)
+                            / (render_size[0] / block_size[0] * render_size[1] / block_size[1])
+                                as f32
+                            * u16::MAX as f32)
+                            .round() as u16,
+                        Ordering::Relaxed,
+                    );
+
+                    (pixels, x_block, y_block)
+                })
+                .for_each_with(texture, |texture, (pixels, x_block, y_block)| {
+                    texture.set_partial(
                         [x_block * block_size[0], y_block * block_size[1]],
                         ImageData::Color(Arc::new(ColorImage {
                             size: block_size,
@@ -70,18 +87,8 @@ impl super::App {
                         TextureOptions::default(),
                     );
 
-                    rendering_progress.store(
-                        (((x_block + y_block * render_size[0] / block_size[0]) as f32
-                            / (render_size[0] / block_size[0] * render_size[1] / block_size[1])
-                                as f32)
-                            * u16::MAX as f32)
-                            .round() as u16,
-                        Ordering::Relaxed,
-                    );
-
                     ctx.request_repaint();
-                }
-            }
+                });
 
             rendering_progress.store(u16::MAX, Ordering::Relaxed);
 
