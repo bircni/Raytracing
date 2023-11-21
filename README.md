@@ -19,7 +19,6 @@ Feel free to download the latest release from [releases](https://github.com/birc
 **Requirements**:
 
 - Rust <https://www.rust-lang.org/tools/install>
-- OpenGL > 4.3
 
 Build with:
 
