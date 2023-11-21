@@ -1,8 +1,6 @@
 [![Linux](https://github.com/bircni/Raytracing/actions/workflows/rust-linux.yml/badge.svg)](https://github.com/bircni/Raytracing/actions/workflows/rust-linux.yml)
 [![Windows](https://github.com/bircni/Raytracing/actions/workflows/rust-windows.yml/badge.svg)](https://github.com/bircni/Raytracing/actions/workflows/rust-windows.yml)
-<!--
 [![MacOS](https://github.com/bircni/Raytracing/actions/workflows/rust-macos.yml/badge.svg)](https://github.com/bircni/Raytracing/actions/workflows/rust-macos.yml)
--->
 
 # Raytracing
 
