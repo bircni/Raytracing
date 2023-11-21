@@ -199,6 +199,22 @@
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>preview;
 <span class="kw">mod </span>properties;
 <span class="kw">mod </span>render;
@@ -206,7 +222,9 @@
 <span class="kw">use </span><span class="self">self</span>::preview::Preview;
 <span class="kw">use </span><span class="kw">crate</span>::scene::Scene;
 <span class="kw">use </span>eframe::CreationContext;
-<span class="kw">use </span>egui::{pos2, Align, CursorIcon, Frame, Layout, ProgressBar, Rect, Rounding, Stroke, Vec2};
+<span class="kw">use </span>egui::{
+    pos2, Align, Button, CursorIcon, Frame, Layout, ProgressBar, Rect, Rounding, Stroke, Vec2,
+};
 <span class="kw">use </span>egui::{CentralPanel, Color32, ColorImage, ImageData, Sense, TextureHandle, TextureOptions};
 <span class="kw">use </span>egui_file::FileDialog;
 <span class="kw">use </span>std::path::PathBuf;
@@ -289,6 +307,20 @@
                 }
 
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    <span class="kw">if </span>ui
+                        .add_enabled(<span class="self">self</span>.current_tab == <span class="number">0</span>, Button::new(<span class="string">&quot;Render&quot;</span>))
+                        .on_hover_text(<span class="string">&quot;Start rendering&quot;</span>)
+                        .clicked()
+                    {
+                        <span class="self">self</span>.render(ctx.clone());
+                        <span class="self">self</span>.current_tab = <span class="number">1</span>;
+                    }
+                    <span class="kw">if </span><span class="self">self</span>.rendering_progress.load(Ordering::Relaxed) == u16::MAX
+                        &amp;&amp; ui.button(<span class="string">&quot;Export&quot;</span>).clicked()
+                    {
+                        <span class="macro">log::info!</span>(<span class="string">&quot;Exporting image&quot;</span>);
+                        <span class="comment">//Export the shown image to a file
+                    </span>}
                     ui.add(
                         ProgressBar::new(
                             <span class="self">self</span>.rendering_progress.load(Ordering::Relaxed) <span class="kw">as </span>f32
