@@ -59,7 +59,7 @@ impl<'de> serde::Deserialize<'de> for Object {
 }
 
 impl Object {
-    fn from_obj<P: AsRef<std::path::Path>>(
+    pub fn from_obj<P: AsRef<std::path::Path>>(
         path: P,
         transform: Similarity3<f32>,
     ) -> anyhow::Result<Object> {

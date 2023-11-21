@@ -35,7 +35,6 @@ impl App {
             cc.wgpu_render_state
                 .as_ref()
                 .context("Failed to get wgpu context")?,
-            &scene,
         )
         .context("Failed to create preview")?;
 

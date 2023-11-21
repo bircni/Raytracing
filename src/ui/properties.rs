@@ -3,6 +3,10 @@ use egui::{
     SidePanel, Slider, Ui,
 };
 use egui_file::FileDialog;
+use log::warn;
+use nalgebra::Similarity3;
+
+use crate::scene::object::Object;
 
 impl super::App {
     pub fn properties(&mut self, ctx: &Context, ui: &mut Ui) {
@@ -143,7 +147,6 @@ impl super::App {
 
                         for n in lights_to_remove {
                             self.scene.lights.remove(n);
-                            log::info!("Removed light {}", n);
                         }
 
                         ui.separator();
@@ -152,7 +155,6 @@ impl super::App {
                                 .clicked()
                                 .then(|| {
                                     self.scene.lights.push(Default::default());
-                                    log::info!("Added light");
                                 });
                         });
                     });
@@ -273,7 +275,6 @@ impl super::App {
 
                         for o in objects_to_remove {
                             self.scene.objects.remove(o);
-                            log::info!("Removed object");
                         }
 
                         ui.separator();
@@ -282,26 +283,25 @@ impl super::App {
                                 .add(Button::new(RichText::new("+ Add Object")).frame(false))
                                 .clicked()
                             {
-                                let dialog = FileDialog::open_file(self.opened_file.clone());
-                                //dialog.filter(Box::new(|path| path.ends_with(".obj"))).open();
-                                let mut dialog = dialog.filter(Box::new(|path| {
-                                    path.extension().is_some_and(|ext| ext == "obj")
-                                }));
+                                let mut dialog = FileDialog::open_file(self.opened_file.clone())
+                                    .filter(Box::new(|path| {
+                                        path.extension().is_some_and(|ext| ext == "obj")
+                                    }));
                                 dialog.open();
                                 self.open_file_dialog = Some(dialog);
-                                log::info!("Added object");
                             }
+
                             if let Some(dialog) = &mut self.open_file_dialog {
                                 if dialog.show(ctx).selected() {
                                     if let Some(file) = dialog.path() {
-                                        self.opened_file = Some(file.to_path_buf());
+                                        match Object::from_obj(file, Similarity3::identity()) {
+                                            Ok(object) => {
+                                                self.scene.objects.push(object);
+                                            }
+                                            Err(e) => warn!("Failed to load object: {}", e),
+                                        }
                                     }
                                 }
-                            }
-                            if self.opened_file.is_some() {
-                                ui.separator();
-                                ui.label("Opened object:");
-                                ui.label(self.opened_file.as_ref().unwrap().to_str().unwrap());
                             }
                         });
                     });
