@@ -1,6 +1,6 @@
 use egui::{
-    color_picker, Button, Context, DragValue, FontFamily, RichText, ScrollArea, SidePanel, Slider,
-    Ui,
+    color_picker, Align, Button, Context, DragValue, FontFamily, Layout, RichText, ScrollArea,
+    SidePanel, Slider, Ui,
 };
 use egui_file::FileDialog;
 
@@ -84,13 +84,34 @@ impl super::App {
                             );
                         });
 
+                        let mut lights_to_remove = Vec::new();
+
                         for (n, light) in self.scene.lights.iter_mut().enumerate() {
                             ui.separator();
-                            ui.label(
-                                RichText::new(format!("Light {n}"))
-                                    .size(14.0)
-                                    .family(FontFamily::Monospace),
-                            );
+                            ui.horizontal(|ui| {
+                                ui.label(
+                                    RichText::new(format!("Light {n}"))
+                                        .size(14.0)
+                                        .family(FontFamily::Monospace),
+                                );
+                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                    if ui
+                                        .add_sized(
+                                            [20., 20.],
+                                            Button::new(
+                                                RichText::new("x")
+                                                    .size(14.0)
+                                                    .family(FontFamily::Monospace),
+                                            )
+                                            .frame(false)
+                                            .small(),
+                                        )
+                                        .clicked()
+                                    {
+                                        lights_to_remove.push(n);
+                                    }
+                                });
+                            });
 
                             ui.label("Position:");
                             ui.horizontal(|ui| {
@@ -119,6 +140,21 @@ impl super::App {
                             ui.label("Color:");
                             color_picker::color_edit_button_rgb(ui, light.color.as_mut());
                         }
+
+                        for n in lights_to_remove {
+                            self.scene.lights.remove(n);
+                            log::info!("Removed light {}", n);
+                        }
+
+                        ui.separator();
+                        ui.vertical_centered(|ui| {
+                            ui.add(Button::new(RichText::new("+ Add Light")).frame(false))
+                                .clicked()
+                                .then(|| {
+                                    self.scene.lights.push(Default::default());
+                                    log::info!("Added light");
+                                });
+                        });
                     });
 
                     ui.add_space(10.0);
@@ -132,17 +168,36 @@ impl super::App {
                             );
                         });
 
-                        for o in self.scene.objects.iter_mut() {
+                        let mut objects_to_remove = Vec::new();
+
+                        for (n, o) in self.scene.objects.iter_mut().enumerate() {
                             ui.separator();
 
-                            ui.label(
-                                RichText::new(format!(
-                                    "Object with {} triangles",
-                                    o.triangles.len()
-                                ))
-                                .size(14.0)
-                                .family(FontFamily::Monospace),
-                            );
+                            ui.horizontal(|ui| {
+                                ui.label(
+                                    //"Object with {} triangles"
+                                    RichText::new(format!("Object ({} ▲)", o.triangles.len()))
+                                        .size(14.0)
+                                        .family(FontFamily::Monospace),
+                                );
+                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                    if ui
+                                        .add_sized(
+                                            [20., 20.],
+                                            Button::new(
+                                                RichText::new("x")
+                                                    .size(14.0)
+                                                    .family(FontFamily::Monospace),
+                                            )
+                                            .frame(false)
+                                            .small(),
+                                        )
+                                        .clicked()
+                                    {
+                                        objects_to_remove.push(n);
+                                    }
+                                });
+                            });
 
                             ui.label("Position");
                             ui.horizontal(|ui| {
@@ -215,51 +270,40 @@ impl super::App {
                                 });
                             });
                         }
-                    });
 
-                    ui.add_space(10.0);
-
-                    //File Group
-                    ui.group(|ui| {
-                        ui.vertical_centered(|ui| {
-                            ui.label(RichText::new("File").size(16.0));
-                        });
-                        ui.separator();
-                        if (ui.button("Open")).clicked() {
-                            let mut dialog = FileDialog::open_file(self.opened_file.clone());
-                            //dialog.filter(Box::new(|path| path.ends_with(".obj"))).open();
-                            dialog.open();
-                            self.open_file_dialog = Some(dialog);
+                        for o in objects_to_remove {
+                            self.scene.objects.remove(o);
+                            log::info!("Removed object");
                         }
-                        if let Some(dialog) = &mut self.open_file_dialog {
-                            if dialog.show(ctx).selected() {
-                                if let Some(file) = dialog.path() {
-                                    self.opened_file = Some(file.to_path_buf());
+
+                        ui.separator();
+                        ui.vertical_centered(|ui| {
+                            if ui
+                                .add(Button::new(RichText::new("+ Add Object")).frame(false))
+                                .clicked()
+                            {
+                                let dialog = FileDialog::open_file(self.opened_file.clone());
+                                //dialog.filter(Box::new(|path| path.ends_with(".obj"))).open();
+                                let mut dialog = dialog.filter(Box::new(|path| {
+                                    path.extension().is_some_and(|ext| ext == "obj")
+                                }));
+                                dialog.open();
+                                self.open_file_dialog = Some(dialog);
+                                log::info!("Added object");
+                            }
+                            if let Some(dialog) = &mut self.open_file_dialog {
+                                if dialog.show(ctx).selected() {
+                                    if let Some(file) = dialog.path() {
+                                        self.opened_file = Some(file.to_path_buf());
+                                    }
                                 }
                             }
-                        }
-                        if self.opened_file.is_some() {
-                            ui.label("Opened file:");
-                            ui.label(self.opened_file.as_ref().unwrap().to_str().unwrap());
-                        }
-                    });
-
-                    ui.add_space(10.0);
-
-                    // Render Button
-                    ui.vertical_centered(|ui| {
-                        ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
-                            ui.add_sized(
-                                // TODO: wegmachen
-                                [120., 40.],
-                                Button::new(RichText::new("Render").size(16.0)),
-                            )
-                            .clicked()
-                            .then(|| {
-                                self.render(ctx.clone());
-                                self.current_tab = 1;
-                            });
-                        })
+                            if self.opened_file.is_some() {
+                                ui.separator();
+                                ui.label("Opened object:");
+                                ui.label(self.opened_file.as_ref().unwrap().to_str().unwrap());
+                            }
+                        });
                     });
                 })
             });

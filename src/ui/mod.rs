@@ -6,7 +6,9 @@ use self::preview::Preview;
 use crate::scene::Scene;
 use anyhow::Context;
 use eframe::CreationContext;
-use egui::{pos2, Align, CursorIcon, Frame, Layout, ProgressBar, Rect, Rounding, Stroke, Vec2};
+use egui::{
+    pos2, Align, Button, CursorIcon, Frame, Layout, ProgressBar, Rect, Rounding, Stroke, Vec2,
+};
 use egui::{CentralPanel, Color32, ColorImage, ImageData, Sense, TextureHandle, TextureOptions};
 use egui_file::FileDialog;
 use std::path::PathBuf;
@@ -95,6 +97,20 @@ impl eframe::App for App {
                 }
 
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if ui
+                        .add_enabled(self.current_tab == 0, Button::new("Render"))
+                        .on_hover_text("Start rendering")
+                        .clicked()
+                    {
+                        self.render(ctx.clone());
+                        self.current_tab = 1;
+                    }
+                    if self.rendering_progress.load(Ordering::Relaxed) == u16::MAX
+                        && ui.button("Export").clicked()
+                    {
+                        log::info!("Exporting image");
+                        //Export the shown image to a file
+                    }
                     ui.add(
                         ProgressBar::new(
                             self.rendering_progress.load(Ordering::Relaxed) as f32
