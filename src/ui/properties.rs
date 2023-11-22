@@ -79,6 +79,29 @@ impl super::App {
 
                     ui.add_space(10.0);
 
+                    //Scene Setting Group
+                    ui.group(|ui| {
+                        ui.vertical_centered(|ui| {
+                            ui.label(RichText::new("Scene Settings").size(16.0));
+                        });
+
+                        ui.separator();
+
+                        ui.vertical(|ui| {
+                            ui.label("Background Color:");
+                            color_picker::color_edit_button_rgb(ui, self.scene.settings.background_color.as_mut());
+                        });
+
+                        ui.separator();
+                        ui.label("Ambient Light:");
+                        ui.add(
+                            Slider::new(&mut 0.0, 0.0..=1.0).clamp_to_range(true),
+                        );
+                        ui.separator();
+                        
+                    });
+                    ui.add_space(10.0);
+
                     //Lighting Group
                     ui.group(|ui| {
                         ui.vertical_centered(|ui| {
@@ -91,12 +114,6 @@ impl super::App {
                         let mut lights_to_remove = Vec::new();
 
                         for (n, light) in self.scene.lights.iter_mut().enumerate() {
-                            ui.separator();
-
-                            ui.label("Ambient Light:");
-                            ui.add(
-                                Slider::new(&mut 0.0, 0.0..=1.0).clamp_to_range(true),
-                            );
                             ui.separator();
 
                             ui.horizontal(|ui| {

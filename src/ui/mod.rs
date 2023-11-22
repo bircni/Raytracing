@@ -3,6 +3,7 @@ mod properties;
 mod render;
 
 use self::preview::Preview;
+use crate::Color;
 use crate::scene::Scene;
 use anyhow::Context;
 use eframe::CreationContext;
@@ -140,7 +141,14 @@ impl eframe::App for App {
                 0 => {
                     self.properties(ctx, ui);
 
-                    Frame::canvas(ui.style()).outer_margin(10.0).show(ui, |ui| {
+                    Frame::canvas(ui.style())
+                    .outer_margin(10.0)
+                    .fill(Color32::from_rgb(
+                        self.scene.settings.background_color[0] as u8,
+                        self.scene.settings.background_color[1] as u8,
+                        self.scene.settings.background_color[2] as u8,
+                    ))
+                    .show(ui, |ui| {
                         let (response, painter) =
                             ui.allocate_painter(ui.available_size(), Sense::drag());
 
@@ -150,6 +158,7 @@ impl eframe::App for App {
 
                 1 => {
                     Frame::canvas(ui.style()).outer_margin(10.0).show(ui, |ui| {
+                    
                         let (response, painter) =
                             ui.allocate_painter(ui.available_size(), Sense::drag());
 

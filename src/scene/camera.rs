@@ -1,7 +1,7 @@
 use nalgebra::{Point3, Rotation3, Vector3};
 use serde::Deserialize;
 
-use crate::raytracer::Ray;
+use crate::{raytracer::Ray, Color};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Camera {
