@@ -144,9 +144,9 @@ impl eframe::App for App {
                     Frame::canvas(ui.style())
                     .outer_margin(10.0)
                     .fill(Color32::from_rgb(
-                        self.scene.settings.background_color[0] as u8,
-                        self.scene.settings.background_color[1] as u8,
-                        self.scene.settings.background_color[2] as u8,
+                        (self.scene.settings.background_color[0] * 255.0) as u8,
+                        (self.scene.settings.background_color[1] * 255.0) as u8,
+                        (self.scene.settings.background_color[2] * 255.0) as u8,
                     ))
                     .show(ui, |ui| {
                         let (response, painter) =

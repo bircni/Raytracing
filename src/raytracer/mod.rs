@@ -26,10 +26,10 @@ pub struct Raytracer {
 impl Raytracer {
     const NO_MATERIAL_COLOR: Color = Color::new(0.9, 0.9, 0.9);
 
-    pub fn new(scene: Scene, background_color: Vector3<f32>, delta: f32) -> Raytracer {
+    pub fn new(scene: Scene, delta: f32) -> Raytracer {
         Raytracer {
+            background_color:scene.settings.background_color,
             scene,
-            background_color,
             delta,
         }
     }
