@@ -121,7 +121,7 @@
 <span class="kw">use </span>log::{debug, info};
 <span class="kw">use </span>rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 
-<span class="kw">use crate</span>::{raytracer::Raytracer, Color};
+<span class="kw">use </span><span class="kw">crate</span>::raytracer::Raytracer;
 
 <span class="kw">impl </span><span class="kw">super</span>::App {
     <span class="kw">pub fn </span>render(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: egui::Context) {
@@ -134,7 +134,7 @@
         );
 
         <span class="kw">let </span>texture = <span class="self">self</span>.render_texture.clone();
-        <span class="kw">let </span>raytracer = Raytracer::new(<span class="self">self</span>.scene.clone(), Color::new(<span class="number">0.1</span>, <span class="number">0.1</span>, <span class="number">0.1</span>), <span class="number">1e-5</span>);
+        <span class="kw">let </span>raytracer = Raytracer::new(<span class="self">self</span>.scene.clone(), <span class="number">1e-5</span>);
 
         <span class="kw">let </span>render_size = <span class="self">self</span>.render_size;
         <span class="kw">let </span>block_size = [render_size[<span class="number">0</span>] / <span class="number">10</span>, render_size[<span class="number">1</span>] / <span class="number">10</span>];

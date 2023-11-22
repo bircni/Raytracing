@@ -404,6 +404,11 @@
 <a href="#404" id="404">404</a>
 <a href="#405" id="405">405</a>
 <a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::borrow::Cow;
 
 <span class="kw">use </span>egui::{Rect, Shape};
@@ -653,6 +658,9 @@
     view: [[f32; <span class="number">4</span>]; <span class="number">4</span>],
     lights_count: u32,
     _pad: [u32; <span class="number">3</span>],
+    ambient_color: [f32; <span class="number">3</span>],
+    ambient_intensity: f32,
+    
 }
 
 <span class="attr">#[repr(C, align(<span class="number">16</span>))]
@@ -743,6 +751,8 @@
                     .to_homogeneous())
                 .into(),
                 lights_count: <span class="self">self</span>.scene.lights.len() <span class="kw">as </span>u32,
+                ambient_color: <span class="self">self</span>.scene.settings.ambient_color.into(),
+                ambient_intensity: <span class="self">self</span>.scene.settings.ambient_intensity,
                 ..Default::default()
             }]),
         );

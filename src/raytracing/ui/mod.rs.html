@@ -243,11 +243,20 @@
 <a href="#243" id="243">243</a>
 <a href="#244" id="244">244</a>
 <a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>preview;
 <span class="kw">mod </span>properties;
 <span class="kw">mod </span>render;
 
 <span class="kw">use </span><span class="self">self</span>::preview::Preview;
+
 <span class="kw">use </span><span class="kw">crate</span>::scene::Scene;
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>eframe::CreationContext;
@@ -400,12 +409,19 @@
                 <span class="number">0 </span>=&gt; {
                     <span class="self">self</span>.properties(ctx, ui);
 
-                    Frame::canvas(ui.style()).outer_margin(<span class="number">10.0</span>).show(ui, |ui| {
-                        <span class="kw">let </span>(response, painter) =
-                            ui.allocate_painter(ui.available_size(), Sense::drag());
+                    Frame::canvas(ui.style())
+                        .outer_margin(<span class="number">10.0</span>)
+                        .fill(Color32::from_rgb(
+                            (<span class="self">self</span>.scene.settings.background_color[<span class="number">0</span>] * <span class="number">255.0</span>) <span class="kw">as </span>u8,
+                            (<span class="self">self</span>.scene.settings.background_color[<span class="number">1</span>] * <span class="number">255.0</span>) <span class="kw">as </span>u8,
+                            (<span class="self">self</span>.scene.settings.background_color[<span class="number">2</span>] * <span class="number">255.0</span>) <span class="kw">as </span>u8,
+                        ))
+                        .show(ui, |ui| {
+                            <span class="kw">let </span>(response, painter) =
+                                ui.allocate_painter(ui.available_size(), Sense::drag());
 
-                        painter.add(<span class="self">self</span>.preview.paint(response.rect, <span class="kw-2">&amp;</span><span class="self">self</span>.scene));
-                    });
+                            painter.add(<span class="self">self</span>.preview.paint(response.rect, <span class="kw-2">&amp;</span><span class="self">self</span>.scene));
+                        });
                 }
 
                 <span class="number">1 </span>=&gt; {

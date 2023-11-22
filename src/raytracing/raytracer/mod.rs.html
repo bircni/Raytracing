@@ -116,10 +116,10 @@
 <span class="kw">impl </span>Raytracer {
     <span class="kw">const </span>NO_MATERIAL_COLOR: Color = Color::new(<span class="number">0.9</span>, <span class="number">0.9</span>, <span class="number">0.9</span>);
 
-    <span class="kw">pub fn </span>new(scene: Scene, background_color: Vector3&lt;f32&gt;, delta: f32) -&gt; Raytracer {
+    <span class="kw">pub fn </span>new(scene: Scene, delta: f32) -&gt; Raytracer {
         Raytracer {
+            background_color:scene.settings.background_color,
             scene,
-            background_color,
             delta,
         }
     }
@@ -140,7 +140,7 @@
                 .map(Color::from)
                 .unwrap_or(<span class="self">Self</span>::NO_MATERIAL_COLOR);
 
-            <span class="kw">let </span><span class="kw-2">mut </span>color = Color::zeros();
+            <span class="kw">let </span><span class="kw-2">mut </span>color = <span class="self">self</span>.scene.settings.ambient_color.component_mul(<span class="kw-2">&amp;</span>diffuse) * <span class="self">self</span>.scene.settings.ambient_intensity;
 
             <span class="kw">for </span>light <span class="kw">in </span><span class="self">self</span>.scene.lights.iter() {
                 <span class="kw">let </span>light_direction = (light.position - hit.point).normalize();
