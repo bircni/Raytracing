@@ -12,9 +12,10 @@ use egui::{
 };
 use egui::{CentralPanel, Color32, ColorImage, ImageData, Sense, TextureHandle, TextureOptions};
 use egui_file::FileDialog;
+use image::{ImageBuffer, RgbImage};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU16, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 pub struct App {
     current_tab: usize,
@@ -24,10 +25,12 @@ pub struct App {
     rendering_thread: Option<std::thread::JoinHandle<()>>,
     opened_file: Option<PathBuf>,
     open_file_dialog: Option<FileDialog>,
+    save_img_dialog: Option<FileDialog>,
     render_size: [usize; 2],
     rendering_progress: Arc<AtomicU16>,
     preview_zoom: f32,
     preview_position: Vec2,
+    image_buffer: Arc<Mutex<RgbImage>>,
 }
 
 impl App {
@@ -54,6 +57,12 @@ impl App {
             TextureOptions::default(),
         );
 
+        // Create a dummy ImageBuffer for illustration purposes
+        let image_buffer = Arc::new(Mutex::new(ImageBuffer::new(
+            render_size[0] as u32,
+            render_size[1] as u32,
+        )));
+
         Ok(Self {
             current_tab: 0,
             scene,
@@ -64,8 +73,10 @@ impl App {
             rendering_thread: None,
             opened_file: None,
             open_file_dialog: None,
+            save_img_dialog: None,
             render_size,
             rendering_progress: Arc::new(AtomicU16::new(0)),
+            image_buffer,
         })
     }
 }
@@ -97,26 +108,31 @@ impl eframe::App for App {
                 }
 
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ui
-                        .add_enabled(self.current_tab == 0, Button::new("Render"))
-                        .on_hover_text("Start rendering")
-                        .clicked()
-                    {
-                        self.render(ctx.clone());
-                        self.current_tab = 1;
-                    }
-                    if self.rendering_progress.load(Ordering::Relaxed) == u16::MAX
+                    if self.current_tab == 0 {
+                        if ui
+                            .add(Button::new("Render"))
+                            .on_hover_text("Start rendering")
+                            .clicked()
+                        {
+                            self.render(ctx.clone());
+                            self.current_tab = 1;
+                        }
+                    } else if self.rendering_progress.load(Ordering::Relaxed) == u16::MAX
                         && ui.button("Export").clicked()
                     {
                         log::info!("Exporting image");
-                        //Export the shown image to a file
+                        let mut dialog = FileDialog::save_file(None).default_filename("Rendered-Image.png");
+                        dialog.open();
+                        self.save_img_dialog = Some(dialog);
                     }
 
-                    if self.rendering_progress.load(Ordering::Relaxed) == u16::MAX
-                        && ui.button("Save").clicked()
-                    {
-                        log::info!("Saving Lights Configs");
-                        //Save the lights configs to the config.yaml file
+                    if let Some(dialog) = &mut self.save_img_dialog {
+                        if dialog.show(ctx).selected() {
+                            if let Some(file) = dialog.path() {
+                                log::info!("Saving image to {:?}", file);
+                                self.image_buffer.lock().unwrap().save(file).unwrap();
+                            }
+                        }
                     }
 
                     ui.add(

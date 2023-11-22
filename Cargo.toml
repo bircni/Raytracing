@@ -16,10 +16,7 @@ anyhow = "1.0.75"
 chrono = { version = "0.4.31", default-features = false, features = ["clock"] }
 
 # image loading and saving
-image = { version = "0.24.7", default-features = false, features = [
-    "png",
-    "jpeg",
-] }
+image = { version = "0.24.7", default-features = false, features = ["png", "jpeg"] }
 
 # logging
 log = "0.4.20"
