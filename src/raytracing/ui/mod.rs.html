@@ -219,6 +219,30 @@
 <a href="#219" id="219">219</a>
 <a href="#220" id="220">220</a>
 <a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>preview;
 <span class="kw">mod </span>properties;
 <span class="kw">mod </span>render;
@@ -232,9 +256,10 @@
 };
 <span class="kw">use </span>egui::{CentralPanel, Color32, ColorImage, ImageData, Sense, TextureHandle, TextureOptions};
 <span class="kw">use </span>egui_file::FileDialog;
+<span class="kw">use </span>image::{ImageBuffer, RgbImage};
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::sync::atomic::{AtomicU16, Ordering};
-<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::sync::{Arc, Mutex};
 
 <span class="kw">pub struct </span>App {
     current_tab: usize,
@@ -244,10 +269,12 @@
     rendering_thread: <span class="prelude-ty">Option</span>&lt;std::thread::JoinHandle&lt;()&gt;&gt;,
     opened_file: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
     open_file_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
+    save_img_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
     render_size: [usize; <span class="number">2</span>],
     rendering_progress: Arc&lt;AtomicU16&gt;,
     preview_zoom: f32,
     preview_position: Vec2,
+    image_buffer: Arc&lt;Mutex&lt;RgbImage&gt;&gt;,
 }
 
 <span class="kw">impl </span>App {
@@ -274,6 +301,12 @@
             TextureOptions::default(),
         );
 
+        <span class="comment">// Create a dummy ImageBuffer for illustration purposes
+        </span><span class="kw">let </span>image_buffer = Arc::new(Mutex::new(ImageBuffer::new(
+            render_size[<span class="number">0</span>] <span class="kw">as </span>u32,
+            render_size[<span class="number">1</span>] <span class="kw">as </span>u32,
+        )));
+
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             current_tab: <span class="number">0</span>,
             scene,
@@ -284,8 +317,10 @@
             rendering_thread: <span class="prelude-val">None</span>,
             opened_file: <span class="prelude-val">None</span>,
             open_file_dialog: <span class="prelude-val">None</span>,
+            save_img_dialog: <span class="prelude-val">None</span>,
             render_size,
             rendering_progress: Arc::new(AtomicU16::new(<span class="number">0</span>)),
+            image_buffer,
         })
     }
 }
@@ -317,20 +352,33 @@
                 }
 
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    <span class="kw">if </span>ui
-                        .add_enabled(<span class="self">self</span>.current_tab == <span class="number">0</span>, Button::new(<span class="string">&quot;Render&quot;</span>))
-                        .on_hover_text(<span class="string">&quot;Start rendering&quot;</span>)
-                        .clicked()
-                    {
-                        <span class="self">self</span>.render(ctx.clone());
-                        <span class="self">self</span>.current_tab = <span class="number">1</span>;
-                    }
-                    <span class="kw">if </span><span class="self">self</span>.rendering_progress.load(Ordering::Relaxed) == u16::MAX
+                    <span class="kw">if </span><span class="self">self</span>.current_tab == <span class="number">0 </span>{
+                        <span class="kw">if </span>ui
+                            .add(Button::new(<span class="string">&quot;Render&quot;</span>))
+                            .on_hover_text(<span class="string">&quot;Start rendering&quot;</span>)
+                            .clicked()
+                        {
+                            <span class="self">self</span>.render(ctx.clone());
+                            <span class="self">self</span>.current_tab = <span class="number">1</span>;
+                        }
+                    } <span class="kw">else if </span><span class="self">self</span>.rendering_progress.load(Ordering::Relaxed) == u16::MAX
                         &amp;&amp; ui.button(<span class="string">&quot;Export&quot;</span>).clicked()
                     {
                         <span class="macro">log::info!</span>(<span class="string">&quot;Exporting image&quot;</span>);
-                        <span class="comment">//Export the shown image to a file
-                    </span>}
+                        <span class="kw">let </span><span class="kw-2">mut </span>dialog = FileDialog::save_file(<span class="prelude-val">None</span>).default_filename(<span class="string">&quot;Rendered-Image.png&quot;</span>);
+                        dialog.open();
+                        <span class="self">self</span>.save_img_dialog = <span class="prelude-val">Some</span>(dialog);
+                    }
+
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.save_img_dialog {
+                        <span class="kw">if </span>dialog.show(ctx).selected() {
+                            <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = dialog.path() {
+                                <span class="macro">log::info!</span>(<span class="string">&quot;Saving image to {:?}&quot;</span>, file);
+                                <span class="self">self</span>.image_buffer.lock().unwrap().save(file).unwrap();
+                            }
+                        }
+                    }
+
                     ui.add(
                         ProgressBar::new(
                             <span class="self">self</span>.rendering_progress.load(Ordering::Relaxed) <span class="kw">as </span>f32
