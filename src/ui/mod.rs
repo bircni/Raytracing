@@ -110,6 +110,15 @@ impl eframe::App for App {
                         log::info!("Exporting image");
                         //Export the shown image to a file
                     }
+
+                    if self.rendering_progress.load(Ordering::Relaxed) == u16::MAX
+                        && ui.button("Save").clicked()
+                    {
+                        log::info!("Saving Lights Configs");
+                        //Save the lights configs to the config.yaml file
+                        
+                    }
+
                     ui.add(
                         ProgressBar::new(
                             self.rendering_progress.load(Ordering::Relaxed) as f32
