@@ -6,7 +6,7 @@ use egui_file::FileDialog;
 use log::warn;
 use nalgebra::Similarity3;
 
-use crate::scene::object::Object;
+use crate::scene::{object::Object, light::Light};
 
 impl super::App {
     pub fn properties(&mut self, ctx: &Context, ui: &mut Ui) {
@@ -79,6 +79,33 @@ impl super::App {
 
                     ui.add_space(10.0);
 
+                    //Scene Setting Group
+                    ui.group(|ui| {
+                        ui.vertical_centered(|ui| {
+                            ui.label(RichText::new("Scene Settings").size(16.0));
+                        });
+
+                        ui.separator();
+
+                        ui.vertical(|ui| {
+                            ui.label("Background Color:");
+                            color_picker::color_edit_button_rgb(ui, self.scene.settings.background_color.as_mut());
+                        });
+
+                        ui.separator();
+                        ui.label("Ambient Color:");
+                        color_picker::color_edit_button_rgb(ui, self.scene.settings.ambient_color.as_mut());
+                        ui.separator();
+
+                        ui.label("Ambient Intensitiy:");
+                        ui.add(
+                            Slider::new(&mut self.scene.settings.ambient_intensity, 0.0..=1.0).clamp_to_range(true),
+                        );
+                        ui.separator();
+                        
+                    });
+                    ui.add_space(10.0);
+
                     //Lighting Group
                     ui.group(|ui| {
                         ui.vertical_centered(|ui| {
@@ -92,6 +119,7 @@ impl super::App {
 
                         for (n, light) in self.scene.lights.iter_mut().enumerate() {
                             ui.separator();
+
                             ui.horizontal(|ui| {
                                 ui.label(
                                     RichText::new(format!("Light {n}"))
@@ -154,7 +182,12 @@ impl super::App {
                             ui.add(Button::new(RichText::new("+ Add Light")).frame(false))
                                 .clicked()
                                 .then(|| {
-                                    self.scene.lights.push(Default::default());
+
+                                    self.scene.lights.push(Light {
+                                        position: nalgebra::Point3::new(5.0, 2.0, 2.0),
+                                        intensity: 3.0,
+                                        color: nalgebra::Vector3::new(1.0, 1.0, 1.0),
+                                    });
                                 });
                         });
                     });

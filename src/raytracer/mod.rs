@@ -26,10 +26,10 @@ pub struct Raytracer {
 impl Raytracer {
     const NO_MATERIAL_COLOR: Color = Color::new(0.9, 0.9, 0.9);
 
-    pub fn new(scene: Scene, background_color: Vector3<f32>, delta: f32) -> Raytracer {
+    pub fn new(scene: Scene, delta: f32) -> Raytracer {
         Raytracer {
+            background_color:scene.settings.background_color,
             scene,
-            background_color,
             delta,
         }
     }
@@ -50,7 +50,7 @@ impl Raytracer {
                 .map(Color::from)
                 .unwrap_or(Self::NO_MATERIAL_COLOR);
 
-            let mut color = Color::zeros();
+            let mut color = self.scene.settings.ambient_color.component_mul(&diffuse) * self.scene.settings.ambient_intensity;
 
             for light in self.scene.lights.iter() {
                 let light_direction = (light.position - hit.point).normalize();
