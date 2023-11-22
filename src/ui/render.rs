@@ -4,6 +4,7 @@ use std::sync::{
 };
 
 use egui::{Color32, ColorImage, ImageData, TextureOptions};
+
 use log::{debug, info};
 use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 
@@ -25,6 +26,7 @@ impl super::App {
         let render_size = self.render_size;
         let block_size = [render_size[0] / 10, render_size[1] / 10];
         let rendering_progress = self.rendering_progress.clone();
+        let image_buffer = self.image_buffer.clone();
 
         rendering_progress.store(0, Ordering::Relaxed);
 
@@ -82,11 +84,24 @@ impl super::App {
                         [x_block * block_size[0], y_block * block_size[1]],
                         ImageData::Color(Arc::new(ColorImage {
                             size: block_size,
-                            pixels,
+                            pixels: pixels.clone(),
                         })),
                         TextureOptions::default(),
                     );
-
+                    let mut bufferlock = image_buffer.lock().unwrap();
+                    for x in 0..block_size[0] {
+                        for y in 0..block_size[1] {
+                            bufferlock.put_pixel(
+                                (x_block * block_size[0] + x) as u32,
+                                (y_block * block_size[1] + y) as u32,
+                                image::Rgb([
+                                    pixels[x + y * block_size[0]].r(),
+                                    pixels[x + y * block_size[0]].g(),
+                                    pixels[x + y * block_size[0]].b(),
+                                ]),
+                            );
+                        }
+                    }
                     ctx.request_repaint();
                 });
 
