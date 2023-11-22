@@ -120,9 +120,7 @@ impl eframe::App for App {
                         && ui.button("Export").clicked()
                     {
                         log::info!("Exporting image");
-                        //Export the shown image to a file
-
-                        let mut dialog = FileDialog::save_file(None);
+                        let mut dialog = FileDialog::save_file(None).default_filename("Rendered-Image.png");
                         dialog.open();
                         self.save_img_dialog = Some(dialog);
                     }
