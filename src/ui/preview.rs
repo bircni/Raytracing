@@ -247,6 +247,9 @@ struct ShaderUniforms {
     view: [[f32; 4]; 4],
     lights_count: u32,
     _pad: [u32; 3],
+    ambient_color: [f32; 3],
+    ambient_intensity: f32,
+    
 }
 
 #[repr(C, align(16))]
@@ -337,6 +340,8 @@ impl CallbackTrait for PreviewRenderer {
                     .to_homogeneous())
                 .into(),
                 lights_count: self.scene.lights.len() as u32,
+                ambient_color: self.scene.settings.ambient_color.into(),
+                ambient_intensity: self.scene.settings.ambient_intensity,
                 ..Default::default()
             }]),
         );

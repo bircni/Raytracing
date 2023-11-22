@@ -50,7 +50,7 @@ impl Raytracer {
                 .map(Color::from)
                 .unwrap_or(Self::NO_MATERIAL_COLOR);
 
-            let mut color = Color::zeros();
+            let mut color = self.scene.settings.ambient_color.component_mul(&diffuse) * self.scene.settings.ambient_intensity;
 
             for light in self.scene.lights.iter() {
                 let light_direction = (light.position - hit.point).normalize();

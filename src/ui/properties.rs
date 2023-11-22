@@ -93,9 +93,13 @@ impl super::App {
                         });
 
                         ui.separator();
-                        ui.label("Ambient Light:");
+                        ui.label("Ambient Color:");
+                        color_picker::color_edit_button_rgb(ui, self.scene.settings.ambient_color.as_mut());
+                        ui.separator();
+
+                        ui.label("Ambient Intensitiy:");
                         ui.add(
-                            Slider::new(&mut 0.0, 0.0..=1.0).clamp_to_range(true),
+                            Slider::new(&mut self.scene.settings.ambient_intensity, 0.0..=1.0).clamp_to_range(true),
                         );
                         ui.separator();
                         

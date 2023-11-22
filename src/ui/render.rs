@@ -7,7 +7,7 @@ use egui::{Color32, ColorImage, ImageData, TextureOptions};
 use log::{debug, info};
 use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 
-use crate::{raytracer::Raytracer, Color};
+use crate::raytracer::Raytracer;
 
 impl super::App {
     pub fn render(&mut self, ctx: egui::Context) {
@@ -20,7 +20,7 @@ impl super::App {
         );
 
         let texture = self.render_texture.clone();
-        let raytracer = Raytracer::new(self.scene.clone(),  1e-5);
+        let raytracer = Raytracer::new(self.scene.clone(), 1e-5);
 
         let render_size = self.render_size;
         let block_size = [render_size[0] / 10, render_size[1] / 10];
