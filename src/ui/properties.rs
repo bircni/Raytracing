@@ -95,13 +95,14 @@ impl App {
 
             ui.separator();
 
-            ui.vertical(|ui| {
-                ui.label("Background Color:");
-                color_picker::color_edit_button_rgb(
-                    ui,
-                    self.scene.settings.background_color.as_mut(),
-                );
+            ui.label("Rendering Size:");
+            ui.horizontal(|ui| {
+                    ui.add(DragValue::new(&mut self.render_size[0]).speed(1.0).prefix("w: "));
+                    ui.add(DragValue::new(&mut self.render_size[1]).speed(1.0).prefix("h: "));
             });
+
+            ui.label("Background Color:");
+            color_picker::color_edit_button_rgb(ui, self.scene.settings.background_color.as_mut());
 
             ui.label("Ambient Color:");
             color_picker::color_edit_button_rgb(ui, self.scene.settings.ambient_color.as_mut());
