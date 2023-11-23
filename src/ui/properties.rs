@@ -99,39 +99,82 @@ impl App {
 
             ui.separator();
 
-            ui.label("Rendering Size:");
-            ui.horizontal(|ui| {
-                ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
-                    (ui.add(
-                        DragValue::new(&mut self.render_size[0])
-                            .speed(1.0)
-                            .clamp_range(10..=8192)
-                            .prefix("w: "),
-                    )
-                    .changed()
-                        || ui
-                            .add(
-                                DragValue::new(&mut self.render_size[1])
-                                    .speed(1.0)
-                                    .clamp_range(10..=8192)
-                                    .prefix("h: "),
-                            )
-                            .changed())
-                    .then(|| {
-                        *self.render_image.lock() =
-                            RgbImage::new(self.render_size[0], self.render_size[1]);
+            ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
+                ui.horizontal(|ui| {
+                    let resolutions = ["FullHD", "4k", "8k"];
+                    egui::ComboBox::from_label("Resolution")
+                        .selected_text(resolutions[self.selected_resolution as usize].to_string())
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(&mut self.selected_resolution, 0, "FullHD");
+                            ui.selectable_value(&mut self.selected_resolution, 1, "4k");
+                            ui.selectable_value(&mut self.selected_resolution, 2, "8k");
+                        });
+                    match self.selected_resolution {
+                        0 => {
+                            self.render_size[0] = 1920;
+                            self.render_size[1] = 1080;
+                            *self.render_image.lock() =
+                                RgbImage::new(self.render_size[0], self.render_size[1]);
 
-                        self.render_texture.set(
-                            ImageData::Color(Arc::new(ColorImage {
-                                size: [self.render_size[0] as usize, self.render_size[1] as usize],
-                                pixels: vec![
-                                    Color32::BLACK;
-                                    (self.render_size[0] * self.render_size[1]) as usize
-                                ],
-                            })),
-                            TextureOptions::default(),
-                        );
-                    });
+                            self.render_texture.set(
+                                ImageData::Color(Arc::new(ColorImage {
+                                    size: [
+                                        self.render_size[0] as usize,
+                                        self.render_size[1] as usize,
+                                    ],
+                                    pixels: vec![
+                                        Color32::BLACK;
+                                        (self.render_size[0] * self.render_size[1])
+                                            as usize
+                                    ],
+                                })),
+                                TextureOptions::default(),
+                            );
+                        }
+                        1 => {
+                            self.render_size[0] = 3840;
+                            self.render_size[1] = 2160;
+                            *self.render_image.lock() =
+                                RgbImage::new(self.render_size[0], self.render_size[1]);
+
+                            self.render_texture.set(
+                                ImageData::Color(Arc::new(ColorImage {
+                                    size: [
+                                        self.render_size[0] as usize,
+                                        self.render_size[1] as usize,
+                                    ],
+                                    pixels: vec![
+                                        Color32::BLACK;
+                                        (self.render_size[0] * self.render_size[1])
+                                            as usize
+                                    ],
+                                })),
+                                TextureOptions::default(),
+                            );
+                        }
+                        2 => {
+                            self.render_size[0] = 7680;
+                            self.render_size[1] = 4320;
+                            *self.render_image.lock() =
+                                RgbImage::new(self.render_size[0], self.render_size[1]);
+
+                            self.render_texture.set(
+                                ImageData::Color(Arc::new(ColorImage {
+                                    size: [
+                                        self.render_size[0] as usize,
+                                        self.render_size[1] as usize,
+                                    ],
+                                    pixels: vec![
+                                        Color32::BLACK;
+                                        (self.render_size[0] * self.render_size[1])
+                                            as usize
+                                    ],
+                                })),
+                                TextureOptions::default(),
+                            );
+                        }
+                        _ => {}
+                    }
                 });
             });
 
