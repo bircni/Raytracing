@@ -35,7 +35,6 @@ pub struct App {
     rendering_progress: Arc<AtomicU16>,
     preview_zoom: f32,
     preview_position: Vec2,
-    selected_resolution: i32,
 }
 
 impl App {
@@ -80,7 +79,6 @@ impl App {
             render_size,
             rendering_progress: Arc::new(AtomicU16::new(0)),
             render_image: image_buffer,
-            selected_resolution: 0,
         })
     }
 
