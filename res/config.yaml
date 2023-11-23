@@ -1,40 +1,35 @@
-title: "Raytracer"
-
 models:
-  - file_path: "./res/test.obj"
-    position:
-      x: 0.0
-      y: 0.0
-      z: 0.0
-    rotation:
-      x: 0.0
-      y: 0.0
-      z: 0.0 # in degree
-    scale: 1
-
+- file_path: ./res/test.obj
+  position:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  rotation:
+    x: 0.0
+    y: -0.0
+    z: 0.0
+  scale: 1.0
 point_lights:
-  - position:
-      x: 5.0
-      y: 2.0
-      z: 2.0
-    ke:
-      r: 15.0
-      g: 15.0
-      b: 15.0
-
-  - position:
-      x: -5.0
-      y: 5.0
-      z: -2.0
-    ke:
-      r: 15.0
-      g: 15.0
-      b: 15.0
-
+- position:
+    x: 5.0
+    y: 2.0
+    z: 2.0
+  ke:
+    r: 5.332843
+    g: 11.98801
+    b: 12.322679
+- position:
+    x: -5.0
+    y: 5.0
+    z: -2.0
+  ke:
+    r: 25.186932
+    g: 4.616624
+    b: 15.630268
 camera:
   position:
-    x: 5.0
-    y: 5.0
+    x: -0.6
+    y: 1.5
     z: 5.0
   look_at:
     x: 0.0
@@ -44,18 +39,15 @@ camera:
     x: 0.0
     y: 1.0
     z: 0.0
-  field_of_view: 90.0
-  width: 1920
-  height: 1080
-
+  field_of_view: 80.21409
 extra_args:
   max_bounces: 3
   samples: 64
   background_color:
-    r: 0.0
-    g: 0.0
-    b: 0.0
+    r: 0.50383204
+    g: 0.21385156
+    b: 0.21385156
   ambient_color:
-    r: 0.0
-    g: 0.0
-    b: 0.0
+    r: 0.16857123
+    g: 0.16428675
+    b: 0.08422359

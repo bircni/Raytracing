@@ -14,8 +14,8 @@ impl super::App {
     pub fn render(&mut self, ctx: egui::Context) {
         self.render_texture.set(
             ImageData::Color(Arc::new(ColorImage {
-                size: self.render_size,
-                pixels: vec![Color32::BLACK; self.render_size[0] * self.render_size[1]],
+                size: [self.render_size[0] as usize, self.render_size[1] as usize],
+                pixels: vec![Color32::BLACK; (self.render_size[0] * self.render_size[1]) as usize],
             })),
             TextureOptions::default(),
         );
@@ -26,7 +26,7 @@ impl super::App {
         let render_size = self.render_size;
         let block_size = [render_size[0] / 10, render_size[1] / 10];
         let rendering_progress = self.rendering_progress.clone();
-        let image_buffer = self.image_buffer.clone();
+        let image_buffer = self.render_image.clone();
 
         rendering_progress.store(0, Ordering::Relaxed);
 
@@ -72,8 +72,8 @@ impl super::App {
                         ((blocks.fetch_add(1, Ordering::Relaxed) as f32)
                             / (render_size[0] / block_size[0] * render_size[1] / block_size[1])
                                 as f32
-                            * u16::MAX as f32)
-                            .round() as u16,
+                            * f32::from(u16::MAX))
+                        .round() as u16,
                         Ordering::Relaxed,
                     );
 
@@ -81,23 +81,26 @@ impl super::App {
                 })
                 .for_each_with(texture, |texture, (pixels, x_block, y_block)| {
                     texture.set_partial(
-                        [x_block * block_size[0], y_block * block_size[1]],
+                        [
+                            (x_block * block_size[0]) as usize,
+                            (y_block * block_size[1]) as usize,
+                        ],
                         ImageData::Color(Arc::new(ColorImage {
-                            size: block_size,
+                            size: [block_size[0] as usize, block_size[1] as usize],
                             pixels: pixels.clone(),
                         })),
                         TextureOptions::default(),
                     );
-                    let mut bufferlock = image_buffer.lock().unwrap();
+                    let mut image = image_buffer.lock();
                     for x in 0..block_size[0] {
                         for y in 0..block_size[1] {
-                            bufferlock.put_pixel(
-                                (x_block * block_size[0] + x) as u32,
-                                (y_block * block_size[1] + y) as u32,
+                            image.put_pixel(
+                                x_block * block_size[0] + x,
+                                y_block * block_size[1] + y,
                                 image::Rgb([
-                                    pixels[x + y * block_size[0]].r(),
-                                    pixels[x + y * block_size[0]].g(),
-                                    pixels[x + y * block_size[0]].b(),
+                                    pixels[(x + y * block_size[0]) as usize].r(),
+                                    pixels[(x + y * block_size[0]) as usize].g(),
+                                    pixels[(x + y * block_size[0]) as usize].b(),
                                 ]),
                             );
                         }
