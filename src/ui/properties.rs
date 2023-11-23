@@ -227,9 +227,6 @@ impl App {
                             ui.add(
                                 DragValue::new(*angle)
                                     .speed(0.01)
-                                    .clamp_range(
-                                        -std::f32::consts::FRAC_PI_2..=std::f32::consts::FRAC_PI_2,
-                                    )
                                     .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
                                     .prefix("x: "),
                             )
@@ -239,6 +236,18 @@ impl App {
                             o.transform.isometry.rotation =
                                 nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
                         })
+                });
+
+                ui.label("Scale");
+                let mut scale = o.transform.scaling();
+                ui.add(
+                    DragValue::new(&mut scale)
+                        .clamp_range(f32::EPSILON..=f32::INFINITY)
+                        .speed(0.01),
+                )
+                .changed()
+                .then(|| {
+                    o.transform.set_scaling(scale);
                 });
             }
 

@@ -104,14 +104,20 @@ impl Object {
                 let point = Point3::from((t.a * u).coords + (t.b * v).coords + (t.c * w).coords);
                 let normal = (t.a_normal * u) + (t.b_normal * v) + (t.c_normal * w);
 
+                (t, point, normal)
+            })
+            .min_by_key(|&(_, point, _)| OrderedFloat((ray.origin - point).norm_squared()))
+            .map(|(t, point, normal)| {
                 // Transform hit point and normal back into world space
+                let point = self.transform.transform_point(&point);
+                let normal = self.transform.transform_vector(&normal);
+
                 Hit {
-                    point: self.transform.transform_point(&point),
-                    normal: self.transform.transform_vector(&normal),
+                    point,
+                    normal,
                     material: t.material_index.map(|i| &self.materials[i]),
                 }
             })
-            .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
     }
 }
 
@@ -127,7 +133,10 @@ fn triangulate(
         let b = Point3::from(obj.data.position[poly.0[i].0]);
         let c = Point3::from(obj.data.position[poly.0[i + 1].0]);
 
-        let computed_normal = (b - a).cross(&(c - a)).normalize();
+        let Some(computed_normal) = (a - b).cross(&(a - c)).try_normalize(f32::EPSILON) else {
+            warn!("Degenerate triangle: {:?}", poly);
+            continue;
+        };
 
         triangles.push(Triangle::new(
             a,
@@ -135,21 +144,21 @@ fn triangulate(
             c,
             poly.0[0].2.map_or_else(
                 || {
-                    warn!("No normal for vertex: {:?}", poly.0[0]);
+                    warn!("No normal for vertex: {}", poly.0[0].0);
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[i].2.map_or_else(
                 || {
-                    warn!("No normal for vertex: {:?}", poly.0[i]);
+                    warn!("No normal for vertex {}", poly.0[i].0);
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[i + 1].2.map_or_else(
                 || {
-                    warn!("No normal for vertex: {:?}", poly.0[i + 1]);
+                    warn!("No normal for vertex {}", poly.0[i + 1].0);
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),

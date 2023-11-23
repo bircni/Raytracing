@@ -1,13 +1,13 @@
 models:
 - file_path: ./res/test.obj
   position:
-    x: 0.0
-    y: 0.0
-    z: 0.0
+    x: 0.7
+    y: -0.1
+    z: -0.5
   rotation:
-    x: 0.0
-    y: -0.0
-    z: 0.0
+    x: 17.761688
+    y: -12.605077
+    z: -6.5614495e-7
   scale: 1.0
 point_lights:
 - position:
@@ -28,7 +28,7 @@ point_lights:
     b: 15.630268
 camera:
   position:
-    x: -0.6
+    x: -2.0
     y: 1.5
     z: 5.0
   look_at:
@@ -44,10 +44,10 @@ extra_args:
   max_bounces: 3
   samples: 64
   background_color:
-    r: 0.50383204
-    g: 0.21385156
-    b: 0.21385156
+    r: 0.67296165
+    g: 0.8369991
+    b: 0.6643321
   ambient_color:
-    r: 0.16857123
-    g: 0.16428675
-    b: 0.08422359
+    r: 0.17478774
+    g: 0.17023797
+    b: 0.08521756
