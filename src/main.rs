@@ -1,6 +1,15 @@
+#![warn(clippy::pedantic)]
+#![warn(clippy::perf)]
+#![warn(clippy::style)]
+#![deny(clippy::all)]
+#![deny(clippy::unwrap_used)]
+#![allow(clippy::cast_precision_loss)]
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_sign_loss)]
+
 use anyhow::Context;
 use eframe::{IconData, Renderer};
-use log::LevelFilter;
+use log::{error, LevelFilter};
 use nalgebra::Vector3;
 use scene::Scene;
 use simplelog::{ColorChoice, ConfigBuilder, TerminalMode};
@@ -39,7 +48,12 @@ fn main() -> anyhow::Result<()> {
             centered: true,
             ..Default::default()
         },
-        Box::new(|cc| Box::new(ui::App::new(cc, scene).expect("Failed to create app"))),
+        Box::new(|cc| {
+            Box::new(ui::App::new(cc, scene).unwrap_or_else(|e| {
+                error!("Failed to create app: {}", e);
+                std::process::exit(1);
+            }))
+        }),
     )
     .map_err(|e| anyhow::anyhow!(e.to_string()))
     .context("Failed to run native")

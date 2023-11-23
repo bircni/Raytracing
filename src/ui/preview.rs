@@ -26,7 +26,8 @@ const MAX_OBJECTS: usize = 255;
 pub struct Preview {}
 
 impl Preview {
-    pub fn new(render_state: &egui_wgpu::RenderState) -> anyhow::Result<Self> {
+    #![allow(clippy::too_many_lines)]
+    pub fn init(render_state: &egui_wgpu::RenderState) {
         let device = &render_state.device;
 
         let shader = device.create_shader_module(ShaderModuleDescriptor {
@@ -210,11 +211,9 @@ impl Preview {
             .write()
             .callback_resources
             .insert(VertexCount(0));
-
-        Ok(Self {})
     }
 
-    pub fn paint(&self, rect: Rect, scene: &Scene) -> egui::Shape {
+    pub fn paint(rect: Rect, scene: &Scene) -> egui::Shape {
         Shape::Callback(Callback::new_paint_callback(
             rect,
             PreviewRenderer {
@@ -249,7 +248,6 @@ struct ShaderUniforms {
     _pad: [u32; 3],
     ambient_color: [f32; 3],
     ambient_intensity: f32,
-    
 }
 
 #[repr(C, align(16))]
@@ -262,6 +260,7 @@ struct ShaderLight {
 }
 
 impl CallbackTrait for PreviewRenderer {
+    #[allow(clippy::too_many_lines)]
     fn prepare(
         &self,
         device: &wgpu::Device,
@@ -271,7 +270,9 @@ impl CallbackTrait for PreviewRenderer {
     ) -> Vec<wgpu::CommandBuffer> {
         debug!("Preparing preview renderer");
 
-        let vertex_count = callback_resources.get::<VertexCount>().unwrap();
+        let vertex_count = callback_resources
+            .get::<VertexCount>()
+            .expect("Failed to get vertex count");
 
         let vertices = self
             .scene
@@ -379,7 +380,7 @@ impl CallbackTrait for PreviewRenderer {
                 .as_slice(),
         );
 
-        Vec::new()
+        vec![]
     }
 
     fn paint<'a>(

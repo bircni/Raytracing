@@ -1,7 +1,9 @@
+use std::path::PathBuf;
+
 use anyhow::Context;
 use bvh::bvh::Bvh;
 use log::warn;
-use nalgebra::{Point3, Similarity3, Translation3, UnitQuaternion, Vector3};
+use nalgebra::{Point3, Similarity3, Vector3};
 use obj::{Material, SimplePolygon};
 use ordered_float::OrderedFloat;
 
@@ -11,51 +13,11 @@ use super::triangle::Triangle;
 
 #[derive(Debug, Clone)]
 pub struct Object {
+    path: PathBuf,
     pub triangles: Vec<Triangle>,
     pub materials: Vec<Material>,
     pub transform: Similarity3<f32>,
     bvh: Bvh<f32, 3>,
-}
-
-impl<'de> serde::Deserialize<'de> for Object {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        mod yaml {
-            use nalgebra::{Point3, Vector3};
-            use serde::Deserialize;
-
-            #[derive(Deserialize)]
-            pub struct Object {
-                pub file_path: String,
-                #[serde(with = "super::super::yaml::point3_xyz")]
-                pub position: Point3<f32>,
-                #[serde(with = "super::super::yaml::vector3_xyz")]
-                pub rotation: Vector3<f32>,
-                pub scale: f32,
-            }
-        }
-
-        let yaml_object = yaml::Object::deserialize(deserializer)?;
-
-        let transform = Similarity3::from_parts(
-            Translation3::from(yaml_object.position.coords),
-            UnitQuaternion::from_euler_angles(
-                yaml_object.rotation.x * std::f32::consts::PI * 2.0 / 360.0,
-                yaml_object.rotation.y * std::f32::consts::PI * 2.0 / 360.0,
-                yaml_object.rotation.z * std::f32::consts::PI * 2.0 / 360.0,
-            ),
-            yaml_object.scale,
-        );
-
-        Object::from_obj(yaml_object.file_path.as_str(), transform)
-            .context(format!(
-                "Failed to load object from path: {:?}",
-                yaml_object.file_path
-            ))
-            .map_err(serde::de::Error::custom)
-    }
 }
 
 impl Object {
@@ -89,7 +51,7 @@ impl Object {
                     .as_ref()
                     .map(|m| match m {
                         obj::ObjMaterial::Ref(str) => {
-                            panic!("Material reference not supported: {}", str)
+                            panic!("Material reference not supported: {str}")
                         }
                         obj::ObjMaterial::Mtl(m) => m,
                     })
@@ -114,6 +76,7 @@ impl Object {
         let bvh = Bvh::build(triangles.as_mut_slice());
 
         Ok(Object {
+            path: path.as_ref().to_path_buf(),
             triangles,
             materials,
             transform,
@@ -141,14 +104,20 @@ impl Object {
                 let point = Point3::from((t.a * u).coords + (t.b * v).coords + (t.c * w).coords);
                 let normal = (t.a_normal * u) + (t.b_normal * v) + (t.c_normal * w);
 
+                (t, point, normal)
+            })
+            .min_by_key(|&(_, point, _)| OrderedFloat((ray.origin - point).norm_squared()))
+            .map(|(t, point, normal)| {
                 // Transform hit point and normal back into world space
+                let point = self.transform.transform_point(&point);
+                let normal = self.transform.transform_vector(&normal);
+
                 Hit {
-                    point: self.transform.transform_point(&point),
-                    normal: self.transform.transform_vector(&normal),
+                    point,
+                    normal,
                     material: t.material_index.map(|i| &self.materials[i]),
                 }
             })
-            .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
     }
 }
 
@@ -164,36 +133,105 @@ fn triangulate(
         let b = Point3::from(obj.data.position[poly.0[i].0]);
         let c = Point3::from(obj.data.position[poly.0[i + 1].0]);
 
-        let computed_normal = (b - a).cross(&(c - a)).normalize();
+        let Some(computed_normal) = (a - b).cross(&(a - c)).try_normalize(f32::EPSILON) else {
+            warn!("Degenerate triangle: {:?}", poly);
+            continue;
+        };
 
         triangles.push(Triangle::new(
             a,
             b,
             c,
-            poly.0[0]
-                .2
-                .map(|i| Vector3::from(obj.data.normal[i]))
-                .unwrap_or_else(|| {
-                    warn!("No normal for vertex: {:?}", poly.0[0]);
+            poly.0[0].2.map_or_else(
+                || {
+                    warn!("No normal for vertex: {}", poly.0[0].0);
                     computed_normal
-                }),
-            poly.0[i]
-                .2
-                .map(|i| Vector3::from(obj.data.normal[i]))
-                .unwrap_or_else(|| {
-                    warn!("No normal for vertex: {:?}", poly.0[i]);
+                },
+                |i| Vector3::from(obj.data.normal[i]),
+            ),
+            poly.0[i].2.map_or_else(
+                || {
+                    warn!("No normal for vertex {}", poly.0[i].0);
                     computed_normal
-                }),
-            poly.0[i + 1]
-                .2
-                .map(|i| Vector3::from(obj.data.normal[i]))
-                .unwrap_or_else(|| {
-                    warn!("No normal for vertex: {:?}", poly.0[i + 1]);
+                },
+                |i| Vector3::from(obj.data.normal[i]),
+            ),
+            poly.0[i + 1].2.map_or_else(
+                || {
+                    warn!("No normal for vertex {}", poly.0[i + 1].0);
                     computed_normal
-                }),
+                },
+                |i| Vector3::from(obj.data.normal[i]),
+            ),
             material_index,
         ));
     }
 
     triangles
+}
+mod yaml {
+    use std::path::PathBuf;
+
+    use anyhow::Context;
+    use nalgebra::{Point3, Similarity3, Translation3, UnitQuaternion, Vector3};
+    use serde::{Deserialize, Serialize};
+
+    use super::Object;
+
+    #[derive(Serialize, Deserialize)]
+    pub struct ObjectDef {
+        pub file_path: PathBuf,
+        #[serde(with = "super::super::yaml::point")]
+        pub position: Point3<f32>,
+        #[serde(with = "super::super::yaml::vector")]
+        pub rotation: Vector3<f32>,
+        pub scale: f32,
+    }
+
+    impl<'de> serde::Deserialize<'de> for Object {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            let yaml_object = ObjectDef::deserialize(deserializer)?;
+
+            let transform = Similarity3::from_parts(
+                Translation3::from(yaml_object.position.coords),
+                UnitQuaternion::from_euler_angles(
+                    yaml_object.rotation.x * std::f32::consts::PI * 2.0 / 360.0,
+                    yaml_object.rotation.y * std::f32::consts::PI * 2.0 / 360.0,
+                    yaml_object.rotation.z * std::f32::consts::PI * 2.0 / 360.0,
+                ),
+                yaml_object.scale,
+            );
+
+            Object::from_obj(yaml_object.file_path.as_path(), transform)
+                .context(format!(
+                    "Failed to load object from path: {:?}",
+                    yaml_object.file_path
+                ))
+                .map_err(serde::de::Error::custom)
+        }
+    }
+
+    impl Serialize for Object {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            let rotation = self.transform.isometry.rotation.euler_angles();
+
+            ObjectDef {
+                file_path: self.path.clone(),
+                position: Point3::from(self.transform.isometry.translation.vector),
+                rotation: Vector3::new(
+                    rotation.0.to_degrees(),
+                    rotation.1.to_degrees(),
+                    rotation.2.to_degrees(),
+                ),
+                scale: self.transform.scaling(),
+            }
+            .serialize(serializer)
+        }
+    }
 }

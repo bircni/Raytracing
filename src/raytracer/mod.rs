@@ -28,7 +28,7 @@ impl Raytracer {
 
     pub fn new(scene: Scene, delta: f32) -> Raytracer {
         Raytracer {
-            background_color:scene.settings.background_color,
+            background_color: scene.settings.background_color,
             scene,
             delta,
         }
@@ -47,12 +47,12 @@ impl Raytracer {
             let diffuse = hit
                 .material
                 .and_then(|m| m.kd)
-                .map(Color::from)
-                .unwrap_or(Self::NO_MATERIAL_COLOR);
+                .map_or(Self::NO_MATERIAL_COLOR, Color::from);
 
-            let mut color = self.scene.settings.ambient_color.component_mul(&diffuse) * self.scene.settings.ambient_intensity;
+            let mut color = self.scene.settings.ambient_color.component_mul(&diffuse)
+                * self.scene.settings.ambient_intensity;
 
-            for light in self.scene.lights.iter() {
+            for light in &self.scene.lights {
                 let light_direction = (light.position - hit.point).normalize();
                 let light_ray = Ray {
                     origin: hit.point + light_direction * self.delta,
@@ -79,7 +79,7 @@ impl Raytracer {
     /// Render a pixel at the given coordinates.
     /// x and y are in the range 0..width and 0..height
     /// where (0, 0) is the top left corner.
-    pub fn render(&self, (x, y): (usize, usize), (width, height): (usize, usize)) -> Color {
+    pub fn render(&self, (x, y): (u32, u32), (width, height): (u32, u32)) -> Color {
         let x = ((x as f32 / width as f32) * 2.0 - 1.0) * (width as f32 / height as f32);
         let y = (y as f32 / height as f32) * 2.0 - 1.0;
 

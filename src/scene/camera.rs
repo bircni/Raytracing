@@ -1,5 +1,4 @@
 use nalgebra::{Point3, Rotation3, Vector3};
-use serde::Deserialize;
 
 use crate::raytracer::Ray;
 
@@ -33,30 +32,47 @@ impl Camera {
 
 mod yaml {
     use nalgebra::{Point3, Vector3};
-    use serde::Deserialize;
+    use serde::{Deserialize, Serialize};
 
-    #[derive(Deserialize)]
-    pub struct Camera {
-        #[serde(with = "super::super::yaml::point3_xyz")]
+    use super::Camera;
+
+    #[derive(Serialize, Deserialize)]
+    pub struct CameraDef {
+        #[serde(with = "super::super::yaml::point")]
         pub position: Point3<f32>,
-        #[serde(with = "super::super::yaml::point3_xyz")]
+        #[serde(with = "super::super::yaml::point")]
         pub look_at: Point3<f32>,
-        #[serde(with = "super::super::yaml::vector3_xyz")]
+        #[serde(with = "super::super::yaml::vector")]
         pub up_vec: Vector3<f32>,
         pub field_of_view: f32,
     }
-}
 
-impl<'de> Deserialize<'de> for Camera {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        yaml::Camera::deserialize(deserializer).map(|yaml_camera| Camera {
-            position: yaml_camera.position,
-            look_at: yaml_camera.look_at,
-            up: yaml_camera.up_vec,
-            fov: yaml_camera.field_of_view.to_radians(),
-        })
+    impl<'de> Deserialize<'de> for Camera {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            CameraDef::deserialize(deserializer).map(|yaml_camera| Camera {
+                position: yaml_camera.position,
+                look_at: yaml_camera.look_at,
+                up: yaml_camera.up_vec,
+                fov: yaml_camera.field_of_view.to_radians(),
+            })
+        }
+    }
+
+    impl Serialize for Camera {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            CameraDef {
+                position: self.position,
+                look_at: self.look_at,
+                up_vec: self.up,
+                field_of_view: self.fov.to_degrees(),
+            }
+            .serialize(serializer)
+        }
     }
 }
