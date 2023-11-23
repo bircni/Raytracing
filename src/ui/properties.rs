@@ -1,8 +1,12 @@
+use std::sync::Arc;
+
 use egui::{
-    color_picker, hex_color, include_image, Align, Button, DragValue, FontFamily, ImageButton,
-    Layout, RichText, ScrollArea, SidePanel, Slider, TextStyle, Ui,
+    color_picker, hex_color, include_image, Align, Button, Color32, ColorImage, DragValue,
+    FontFamily, ImageButton, ImageData, Layout, RichText, ScrollArea, SidePanel, Slider, TextStyle,
+    TextureOptions, Ui,
 };
 use egui_file::FileDialog;
+use image::RgbImage;
 use log::warn;
 use nalgebra::{coordinates::XYZ, Similarity3};
 
@@ -95,13 +99,44 @@ impl App {
 
             ui.separator();
 
-            ui.vertical(|ui| {
-                ui.label("Background Color:");
-                color_picker::color_edit_button_rgb(
-                    ui,
-                    self.scene.settings.background_color.as_mut(),
-                );
+            ui.label("Rendering Size:");
+            ui.horizontal(|ui| {
+                ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
+                    (ui.add(
+                        DragValue::new(&mut self.render_size[0])
+                            .speed(1.0)
+                            .clamp_range(10..=8192)
+                            .prefix("w: "),
+                    )
+                    .changed()
+                        || ui
+                            .add(
+                                DragValue::new(&mut self.render_size[1])
+                                    .speed(1.0)
+                                    .clamp_range(10..=8192)
+                                    .prefix("h: "),
+                            )
+                            .changed())
+                    .then(|| {
+                        *self.render_image.lock() =
+                            RgbImage::new(self.render_size[0], self.render_size[1]);
+
+                        self.render_texture.set(
+                            ImageData::Color(Arc::new(ColorImage {
+                                size: [self.render_size[0] as usize, self.render_size[1] as usize],
+                                pixels: vec![
+                                    Color32::BLACK;
+                                    (self.render_size[0] * self.render_size[1]) as usize
+                                ],
+                            })),
+                            TextureOptions::default(),
+                        );
+                    });
+                });
             });
+
+            ui.label("Background Color:");
+            color_picker::color_edit_button_rgb(ui, self.scene.settings.background_color.as_mut());
 
             ui.label("Ambient Color:");
             color_picker::color_edit_button_rgb(ui, self.scene.settings.ambient_color.as_mut());

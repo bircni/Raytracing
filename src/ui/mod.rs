@@ -11,7 +11,7 @@ use egui::{
     mutex::Mutex, pos2, Align, CursorIcon, Frame, Layout, ProgressBar, Rect, Rounding, Stroke, Vec2,
 };
 use egui::{
-    CentralPanel, Color32, ColorImage, ImageData, Key, Sense, TextStyle, TextureHandle,
+    Button, CentralPanel, Color32, ColorImage, ImageData, Key, Sense, TextStyle, TextureHandle,
     TextureOptions, Ui,
 };
 use egui_file::FileDialog;
@@ -46,8 +46,7 @@ impl App {
                 .as_ref()
                 .context("Failed to get wgpu context")?,
         );
-
-        let render_size = [1920, 1080];
+        let render_size = [3840, 2160];
 
         let render_texture = cc.egui_ctx.load_texture(
             "render",
@@ -84,7 +83,13 @@ impl App {
     }
 
     fn export_button(&mut self, ui: &mut Ui) {
-        if ui.button("Export").clicked() {
+        if ui
+            .add_enabled(
+                self.rendering_progress.load(Ordering::Relaxed) == u16::MAX,
+                Button::new("Export"),
+            )
+            .clicked()
+        {
             info!("Exporting image");
             self.save_image_dialog
                 .get_or_insert_with(|| {
