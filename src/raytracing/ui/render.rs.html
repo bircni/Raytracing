@@ -111,6 +111,9 @@
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::{
     atomic::{AtomicUsize, Ordering},
     Arc,
@@ -127,8 +130,8 @@
     <span class="kw">pub fn </span>render(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: egui::Context) {
         <span class="self">self</span>.render_texture.set(
             ImageData::Color(Arc::new(ColorImage {
-                size: <span class="self">self</span>.render_size,
-                pixels: <span class="macro">vec!</span>[Color32::BLACK; <span class="self">self</span>.render_size[<span class="number">0</span>] * <span class="self">self</span>.render_size[<span class="number">1</span>]],
+                size: [<span class="self">self</span>.render_size[<span class="number">0</span>] <span class="kw">as </span>usize, <span class="self">self</span>.render_size[<span class="number">1</span>] <span class="kw">as </span>usize],
+                pixels: <span class="macro">vec!</span>[Color32::BLACK; (<span class="self">self</span>.render_size[<span class="number">0</span>] * <span class="self">self</span>.render_size[<span class="number">1</span>]) <span class="kw">as </span>usize],
             })),
             TextureOptions::default(),
         );
@@ -139,7 +142,7 @@
         <span class="kw">let </span>render_size = <span class="self">self</span>.render_size;
         <span class="kw">let </span>block_size = [render_size[<span class="number">0</span>] / <span class="number">10</span>, render_size[<span class="number">1</span>] / <span class="number">10</span>];
         <span class="kw">let </span>rendering_progress = <span class="self">self</span>.rendering_progress.clone();
-        <span class="kw">let </span>image_buffer = <span class="self">self</span>.image_buffer.clone();
+        <span class="kw">let </span>image_buffer = <span class="self">self</span>.render_image.clone();
 
         rendering_progress.store(<span class="number">0</span>, Ordering::Relaxed);
 
@@ -185,8 +188,8 @@
                         ((blocks.fetch_add(<span class="number">1</span>, Ordering::Relaxed) <span class="kw">as </span>f32)
                             / (render_size[<span class="number">0</span>] / block_size[<span class="number">0</span>] * render_size[<span class="number">1</span>] / block_size[<span class="number">1</span>])
                                 <span class="kw">as </span>f32
-                            * u16::MAX <span class="kw">as </span>f32)
-                            .round() <span class="kw">as </span>u16,
+                            * f32::from(u16::MAX))
+                        .round() <span class="kw">as </span>u16,
                         Ordering::Relaxed,
                     );
 
@@ -194,23 +197,26 @@
                 })
                 .for_each_with(texture, |texture, (pixels, x_block, y_block)| {
                     texture.set_partial(
-                        [x_block * block_size[<span class="number">0</span>], y_block * block_size[<span class="number">1</span>]],
+                        [
+                            (x_block * block_size[<span class="number">0</span>]) <span class="kw">as </span>usize,
+                            (y_block * block_size[<span class="number">1</span>]) <span class="kw">as </span>usize,
+                        ],
                         ImageData::Color(Arc::new(ColorImage {
-                            size: block_size,
+                            size: [block_size[<span class="number">0</span>] <span class="kw">as </span>usize, block_size[<span class="number">1</span>] <span class="kw">as </span>usize],
                             pixels: pixels.clone(),
                         })),
                         TextureOptions::default(),
                     );
-                    <span class="kw">let </span><span class="kw-2">mut </span>bufferlock = image_buffer.lock().unwrap();
+                    <span class="kw">let </span><span class="kw-2">mut </span>image = image_buffer.lock();
                     <span class="kw">for </span>x <span class="kw">in </span><span class="number">0</span>..block_size[<span class="number">0</span>] {
                         <span class="kw">for </span>y <span class="kw">in </span><span class="number">0</span>..block_size[<span class="number">1</span>] {
-                            bufferlock.put_pixel(
-                                (x_block * block_size[<span class="number">0</span>] + x) <span class="kw">as </span>u32,
-                                (y_block * block_size[<span class="number">1</span>] + y) <span class="kw">as </span>u32,
+                            image.put_pixel(
+                                x_block * block_size[<span class="number">0</span>] + x,
+                                y_block * block_size[<span class="number">1</span>] + y,
                                 image::Rgb([
-                                    pixels[x + y * block_size[<span class="number">0</span>]].r(),
-                                    pixels[x + y * block_size[<span class="number">0</span>]].g(),
-                                    pixels[x + y * block_size[<span class="number">0</span>]].b(),
+                                    pixels[(x + y * block_size[<span class="number">0</span>]) <span class="kw">as </span>usize].r(),
+                                    pixels[(x + y * block_size[<span class="number">0</span>]) <span class="kw">as </span>usize].g(),
+                                    pixels[(x + y * block_size[<span class="number">0</span>]) <span class="kw">as </span>usize].b(),
                                 ]),
                             );
                         }

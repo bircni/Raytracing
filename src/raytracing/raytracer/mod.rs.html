@@ -118,7 +118,7 @@
 
     <span class="kw">pub fn </span>new(scene: Scene, delta: f32) -&gt; Raytracer {
         Raytracer {
-            background_color:scene.settings.background_color,
+            background_color: scene.settings.background_color,
             scene,
             delta,
         }
@@ -137,12 +137,12 @@
             <span class="kw">let </span>diffuse = hit
                 .material
                 .and_then(|m| m.kd)
-                .map(Color::from)
-                .unwrap_or(<span class="self">Self</span>::NO_MATERIAL_COLOR);
+                .map_or(<span class="self">Self</span>::NO_MATERIAL_COLOR, Color::from);
 
-            <span class="kw">let </span><span class="kw-2">mut </span>color = <span class="self">self</span>.scene.settings.ambient_color.component_mul(<span class="kw-2">&amp;</span>diffuse) * <span class="self">self</span>.scene.settings.ambient_intensity;
+            <span class="kw">let </span><span class="kw-2">mut </span>color = <span class="self">self</span>.scene.settings.ambient_color.component_mul(<span class="kw-2">&amp;</span>diffuse)
+                * <span class="self">self</span>.scene.settings.ambient_intensity;
 
-            <span class="kw">for </span>light <span class="kw">in </span><span class="self">self</span>.scene.lights.iter() {
+            <span class="kw">for </span>light <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.scene.lights {
                 <span class="kw">let </span>light_direction = (light.position - hit.point).normalize();
                 <span class="kw">let </span>light_ray = Ray {
                     origin: hit.point + light_direction * <span class="self">self</span>.delta,
@@ -169,7 +169,7 @@
     <span class="doccomment">/// Render a pixel at the given coordinates.
     /// x and y are in the range 0..width and 0..height
     /// where (0, 0) is the top left corner.
-    </span><span class="kw">pub fn </span>render(<span class="kw-2">&amp;</span><span class="self">self</span>, (x, y): (usize, usize), (width, height): (usize, usize)) -&gt; Color {
+    </span><span class="kw">pub fn </span>render(<span class="kw-2">&amp;</span><span class="self">self</span>, (x, y): (u32, u32), (width, height): (u32, u32)) -&gt; Color {
         <span class="kw">let </span>x = ((x <span class="kw">as </span>f32 / width <span class="kw">as </span>f32) * <span class="number">2.0 </span>- <span class="number">1.0</span>) * (width <span class="kw">as </span>f32 / height <span class="kw">as </span>f32);
         <span class="kw">let </span>y = (y <span class="kw">as </span>f32 / height <span class="kw">as </span>f32) * <span class="number">2.0 </span>- <span class="number">1.0</span>;
 

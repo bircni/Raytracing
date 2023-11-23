@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Settings"]};
+window.SIDEBAR_ITEMS = {"mod":["yaml"],"struct":["Settings"]};

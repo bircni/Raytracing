@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["triangulate"],"struct":["Object"]};
+window.SIDEBAR_ITEMS = {"fn":["triangulate"],"mod":["yaml"],"struct":["Object"]};

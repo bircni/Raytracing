@@ -320,370 +320,326 @@
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
-<a href="#329" id="329">329</a>
-<a href="#330" id="330">330</a>
-<a href="#331" id="331">331</a>
-<a href="#332" id="332">332</a>
-<a href="#333" id="333">333</a>
-<a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
-<a href="#340" id="340">340</a>
-<a href="#341" id="341">341</a>
-<a href="#342" id="342">342</a>
-<a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>egui::{
-    color_picker, Align, Button, Context, DragValue, FontFamily, Layout, RichText, ScrollArea,
-    SidePanel, Slider, Ui,
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use </span>egui::{
+    color_picker, hex_color, include_image, Align, Button, Color32, ColorImage, DragValue,
+    FontFamily, ImageButton, ImageData, Layout, RichText, ScrollArea, SidePanel, Slider, TextStyle,
+    TextureOptions, Ui,
 };
 <span class="kw">use </span>egui_file::FileDialog;
+<span class="kw">use </span>image::RgbImage;
 <span class="kw">use </span>log::warn;
-<span class="kw">use </span>nalgebra::Similarity3;
+<span class="kw">use </span>nalgebra::{coordinates::XYZ, Similarity3};
 
-<span class="kw">use </span><span class="kw">crate</span>::scene::{object::Object, light::Light};
+<span class="kw">use </span><span class="kw">crate</span>::scene::{Light, Object};
 
-<span class="kw">impl </span><span class="kw">super</span>::App {
-    <span class="kw">pub fn </span>properties(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>Context, ui: <span class="kw-2">&amp;mut </span>Ui) {
+<span class="kw">use </span><span class="kw">super</span>::App;
+
+<span class="kw">fn </span>xyz_drag_value(ui: <span class="kw-2">&amp;mut </span>Ui, value: <span class="kw-2">&amp;mut </span>XYZ&lt;f32&gt;) {
+    ui.horizontal(|ui| {
+        ui.add(DragValue::new(<span class="kw-2">&amp;mut </span>value.x).speed(<span class="number">0.1</span>).prefix(<span class="string">&quot;x: &quot;</span>));
+        ui.add(DragValue::new(<span class="kw-2">&amp;mut </span>value.y).speed(<span class="number">0.1</span>).prefix(<span class="string">&quot;y: &quot;</span>));
+        ui.add(DragValue::new(<span class="kw-2">&amp;mut </span>value.z).speed(<span class="number">0.1</span>).prefix(<span class="string">&quot;z: &quot;</span>));
+    });
+}
+
+<span class="kw">impl </span>App {
+    <span class="kw">pub fn </span>properties(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
         SidePanel::right(<span class="string">&quot;panel&quot;</span>)
             .show_separator_line(<span class="bool-val">true</span>)
             .show_inside(ui, |ui| {
                 ScrollArea::new([<span class="bool-val">false</span>, <span class="bool-val">true</span>]).show(ui, |ui| {
-                    ui.heading(<span class="string">&quot;Properties&quot;</span>);
+                    ui.horizontal(|ui| {
+                        ui.heading(<span class="string">&quot;Properties&quot;</span>);
+
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            ui.add_sized(
+                                [<span class="number">20.0</span>, <span class="number">20.0</span>],
+                                ImageButton::new(<span class="macro">include_image!</span>(
+                                    <span class="string">&quot;../../res/icons/floppy-disk-solid.svg&quot;
+                                </span>))
+                                .tint(<span class="macro">hex_color!</span>(<span class="string">&quot;#ffffff&quot;</span>)),
+                            )
+                            .clicked()
+                            .then(|| {
+                                <span class="self">self</span>.save_scene();
+                            });
+                        });
+                    });
 
                     ui.add_space(<span class="number">5.0</span>);
 
-                    <span class="comment">//Camera Group
-                    </span>ui.group(|ui| {
-                        ui.vertical_centered(|ui| {
-                            ui.label(RichText::new(<span class="string">&quot;Camera&quot;</span>).size(<span class="number">16.0</span>));
-                        });
-
-                        ui.separator();
-
-                        ui.vertical(|ui| {
-                            ui.label(<span class="string">&quot;Position:&quot;</span>);
-
-                            ui.horizontal(|ui| {
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.scene.camera.position.x)
-                                        .speed(<span class="number">0.1</span>)
-                                        .prefix(<span class="string">&quot;x: &quot;</span>),
-                                );
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.scene.camera.position.y)
-                                        .speed(<span class="number">0.1</span>)
-                                        .prefix(<span class="string">&quot;y: &quot;</span>),
-                                );
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.scene.camera.position.z)
-                                        .speed(<span class="number">0.1</span>)
-                                        .prefix(<span class="string">&quot;z: &quot;</span>),
-                                );
-                            });
-
-                            ui.label(<span class="string">&quot;Look at:&quot;</span>);
-
-                            ui.horizontal(|ui| {
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.scene.camera.look_at.x)
-                                        .speed(<span class="number">0.1</span>)
-                                        .prefix(<span class="string">&quot;x: &quot;</span>),
-                                );
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.scene.camera.look_at.y)
-                                        .speed(<span class="number">0.1</span>)
-                                        .prefix(<span class="string">&quot;y: &quot;</span>),
-                                );
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.scene.camera.look_at.z)
-                                        .speed(<span class="number">0.1</span>)
-                                        .prefix(<span class="string">&quot;z: &quot;</span>),
-                                );
-                            });
-
-                            ui.label(<span class="string">&quot;Field of View:&quot;</span>);
-                            ui.add(
-                                Slider::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.scene.camera.fov, <span class="number">0.0</span>..=std::f32::consts::PI)
-                                    .step_by(<span class="number">0.01</span>)
-                                    .custom_formatter(|x, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{:.2}°&quot;</span>, x.to_degrees()))
-                                    .clamp_to_range(<span class="bool-val">true</span>),
-                            );
-                        });
-                    });
+                    <span class="self">self</span>.camera_settings(ui);
 
                     ui.add_space(<span class="number">10.0</span>);
 
-                    <span class="comment">//Scene Setting Group
-                    </span>ui.group(|ui| {
-                        ui.vertical_centered(|ui| {
-                            ui.label(RichText::new(<span class="string">&quot;Scene Settings&quot;</span>).size(<span class="number">16.0</span>));
-                        });
-
-                        ui.separator();
-
-                        ui.vertical(|ui| {
-                            ui.label(<span class="string">&quot;Background Color:&quot;</span>);
-                            color_picker::color_edit_button_rgb(ui, <span class="self">self</span>.scene.settings.background_color.as_mut());
-                        });
-
-                        ui.separator();
-                        ui.label(<span class="string">&quot;Ambient Color:&quot;</span>);
-                        color_picker::color_edit_button_rgb(ui, <span class="self">self</span>.scene.settings.ambient_color.as_mut());
-                        ui.separator();
-
-                        ui.label(<span class="string">&quot;Ambient Intensitiy:&quot;</span>);
-                        ui.add(
-                            Slider::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.scene.settings.ambient_intensity, <span class="number">0.0</span>..=<span class="number">1.0</span>).clamp_to_range(<span class="bool-val">true</span>),
-                        );
-                        ui.separator();
-                        
-                    });
-                    ui.add_space(<span class="number">10.0</span>);
-
-                    <span class="comment">//Lighting Group
-                    </span>ui.group(|ui| {
-                        ui.vertical_centered(|ui| {
-                            ui.label(
-                                RichText::new(<span class="macro">format!</span>(<span class="string">&quot;Lights ({})&quot;</span>, <span class="self">self</span>.scene.lights.len()))
-                                    .size(<span class="number">16.0</span>),
-                            );
-                        });
-
-                        <span class="kw">let </span><span class="kw-2">mut </span>lights_to_remove = Vec::new();
-
-                        <span class="kw">for </span>(n, light) <span class="kw">in </span><span class="self">self</span>.scene.lights.iter_mut().enumerate() {
-                            ui.separator();
-
-                            ui.horizontal(|ui| {
-                                ui.label(
-                                    RichText::new(<span class="macro">format!</span>(<span class="string">&quot;Light {n}&quot;</span>))
-                                        .size(<span class="number">14.0</span>)
-                                        .family(FontFamily::Monospace),
-                                );
-                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                                    <span class="kw">if </span>ui
-                                        .add_sized(
-                                            [<span class="number">20.</span>, <span class="number">20.</span>],
-                                            Button::new(
-                                                RichText::new(<span class="string">&quot;x&quot;</span>)
-                                                    .size(<span class="number">14.0</span>)
-                                                    .family(FontFamily::Monospace),
-                                            )
-                                            .frame(<span class="bool-val">false</span>)
-                                            .small(),
-                                        )
-                                        .clicked()
-                                    {
-                                        lights_to_remove.push(n);
-                                    }
-                                });
-                            });
-
-                            ui.label(<span class="string">&quot;Position:&quot;</span>);
-                            ui.horizontal(|ui| {
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span>light.position.x)
-                                        .speed(<span class="number">0.1</span>)
-                                        .prefix(<span class="string">&quot;x: &quot;</span>),
-                                );
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span>light.position.y)
-                                        .speed(<span class="number">0.1</span>)
-                                        .prefix(<span class="string">&quot;y: &quot;</span>),
-                                );
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span>light.position.z)
-                                        .speed(<span class="number">0.1</span>)
-                                        .prefix(<span class="string">&quot;z: &quot;</span>),
-                                );
-                            });
-
-                            ui.label(<span class="string">&quot;Intensity:&quot;</span>);
-                            ui.add(
-                                Slider::new(<span class="kw-2">&amp;mut </span>light.intensity, <span class="number">0.0</span>..=<span class="number">100.0</span>).clamp_to_range(<span class="bool-val">true</span>),
-                            );
-
-                            ui.label(<span class="string">&quot;Color:&quot;</span>);
-                            color_picker::color_edit_button_rgb(ui, light.color.as_mut());
-                        }
-
-                        <span class="kw">for </span>n <span class="kw">in </span>lights_to_remove {
-                            <span class="self">self</span>.scene.lights.remove(n);
-                        }
-
-                        ui.separator();
-                        ui.vertical_centered(|ui| {
-                            ui.add(Button::new(RichText::new(<span class="string">&quot;+ Add Light&quot;</span>)).frame(<span class="bool-val">false</span>))
-                                .clicked()
-                                .then(|| {
-
-                                    <span class="self">self</span>.scene.lights.push(Light {
-                                        position: nalgebra::Point3::new(<span class="number">5.0</span>, <span class="number">2.0</span>, <span class="number">2.0</span>),
-                                        intensity: <span class="number">3.0</span>,
-                                        color: nalgebra::Vector3::new(<span class="number">1.0</span>, <span class="number">1.0</span>, <span class="number">1.0</span>),
-                                    });
-                                });
-                        });
-                    });
+                    <span class="self">self</span>.scene_settings(ui);
 
                     ui.add_space(<span class="number">10.0</span>);
 
-                    <span class="comment">//Objects Group
-                    </span>ui.group(|ui| {
-                        ui.vertical_centered(|ui| {
-                            ui.label(
-                                RichText::new(<span class="macro">format!</span>(<span class="string">&quot;Objects ({})&quot;</span>, <span class="self">self</span>.scene.objects.len()))
-                                    .size(<span class="number">16.0</span>),
-                            );
-                        });
+                    <span class="self">self</span>.lights(ui);
 
-                        <span class="kw">let </span><span class="kw-2">mut </span>objects_to_remove = Vec::new();
+                    ui.add_space(<span class="number">10.0</span>);
 
-                        <span class="kw">for </span>(n, o) <span class="kw">in </span><span class="self">self</span>.scene.objects.iter_mut().enumerate() {
-                            ui.separator();
-
-                            ui.horizontal(|ui| {
-                                ui.label(
-                                    <span class="comment">//&quot;Object with {} triangles&quot;
-                                    </span>RichText::new(<span class="macro">format!</span>(<span class="string">&quot;Object ({} ▲)&quot;</span>, o.triangles.len()))
-                                        .size(<span class="number">14.0</span>)
-                                        .family(FontFamily::Monospace),
-                                );
-                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                                    <span class="kw">if </span>ui
-                                        .add_sized(
-                                            [<span class="number">20.</span>, <span class="number">20.</span>],
-                                            Button::new(
-                                                RichText::new(<span class="string">&quot;x&quot;</span>)
-                                                    .size(<span class="number">14.0</span>)
-                                                    .family(FontFamily::Monospace),
-                                            )
-                                            .frame(<span class="bool-val">false</span>)
-                                            .small(),
-                                        )
-                                        .clicked()
-                                    {
-                                        objects_to_remove.push(n);
-                                    }
-                                });
-                            });
-
-                            ui.label(<span class="string">&quot;Position&quot;</span>);
-                            ui.horizontal(|ui| {
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span>o.transform.isometry.translation.x)
-                                        .speed(<span class="number">0.1</span>)
-                                        .prefix(<span class="string">&quot;x: &quot;</span>),
-                                );
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span>o.transform.isometry.translation.y)
-                                        .speed(<span class="number">0.1</span>)
-                                        .prefix(<span class="string">&quot;y: &quot;</span>),
-                                );
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span>o.transform.isometry.translation.z)
-                                        .speed(<span class="number">0.1</span>)
-                                        .prefix(<span class="string">&quot;z: &quot;</span>),
-                                );
-                            });
-
-                            ui.label(<span class="string">&quot;Rotation&quot;</span>);
-                            ui.horizontal(|ui| {
-                                <span class="kw">let </span>(<span class="kw-2">mut </span>x, <span class="kw-2">mut </span>y, <span class="kw-2">mut </span>z) =
-                                    o.transform.isometry.rotation.euler_angles();
-
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span>x)
-                                        .speed(<span class="number">0.01</span>)
-                                        .clamp_range(
-                                            -std::f32::consts::FRAC_PI_2
-                                                ..=std::f32::consts::FRAC_PI_2,
-                                        )
-                                        .custom_formatter(|x, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{:.2}°&quot;</span>, x.to_degrees()))
-                                        .prefix(<span class="string">&quot;x: &quot;</span>),
-                                )
-                                .changed()
-                                .then(|| {
-                                    o.transform.isometry.rotation =
-                                        nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
-                                });
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span>y)
-                                        .speed(<span class="number">0.01</span>)
-                                        .clamp_range(
-                                            -std::f32::consts::FRAC_PI_2
-                                                ..=std::f32::consts::FRAC_PI_2,
-                                        )
-                                        .custom_formatter(|x, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{:.2}°&quot;</span>, x.to_degrees()))
-                                        .prefix(<span class="string">&quot;y: &quot;</span>),
-                                )
-                                .changed()
-                                .then(|| {
-                                    o.transform.isometry.rotation =
-                                        nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
-                                });
-                                ui.add(
-                                    DragValue::new(<span class="kw-2">&amp;mut </span>z)
-                                        .speed(<span class="number">0.01</span>)
-                                        .clamp_range(
-                                            -std::f32::consts::FRAC_PI_2
-                                                ..=std::f32::consts::FRAC_PI_2,
-                                        )
-                                        .custom_formatter(|x, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{:.2}°&quot;</span>, x.to_degrees()))
-                                        .prefix(<span class="string">&quot;z: &quot;</span>),
-                                )
-                                .changed()
-                                .then(|| {
-                                    o.transform.isometry.rotation =
-                                        nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
-                                });
-                            });
-                        }
-
-                        <span class="kw">for </span>o <span class="kw">in </span>objects_to_remove {
-                            <span class="self">self</span>.scene.objects.remove(o);
-                        }
-
-                        ui.separator();
-                        ui.vertical_centered(|ui| {
-                            <span class="kw">if </span>ui
-                                .add(Button::new(RichText::new(<span class="string">&quot;+ Add Object&quot;</span>)).frame(<span class="bool-val">false</span>))
-                                .clicked()
-                            {
-                                <span class="kw">let </span><span class="kw-2">mut </span>dialog = FileDialog::open_file(<span class="self">self</span>.opened_file.clone())
-                                    .filter(Box::new(|path| {
-                                        path.extension().is_some_and(|ext| ext == <span class="string">&quot;obj&quot;</span>)
-                                    }));
-                                dialog.open();
-                                <span class="self">self</span>.open_file_dialog = <span class="prelude-val">Some</span>(dialog);
-                            }
-
-                            <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.open_file_dialog {
-                                <span class="kw">if </span>dialog.show(ctx).selected() {
-                                    <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = dialog.path() {
-                                        <span class="kw">match </span>Object::from_obj(file, Similarity3::identity()) {
-                                            <span class="prelude-val">Ok</span>(object) =&gt; {
-                                                <span class="self">self</span>.scene.objects.push(object);
-                                            }
-                                            <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;Failed to load object: {}&quot;</span>, e),
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                    });
-                })
+                    <span class="self">self</span>.objects(ui);
+                });
             });
+    }
+
+    <span class="kw">fn </span>camera_settings(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>egui::Ui) {
+        ui.group(|ui| {
+            ui.vertical_centered(|ui| {
+                ui.label(RichText::new(<span class="string">&quot;Camera&quot;</span>).size(<span class="number">16.0</span>));
+            });
+
+            ui.separator();
+
+            ui.vertical(|ui| {
+                ui.label(<span class="string">&quot;Position:&quot;</span>);
+                xyz_drag_value(ui, <span class="kw-2">&amp;mut </span><span class="self">self</span>.scene.camera.position);
+
+                ui.label(<span class="string">&quot;Look at:&quot;</span>);
+                xyz_drag_value(ui, <span class="kw-2">&amp;mut </span><span class="self">self</span>.scene.camera.look_at);
+
+                ui.label(<span class="string">&quot;Field of View:&quot;</span>);
+                ui.add(
+                    Slider::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.scene.camera.fov, <span class="number">0.0</span>..=std::f32::consts::PI)
+                        .step_by(<span class="number">0.01</span>)
+                        .custom_formatter(|x, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{:.2}°&quot;</span>, x.to_degrees()))
+                        .clamp_to_range(<span class="bool-val">true</span>),
+                );
+            });
+        });
+    }
+
+    <span class="kw">fn </span>scene_settings(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
+        ui.group(|ui| {
+            ui.vertical_centered(|ui| {
+                ui.label(RichText::new(<span class="string">&quot;Scene Settings&quot;</span>).size(<span class="number">16.0</span>));
+            });
+
+            ui.separator();
+
+            ui.label(<span class="string">&quot;Rendering Size:&quot;</span>);
+            ui.horizontal(|ui| {
+                ui.add_enabled_ui(<span class="self">self</span>.rendering_thread.is_none(), |ui| {
+                    (ui.add(
+                        DragValue::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.render_size[<span class="number">0</span>])
+                            .speed(<span class="number">1.0</span>)
+                            .clamp_range(<span class="number">10</span>..=<span class="number">8192</span>)
+                            .prefix(<span class="string">&quot;w: &quot;</span>),
+                    )
+                    .changed()
+                        || ui
+                            .add(
+                                DragValue::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.render_size[<span class="number">1</span>])
+                                    .speed(<span class="number">1.0</span>)
+                                    .clamp_range(<span class="number">10</span>..=<span class="number">8192</span>)
+                                    .prefix(<span class="string">&quot;h: &quot;</span>),
+                            )
+                            .changed())
+                    .then(|| {
+                        <span class="kw-2">*</span><span class="self">self</span>.render_image.lock() =
+                            RgbImage::new(<span class="self">self</span>.render_size[<span class="number">0</span>], <span class="self">self</span>.render_size[<span class="number">1</span>]);
+
+                        <span class="self">self</span>.render_texture.set(
+                            ImageData::Color(Arc::new(ColorImage {
+                                size: [<span class="self">self</span>.render_size[<span class="number">0</span>] <span class="kw">as </span>usize, <span class="self">self</span>.render_size[<span class="number">1</span>] <span class="kw">as </span>usize],
+                                pixels: <span class="macro">vec!</span>[
+                                    Color32::BLACK;
+                                    (<span class="self">self</span>.render_size[<span class="number">0</span>] * <span class="self">self</span>.render_size[<span class="number">1</span>]) <span class="kw">as </span>usize
+                                ],
+                            })),
+                            TextureOptions::default(),
+                        );
+                    });
+                });
+            });
+
+            ui.label(<span class="string">&quot;Background Color:&quot;</span>);
+            color_picker::color_edit_button_rgb(ui, <span class="self">self</span>.scene.settings.background_color.as_mut());
+
+            ui.label(<span class="string">&quot;Ambient Color:&quot;</span>);
+            color_picker::color_edit_button_rgb(ui, <span class="self">self</span>.scene.settings.ambient_color.as_mut());
+
+            ui.label(<span class="string">&quot;Ambient Intensitiy:&quot;</span>);
+            ui.add(
+                Slider::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.scene.settings.ambient_intensity, <span class="number">0.0</span>..=<span class="number">1.0</span>)
+                    .clamp_to_range(<span class="bool-val">true</span>),
+            );
+
+            ui.separator();
+        });
+    }
+
+    <span class="kw">fn </span>lights(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
+        ui.group(|ui| {
+            ui.vertical_centered(|ui| {
+                ui.label(
+                    RichText::new(<span class="macro">format!</span>(<span class="string">&quot;Lights ({})&quot;</span>, <span class="self">self</span>.scene.lights.len()))
+                        .text_style(TextStyle::Name(<span class="string">&quot;subheading&quot;</span>.into())),
+                )
+            });
+
+            <span class="self">self</span>.scene
+                .lights
+                .iter_mut()
+                .enumerate()
+                .filter_map(|(n, light)| {
+                    <span class="kw">let </span><span class="kw-2">mut </span>remove = <span class="bool-val">false</span>;
+
+                    ui.separator();
+
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new(<span class="macro">format!</span>(<span class="string">&quot;Light {n}&quot;</span>)).size(<span class="number">14.0</span>));
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            remove = ui
+                                .add_sized(
+                                    [<span class="number">20.0</span>, <span class="number">20.0</span>],
+                                    ImageButton::new(<span class="macro">include_image!</span>(
+                                        <span class="string">&quot;../../res/icons/trash-solid.svg&quot;
+                                    </span>))
+                                    .tint(<span class="macro">hex_color!</span>(<span class="string">&quot;#cc0000&quot;</span>)),
+                                )
+                                .clicked();
+                        });
+                    });
+
+                    ui.label(<span class="string">&quot;Position:&quot;</span>);
+                    xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>light.position);
+
+                    ui.label(<span class="string">&quot;Intensity:&quot;</span>);
+                    ui.add(Slider::new(<span class="kw-2">&amp;mut </span>light.intensity, <span class="number">0.0</span>..=<span class="number">100.0</span>).clamp_to_range(<span class="bool-val">true</span>));
+
+                    ui.label(<span class="string">&quot;Color:&quot;</span>);
+                    color_picker::color_edit_button_rgb(ui, light.color.as_mut());
+
+                    remove.then_some(n)
+                })
+                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+                .into_iter()
+                .for_each(|n| {
+                    <span class="self">self</span>.scene.lights.remove(n);
+                });
+
+            ui.separator();
+            ui.vertical_centered(|ui| {
+                ui.add(Button::new(RichText::new(<span class="string">&quot;+ Add Light&quot;</span>)).frame(<span class="bool-val">false</span>))
+                    .clicked()
+                    .then(|| {
+                        <span class="self">self</span>.scene.lights.push(Light {
+                            position: nalgebra::Point3::new(<span class="number">5.0</span>, <span class="number">2.0</span>, <span class="number">2.0</span>),
+                            intensity: <span class="number">3.0</span>,
+                            color: nalgebra::Vector3::new(<span class="number">1.0</span>, <span class="number">1.0</span>, <span class="number">1.0</span>),
+                        });
+                    });
+            });
+        });
+    }
+
+    <span class="kw">fn </span>objects(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
+        ui.group(|ui| {
+            ui.vertical_centered(|ui| {
+                ui.label(
+                    RichText::new(<span class="macro">format!</span>(<span class="string">&quot;Objects ({})&quot;</span>, <span class="self">self</span>.scene.objects.len())).size(<span class="number">16.0</span>),
+                );
+            });
+
+            <span class="kw">let </span><span class="kw-2">mut </span>objects_to_remove = Vec::new();
+
+            <span class="kw">for </span>(n, o) <span class="kw">in </span><span class="self">self</span>.scene.objects.iter_mut().enumerate() {
+                ui.separator();
+
+                ui.horizontal(|ui| {
+                    ui.label(
+                        RichText::new(<span class="macro">format!</span>(<span class="string">&quot;Object {} ({} ▲)&quot;</span>, n, o.triangles.len()))
+                            .size(<span class="number">14.0</span>)
+                            .family(FontFamily::Monospace),
+                    );
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        <span class="kw">if </span>ui
+                            .add_sized(
+                                [<span class="number">20.0</span>, <span class="number">20.0</span>],
+                                ImageButton::new(<span class="macro">include_image!</span>(<span class="string">&quot;../../res/icons/trash-solid.svg&quot;</span>))
+                                    .tint(<span class="macro">hex_color!</span>(<span class="string">&quot;#cc0000&quot;</span>)),
+                            )
+                            .clicked()
+                        {
+                            objects_to_remove.push(n);
+                        }
+                    });
+                });
+
+                ui.label(<span class="string">&quot;Position&quot;</span>);
+                xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>o.transform.isometry.translation);
+
+                ui.label(<span class="string">&quot;Rotation&quot;</span>);
+                ui.horizontal(|ui| {
+                    <span class="kw">let </span>(<span class="kw-2">mut </span>x, <span class="kw-2">mut </span>y, <span class="kw-2">mut </span>z) = o.transform.isometry.rotation.euler_angles();
+
+                    [<span class="kw-2">&amp;mut </span>x, <span class="kw-2">&amp;mut </span>y, <span class="kw-2">&amp;mut </span>z]
+                        .iter_mut()
+                        .any(|angle| {
+                            ui.add(
+                                DragValue::new(<span class="kw-2">*</span>angle)
+                                    .speed(<span class="number">0.01</span>)
+                                    .custom_formatter(|x, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{:.2}°&quot;</span>, x.to_degrees()))
+                                    .prefix(<span class="string">&quot;x: &quot;</span>),
+                            )
+                            .changed()
+                        })
+                        .then(|| {
+                            o.transform.isometry.rotation =
+                                nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
+                        })
+                });
+
+                ui.label(<span class="string">&quot;Scale&quot;</span>);
+                <span class="kw">let </span><span class="kw-2">mut </span>scale = o.transform.scaling();
+                ui.add(
+                    DragValue::new(<span class="kw-2">&amp;mut </span>scale)
+                        .clamp_range(f32::EPSILON..=f32::INFINITY)
+                        .speed(<span class="number">0.01</span>),
+                )
+                .changed()
+                .then(|| {
+                    o.transform.set_scaling(scale);
+                });
+            }
+
+            <span class="kw">for </span>o <span class="kw">in </span>objects_to_remove {
+                <span class="self">self</span>.scene.objects.remove(o);
+            }
+
+            ui.separator();
+            ui.vertical_centered(|ui| {
+                <span class="kw">if </span>ui
+                    .add(Button::new(RichText::new(<span class="string">&quot;+ Add Object&quot;</span>)).frame(<span class="bool-val">false</span>))
+                    .clicked()
+                {
+                    <span class="kw">let </span><span class="kw-2">mut </span>dialog = FileDialog::open_file(<span class="self">self</span>.opened_file.clone())
+                        .show_files_filter(Box::new(|path| {
+                            path.extension().is_some_and(|ext| ext == <span class="string">&quot;obj&quot;</span>)
+                        }));
+                    dialog.open();
+                    <span class="self">self</span>.open_file_dialog = <span class="prelude-val">Some</span>(dialog);
+                }
+
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.open_file_dialog {
+                    <span class="kw">if </span>dialog.show(ui.ctx()).selected() {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = dialog.path() {
+                            <span class="kw">match </span>Object::from_obj(file, Similarity3::identity()) {
+                                <span class="prelude-val">Ok</span>(object) =&gt; {
+                                    <span class="self">self</span>.scene.objects.push(object);
+                                }
+                                <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;Failed to load object: {}&quot;</span>, e),
+                            }
+                        }
+                    }
+                }
+            });
+        });
     }
 }
 </code></pre></div></section></main></body></html>

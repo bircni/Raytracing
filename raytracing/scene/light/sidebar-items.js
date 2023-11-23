@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Light"]};
+window.SIDEBAR_ITEMS = {"mod":["yaml"],"struct":["Light"]};
