@@ -290,6 +290,15 @@
 <a href="#290" id="290">290</a>
 <a href="#291" id="291">291</a>
 <a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>preview;
 <span class="kw">mod </span>properties;
 <span class="kw">mod </span>render;
@@ -327,6 +336,7 @@
     rendering_progress: Arc&lt;AtomicU16&gt;,
     preview_zoom: f32,
     preview_position: Vec2,
+    selected_resolution: i32,
 }
 
 <span class="kw">impl </span>App {
@@ -371,6 +381,7 @@
             render_size,
             rendering_progress: Arc::new(AtomicU16::new(<span class="number">0</span>)),
             render_image: image_buffer,
+            selected_resolution: <span class="number">1</span>,
         })
     }
 
@@ -409,12 +420,19 @@
     }
 
     <span class="kw">fn </span>render_button(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
-        ui.add_enabled_ui(<span class="self">self</span>.rendering_thread.is_none(), |ui| {
-            ui.button(<span class="string">&quot;Render&quot;</span>).clicked().then(|| {
-                <span class="self">self</span>.render(ui.ctx().clone());
-                <span class="self">self</span>.current_tab = <span class="number">1</span>;
-            })
-        });
+        <span class="kw">if </span><span class="self">self</span>.rendering_thread.is_some() {
+            ui.button(<span class="string">&quot;Cancel&quot;</span>).clicked().then(|| {
+                <span class="comment">//self.rendering_thread = None;
+                </span><span class="self">self</span>.current_tab = <span class="number">0</span>;
+            });
+        } <span class="kw">else </span>{
+            ui.add_enabled_ui(<span class="self">self</span>.rendering_thread.is_none(), |ui| {
+                ui.button(<span class="string">&quot;Render&quot;</span>).clicked().then(|| {
+                    <span class="self">self</span>.render(ui.ctx().clone());
+                    <span class="self">self</span>.current_tab = <span class="number">1</span>;
+                })
+            });
+        }
     }
 
     <span class="kw">fn </span>preview(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
