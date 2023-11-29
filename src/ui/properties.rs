@@ -6,7 +6,6 @@ use egui::{
     TextureOptions, Ui,
 };
 use egui_file::FileDialog;
-use egui_wgpu::wgpu::Color;
 use image::RgbImage;
 use log::warn;
 use nalgebra::{coordinates::XYZ, Similarity3};
@@ -111,11 +110,22 @@ impl App {
                                 resolutions[self.selected_resolution as usize].to_string(),
                             )
                             .show_ui(ui, |ui| {
-                                ( ui.selectable_value(&mut self.selected_resolution, 0, "FullHD").changed() ||
-                                ui.selectable_value(&mut self.selected_resolution, 1, "4k").changed() ||
-                                ui.selectable_value(&mut self.selected_resolution, 2, "8k").changed() ||
-                                ui.selectable_value(&mut self.selected_resolution, 3, "Custom").changed() 
-                            ).then(|| {
+                                (ui.selectable_value(&mut self.selected_resolution, 0, "FullHD")
+                                    .changed()
+                                    || ui
+                                        .selectable_value(&mut self.selected_resolution, 1, "4k")
+                                        .changed()
+                                    || ui
+                                        .selectable_value(&mut self.selected_resolution, 2, "8k")
+                                        .changed()
+                                    || ui
+                                        .selectable_value(
+                                            &mut self.selected_resolution,
+                                            3,
+                                            "Custom",
+                                        )
+                                        .changed())
+                                .then(|| {
                                     match self.selected_resolution {
                                         0 => {
                                             self.render_size[0] = 1920;
@@ -154,23 +164,7 @@ impl App {
                                             )
                                             .changed())
                                     .then(|| {
-                                        *self.render_image.lock() =
-                                            RgbImage::new(self.render_size[0], self.render_size[1]);
-
-                                        self.render_texture.set(
-                                            ImageData::Color(Arc::new(ColorImage {
-                                                size: [
-                                                    self.render_size[0] as usize,
-                                                    self.render_size[1] as usize,
-                                                ],
-                                                pixels: vec![
-                                                    Color32::BLACK;
-                                                    (self.render_size[0] * self.render_size[1])
-                                                        as usize
-                                                ],
-                                            })),
-                                            TextureOptions::default(),
-                                        );
+                                        self.change_render_size();
                                     });
                                 },
                             );
