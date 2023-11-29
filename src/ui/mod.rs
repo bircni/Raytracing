@@ -35,6 +35,7 @@ pub struct App {
     rendering_progress: Arc<AtomicU16>,
     preview_zoom: f32,
     preview_position: Vec2,
+    selected_resolution: i32,
 }
 
 impl App {
@@ -79,6 +80,7 @@ impl App {
             render_size,
             rendering_progress: Arc::new(AtomicU16::new(0)),
             render_image: image_buffer,
+            selected_resolution: 1,
         })
     }
 
@@ -117,12 +119,19 @@ impl App {
     }
 
     fn render_button(&mut self, ui: &mut Ui) {
-        ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
-            ui.button("Render").clicked().then(|| {
-                self.render(ui.ctx().clone());
-                self.current_tab = 1;
-            })
-        });
+        if self.rendering_thread.is_some() {
+            ui.button("Cancel").clicked().then(|| {
+                //self.rendering_thread = None;
+                self.current_tab = 0;
+            });
+        } else {
+            ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
+                ui.button("Render").clicked().then(|| {
+                    self.render(ui.ctx().clone());
+                    self.current_tab = 1;
+                })
+            });
+        }
     }
 
     fn preview(&mut self, ui: &mut Ui) {
