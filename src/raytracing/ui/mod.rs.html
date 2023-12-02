@@ -299,6 +299,41 @@
 <a href="#299" id="299">299</a>
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>preview;
 <span class="kw">mod </span>properties;
 <span class="kw">mod </span>render;
@@ -323,6 +358,39 @@
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::thread::JoinHandle;
 
+<span class="attr">#[derive(PartialEq, Eq)]
+</span><span class="kw">enum </span>RenderSize {
+    FullHD,
+    Wqhd,
+    Uhd1,
+    Uhd2,
+    Custom([u32; <span class="number">2</span>]),
+}
+
+<span class="kw">impl </span>RenderSize {
+    <span class="kw">fn </span>as_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (u32, u32) {
+        <span class="kw">match </span><span class="self">self </span>{
+            RenderSize::FullHD =&gt; (<span class="number">1920</span>, <span class="number">1080</span>),
+            RenderSize::Wqhd =&gt; (<span class="number">2560</span>, <span class="number">1440</span>),
+            RenderSize::Uhd1 =&gt; (<span class="number">3840</span>, <span class="number">2160</span>),
+            RenderSize::Uhd2 =&gt; (<span class="number">7680</span>, <span class="number">4320</span>),
+            <span class="kw-2">&amp;</span>RenderSize::Custom([x, y]) =&gt; (x, y),
+        }
+    }
+}
+
+<span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>RenderSize {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+        <span class="kw">match </span><span class="self">self </span>{
+            RenderSize::FullHD =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Full HD&quot;</span>),
+            RenderSize::Wqhd =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;2k&quot;</span>),
+            RenderSize::Uhd1 =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;4k&quot;</span>),
+            RenderSize::Uhd2 =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;8k&quot;</span>),
+            RenderSize::Custom(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Custom&quot;</span>),
+        }
+    }
+}
+
 <span class="kw">pub struct </span>App {
     current_tab: usize,
     scene: Scene,
@@ -332,11 +400,10 @@
     opened_file: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
     open_file_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
     save_image_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
-    render_size: [u32; <span class="number">2</span>],
+    render_size: RenderSize,
     rendering_progress: Arc&lt;AtomicU16&gt;,
     preview_zoom: f32,
     preview_position: Vec2,
-    selected_resolution: i32,
 }
 
 <span class="kw">impl </span>App {
@@ -348,18 +415,21 @@
                 .as_ref()
                 .context(<span class="string">&quot;Failed to get wgpu context&quot;</span>)<span class="question-mark">?</span>,
         );
-        <span class="kw">let </span>render_size = [<span class="number">3840</span>, <span class="number">2160</span>];
+        <span class="kw">let </span>render_size = RenderSize::FullHD;
 
-        <span class="kw">let </span>render_texture = cc.egui_ctx.load_texture(
-            <span class="string">&quot;render&quot;</span>,
-            ImageData::Color(Arc::new(ColorImage {
-                size: [render_size[<span class="number">0</span>] <span class="kw">as </span>usize, render_size[<span class="number">1</span>] <span class="kw">as </span>usize],
-                pixels: <span class="macro">vec!</span>[Color32::BLACK; (render_size[<span class="number">0</span>] * render_size[<span class="number">1</span>]) <span class="kw">as </span>usize],
-            })),
-            TextureOptions::default(),
-        );
-
-        <span class="kw">let </span>image_buffer = Arc::new(Mutex::new(ImageBuffer::new(render_size[<span class="number">0</span>], render_size[<span class="number">1</span>])));
+        <span class="kw">let </span>(render_texture, image_buffer) = {
+            <span class="kw">let </span>render_size = render_size.as_size();
+            <span class="kw">let </span>texture = cc.egui_ctx.load_texture(
+                <span class="string">&quot;render&quot;</span>,
+                ImageData::Color(Arc::new(ColorImage {
+                    size: [render_size.<span class="number">0 </span><span class="kw">as </span>usize, render_size.<span class="number">1 </span><span class="kw">as </span>usize],
+                    pixels: <span class="macro">vec!</span>[Color32::BLACK; (render_size.<span class="number">0 </span>* render_size.<span class="number">1</span>) <span class="kw">as </span>usize],
+                })),
+                TextureOptions::default(),
+            );
+            <span class="kw">let </span>image_buffer = Arc::new(Mutex::new(ImageBuffer::new(render_size.<span class="number">0</span>, render_size.<span class="number">1</span>)));
+            (texture, image_buffer)
+        };
 
         cc.egui_ctx.style_mut(|s| {
             s.text_styles.insert(
@@ -381,7 +451,6 @@
             render_size,
             rendering_progress: Arc::new(AtomicU16::new(<span class="number">0</span>)),
             render_image: image_buffer,
-            selected_resolution: <span class="number">1</span>,
         })
     }
 
@@ -491,7 +560,8 @@
                 }
             }
 
-            <span class="kw">let </span>render_aspect = <span class="self">self</span>.render_size[<span class="number">0</span>] <span class="kw">as </span>f32 / <span class="self">self</span>.render_size[<span class="number">1</span>] <span class="kw">as </span>f32;
+            <span class="kw">let </span>render_aspect =
+                <span class="self">self</span>.render_size.as_size().<span class="number">0 </span><span class="kw">as </span>f32 / <span class="self">self</span>.render_size.as_size().<span class="number">1 </span><span class="kw">as </span>f32;
             <span class="kw">let </span>rect = Rect::from_min_size(
                 response.rect.min,
                 <span class="comment">// keep aspect ratio

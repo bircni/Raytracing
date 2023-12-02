@@ -58,6 +58,10 @@
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
 </pre></div><pre class="rust"><code><span class="attr">#![warn(clippy::pedantic)]
 #![warn(clippy::perf)]
 #![warn(clippy::style)]
@@ -68,7 +72,7 @@
 #![allow(clippy::cast_sign_loss)]
 
 </span><span class="kw">use </span>anyhow::Context;
-<span class="kw">use </span>eframe::{IconData, Renderer};
+<span class="kw">use </span>eframe::Renderer;
 <span class="kw">use </span>log::{error, LevelFilter};
 <span class="kw">use </span>nalgebra::Vector3;
 <span class="kw">use </span>scene::Scene;
@@ -99,11 +103,15 @@
     eframe::run_native(
         <span class="string">&quot;RayTracer&quot;</span>,
         eframe::NativeOptions {
-            initial_window_size: <span class="prelude-val">Some</span>(egui::vec2(<span class="number">1200.0</span>, <span class="number">900.0</span>)),
+            viewport: egui::ViewportBuilder::default()
+                .with_inner_size(egui::vec2(<span class="number">1200.0</span>, <span class="number">900.0</span>))
+                .with_icon(
+                    eframe::icon_data::from_png_bytes(<span class="kw-2">&amp;</span><span class="macro">include_bytes!</span>(<span class="string">&quot;../res/icon.png&quot;</span>)[..])
+                        .expect(<span class="string">&quot;Could not load Icon!&quot;</span>),
+                )
+                .with_app_id(<span class="string">&quot;raytracer&quot;</span>),
             renderer: Renderer::Wgpu,
             depth_buffer: <span class="number">32</span>,
-            icon_data: IconData::try_from_png_bytes(<span class="macro">include_bytes!</span>(<span class="string">&quot;../res/icon.png&quot;</span>)).ok(),
-            app_id: <span class="prelude-val">Some</span>(<span class="string">&quot;raytracer&quot;</span>.to_owned()),
             follow_system_theme: <span class="bool-val">true</span>,
             centered: <span class="bool-val">true</span>,
             ..Default::default()

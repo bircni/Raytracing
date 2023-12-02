@@ -128,10 +128,11 @@
 
 <span class="kw">impl </span><span class="kw">super</span>::App {
     <span class="kw">pub fn </span>render(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: egui::Context) {
+        <span class="kw">let </span>render_size = <span class="self">self</span>.render_size.as_size();
         <span class="self">self</span>.render_texture.set(
             ImageData::Color(Arc::new(ColorImage {
-                size: [<span class="self">self</span>.render_size[<span class="number">0</span>] <span class="kw">as </span>usize, <span class="self">self</span>.render_size[<span class="number">1</span>] <span class="kw">as </span>usize],
-                pixels: <span class="macro">vec!</span>[Color32::BLACK; (<span class="self">self</span>.render_size[<span class="number">0</span>] * <span class="self">self</span>.render_size[<span class="number">1</span>]) <span class="kw">as </span>usize],
+                size: [render_size.<span class="number">0 </span><span class="kw">as </span>usize, render_size.<span class="number">1 </span><span class="kw">as </span>usize],
+                pixels: <span class="macro">vec!</span>[Color32::BLACK; (render_size.<span class="number">0 </span>* render_size.<span class="number">1</span>) <span class="kw">as </span>usize],
             })),
             TextureOptions::default(),
         );
@@ -139,8 +140,7 @@
         <span class="kw">let </span>texture = <span class="self">self</span>.render_texture.clone();
         <span class="kw">let </span>raytracer = Raytracer::new(<span class="self">self</span>.scene.clone(), <span class="number">1e-5</span>);
 
-        <span class="kw">let </span>render_size = <span class="self">self</span>.render_size;
-        <span class="kw">let </span>block_size = [render_size[<span class="number">0</span>] / <span class="number">10</span>, render_size[<span class="number">1</span>] / <span class="number">10</span>];
+        <span class="kw">let </span>block_size = [render_size.<span class="number">0 </span>/ <span class="number">10</span>, render_size.<span class="number">1 </span>/ <span class="number">10</span>];
         <span class="kw">let </span>rendering_progress = <span class="self">self</span>.rendering_progress.clone();
         <span class="kw">let </span>image_buffer = <span class="self">self</span>.render_image.clone();
 
@@ -150,9 +150,9 @@
             <span class="kw">let </span>start = std::time::Instant::now();
 
             <span class="kw">let </span>blocks = AtomicUsize::new(<span class="number">0</span>);
-            (<span class="number">0</span>..render_size[<span class="number">1</span>] / block_size[<span class="number">1</span>])
+            (<span class="number">0</span>..render_size.<span class="number">1 </span>/ block_size[<span class="number">1</span>])
                 .flat_map(|y_block| {
-                    (<span class="number">0</span>..render_size[<span class="number">0</span>] / block_size[<span class="number">0</span>]).map(<span class="kw">move </span>|x_block| (x_block, y_block))
+                    (<span class="number">0</span>..render_size.<span class="number">0 </span>/ block_size[<span class="number">0</span>]).map(<span class="kw">move </span>|x_block| (x_block, y_block))
                 })
                 .par_bridge()
                 .map(|(x_block, y_block)| {
@@ -160,10 +160,10 @@
                         <span class="string">&quot;rendering block ({}, {}) of ({}, {}) ({:.2}%)&quot;</span>,
                         x_block,
                         y_block,
-                        render_size[<span class="number">0</span>] / block_size[<span class="number">0</span>],
-                        render_size[<span class="number">1</span>] / block_size[<span class="number">1</span>],
-                        (x_block + y_block * render_size[<span class="number">0</span>] / block_size[<span class="number">0</span>]) <span class="kw">as </span>f32
-                            / (render_size[<span class="number">0</span>] / block_size[<span class="number">0</span>] * render_size[<span class="number">1</span>] / block_size[<span class="number">1</span>])
+                        render_size.<span class="number">0 </span>/ block_size[<span class="number">0</span>],
+                        render_size.<span class="number">1 </span>/ block_size[<span class="number">1</span>],
+                        (x_block + y_block * render_size.<span class="number">0 </span>/ block_size[<span class="number">0</span>]) <span class="kw">as </span>f32
+                            / (render_size.<span class="number">0 </span>/ block_size[<span class="number">0</span>] * render_size.<span class="number">1 </span>/ block_size[<span class="number">1</span>])
                                 <span class="kw">as </span>f32
                             * <span class="number">100.0
                     </span>);
@@ -173,7 +173,7 @@
                         .map(|i| {
                             <span class="kw">let </span>x = i % block_size[<span class="number">0</span>] + x_block * block_size[<span class="number">0</span>];
                             <span class="kw">let </span>y = i / block_size[<span class="number">0</span>] + y_block * block_size[<span class="number">1</span>];
-                            raytracer.render((x, y), (render_size[<span class="number">0</span>], render_size[<span class="number">1</span>]))
+                            raytracer.render((x, y), (render_size.<span class="number">0</span>, render_size.<span class="number">1</span>))
                         })
                         .map(|c| {
                             Color32::from_rgb(
@@ -186,7 +186,7 @@
 
                     rendering_progress.store(
                         ((blocks.fetch_add(<span class="number">1</span>, Ordering::Relaxed) <span class="kw">as </span>f32)
-                            / (render_size[<span class="number">0</span>] / block_size[<span class="number">0</span>] * render_size[<span class="number">1</span>] / block_size[<span class="number">1</span>])
+                            / (render_size.<span class="number">0 </span>/ block_size[<span class="number">0</span>] * render_size.<span class="number">1 </span>/ block_size[<span class="number">1</span>])
                                 <span class="kw">as </span>f32
                             * f32::from(u16::MAX))
                         .round() <span class="kw">as </span>u16,

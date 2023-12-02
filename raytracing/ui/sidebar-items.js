@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["preview","properties","render"],"struct":["App"]};
+window.SIDEBAR_ITEMS = {"enum":["RenderSize"],"mod":["preview","properties","render"],"struct":["App"]};
