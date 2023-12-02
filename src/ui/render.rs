@@ -26,6 +26,7 @@ impl super::App {
 
         let block_size = [render_size.0 / 10, render_size.1 / 10];
         let rendering_progress = self.rendering_progress.clone();
+        let rendering_cancel = self.rendering_cancel.clone();
         let image_buffer = self.render_image.clone();
 
         rendering_progress.store(0, Ordering::Relaxed);
@@ -39,6 +40,7 @@ impl super::App {
                     (0..render_size.0 / block_size[0]).map(move |x_block| (x_block, y_block))
                 })
                 .par_bridge()
+                .take_any_while(|_| !rendering_cancel.load(Ordering::Relaxed))
                 .map(|(x_block, y_block)| {
                     debug!(
                         "rendering block ({}, {}) of ({}, {}) ({:.2}%)",
@@ -79,6 +81,7 @@ impl super::App {
 
                     (pixels, x_block, y_block)
                 })
+                .take_any_while(|_| !rendering_cancel.load(Ordering::Relaxed))
                 .for_each_with(texture, |texture, (pixels, x_block, y_block)| {
                     texture.set_partial(
                         [
