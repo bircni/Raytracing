@@ -12,10 +12,11 @@ use crate::raytracer::Raytracer;
 
 impl super::App {
     pub fn render(&mut self, ctx: egui::Context) {
+        let render_size = self.render_size.as_size();
         self.render_texture.set(
             ImageData::Color(Arc::new(ColorImage {
-                size: [self.render_size[0] as usize, self.render_size[1] as usize],
-                pixels: vec![Color32::BLACK; (self.render_size[0] * self.render_size[1]) as usize],
+                size: [render_size.0 as usize, render_size.1 as usize],
+                pixels: vec![Color32::BLACK; (render_size.0 * render_size.1) as usize],
             })),
             TextureOptions::default(),
         );
@@ -23,8 +24,7 @@ impl super::App {
         let texture = self.render_texture.clone();
         let raytracer = Raytracer::new(self.scene.clone(), 1e-5);
 
-        let render_size = self.render_size;
-        let block_size = [render_size[0] / 10, render_size[1] / 10];
+        let block_size = [render_size.0 / 10, render_size.1 / 10];
         let rendering_progress = self.rendering_progress.clone();
         let image_buffer = self.render_image.clone();
 
@@ -34,9 +34,9 @@ impl super::App {
             let start = std::time::Instant::now();
 
             let blocks = AtomicUsize::new(0);
-            (0..render_size[1] / block_size[1])
+            (0..render_size.1 / block_size[1])
                 .flat_map(|y_block| {
-                    (0..render_size[0] / block_size[0]).map(move |x_block| (x_block, y_block))
+                    (0..render_size.0 / block_size[0]).map(move |x_block| (x_block, y_block))
                 })
                 .par_bridge()
                 .map(|(x_block, y_block)| {
@@ -44,10 +44,10 @@ impl super::App {
                         "rendering block ({}, {}) of ({}, {}) ({:.2}%)",
                         x_block,
                         y_block,
-                        render_size[0] / block_size[0],
-                        render_size[1] / block_size[1],
-                        (x_block + y_block * render_size[0] / block_size[0]) as f32
-                            / (render_size[0] / block_size[0] * render_size[1] / block_size[1])
+                        render_size.0 / block_size[0],
+                        render_size.1 / block_size[1],
+                        (x_block + y_block * render_size.0 / block_size[0]) as f32
+                            / (render_size.0 / block_size[0] * render_size.1 / block_size[1])
                                 as f32
                             * 100.0
                     );
@@ -57,7 +57,7 @@ impl super::App {
                         .map(|i| {
                             let x = i % block_size[0] + x_block * block_size[0];
                             let y = i / block_size[0] + y_block * block_size[1];
-                            raytracer.render((x, y), (render_size[0], render_size[1]))
+                            raytracer.render((x, y), (render_size.0, render_size.1))
                         })
                         .map(|c| {
                             Color32::from_rgb(
@@ -70,7 +70,7 @@ impl super::App {
 
                     rendering_progress.store(
                         ((blocks.fetch_add(1, Ordering::Relaxed) as f32)
-                            / (render_size[0] / block_size[0] * render_size[1] / block_size[1])
+                            / (render_size.0 / block_size[0] * render_size.1 / block_size[1])
                                 as f32
                             * f32::from(u16::MAX))
                         .round() as u16,

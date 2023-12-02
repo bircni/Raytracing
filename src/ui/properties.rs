@@ -12,7 +12,7 @@ use nalgebra::{coordinates::XYZ, Similarity3};
 
 use crate::scene::{Light, Object};
 
-use super::App;
+use super::{App, RenderSize};
 
 fn xyz_drag_value(ui: &mut Ui, value: &mut XYZ<f32>) {
     ui.horizontal(|ui| {
@@ -102,60 +102,60 @@ impl App {
             ui.label("Render Size:");
 
             ui.vertical(|ui| {
+                let mut render_size = self.render_size.as_size();
                 ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
                     ui.vertical(|ui| {
-                        let resolutions = ["FullHD", "2k", "4k", "8k", "Custom"];
                         egui::ComboBox::from_id_source(0)
-                            .selected_text(
-                                resolutions[self.selected_resolution as usize].to_string(),
-                            )
+                            .selected_text(format!("{}", self.render_size))
                             .show_ui(ui, |ui| {
-                                (ui.selectable_value(&mut self.selected_resolution, 0, "FullHD")
+                                (ui.selectable_value(
+                                    &mut self.render_size,
+                                    RenderSize::FullHD,
+                                    format!("{}", RenderSize::FullHD),
+                                )
+                                .changed()
+                                    | ui.selectable_value(
+                                        &mut self.render_size,
+                                        RenderSize::Wqhd,
+                                        format!("{}", RenderSize::Wqhd),
+                                    )
                                     .changed()
-                                    | ui.selectable_value(&mut self.selected_resolution, 1, "2k")
-                                        .changed()
                                     || ui
-                                        .selectable_value(&mut self.selected_resolution, 2, "4k")
-                                        .changed()
-                                    || ui
-                                        .selectable_value(&mut self.selected_resolution, 3, "8k")
+                                        .selectable_value(
+                                            &mut self.render_size,
+                                            RenderSize::Uhd1,
+                                            format!("{}", RenderSize::Uhd1),
+                                        )
                                         .changed()
                                     || ui
                                         .selectable_value(
-                                            &mut self.selected_resolution,
-                                            4,
-                                            "Custom",
+                                            &mut self.render_size,
+                                            RenderSize::Uhd2,
+                                            format!("{}", RenderSize::Uhd2),
+                                        )
+                                        .changed()
+                                    || ui
+                                        .selectable_value(
+                                            &mut self.render_size,
+                                            RenderSize::Custom([render_size.0, render_size.1]),
+                                            format!("{}", RenderSize::Custom([0, 0])),
                                         )
                                         .changed())
                                 .then(|| {
-                                    match self.selected_resolution {
-                                        0 => {
-                                            self.render_size[0] = 1920;
-                                            self.render_size[1] = 1080;
-                                        }
-                                        1 => {
-                                            self.render_size[0] = 2560;
-                                            self.render_size[1] = 1440;
-                                        }
-                                        2 => {
-                                            self.render_size[0] = 3840;
-                                            self.render_size[1] = 2160;
-                                        }
-                                        3 => {
-                                            self.render_size[0] = 7680;
-                                            self.render_size[1] = 4320;
-                                        }
-                                        _ => {}
-                                    }
                                     self.change_render_size();
                                 });
                             });
                         ui.horizontal(|ui| {
                             ui.add_enabled_ui(
-                                self.rendering_thread.is_none() && self.selected_resolution == 4,
+                                self.rendering_thread.is_none()
+                                    && matches!(self.render_size, RenderSize::Custom(_)),
                                 |ui| {
+                                    let (x, y) = match &mut self.render_size {
+                                        RenderSize::Custom([x, y]) => (x, y),
+                                        _ => (&mut render_size.0, &mut render_size.1),
+                                    };
                                     (ui.add(
-                                        DragValue::new(&mut self.render_size[0])
+                                        DragValue::new(x)
                                             .speed(1.0)
                                             .clamp_range(10..=8192)
                                             .prefix("w: "),
@@ -163,7 +163,7 @@ impl App {
                                     .changed()
                                         || ui
                                             .add(
-                                                DragValue::new(&mut self.render_size[1])
+                                                DragValue::new(y)
                                                     .speed(1.0)
                                                     .clamp_range(10..=8192)
                                                     .prefix("h: "),
@@ -366,12 +366,13 @@ impl App {
 
     /// Change the render size
     fn change_render_size(&mut self) {
-        *self.render_image.lock() = RgbImage::new(self.render_size[0], self.render_size[1]);
+        let (x, y) = self.render_size.as_size();
+        *self.render_image.lock() = RgbImage::new(x, y);
 
         self.render_texture.set(
             ImageData::Color(Arc::new(ColorImage {
-                size: [self.render_size[0] as usize, self.render_size[1] as usize],
-                pixels: vec![Color32::BLACK; (self.render_size[0] * self.render_size[1]) as usize],
+                size: [x as usize, y as usize],
+                pixels: vec![Color32::BLACK; (x * y) as usize],
             })),
             TextureOptions::default(),
         );
