@@ -99,12 +99,12 @@ impl App {
 
             ui.separator();
 
-            ui.label("Rendering Size:");
+            ui.label("Render Size:");
 
             ui.vertical(|ui| {
                 ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
                     ui.vertical(|ui| {
-                        let resolutions = ["FullHD", "4k", "8k", "Custom"];
+                        let resolutions = ["FullHD", "2k", "4k", "8k", "Custom"];
                         egui::ComboBox::from_id_source(0)
                             .selected_text(
                                 resolutions[self.selected_resolution as usize].to_string(),
@@ -112,16 +112,18 @@ impl App {
                             .show_ui(ui, |ui| {
                                 (ui.selectable_value(&mut self.selected_resolution, 0, "FullHD")
                                     .changed()
-                                    || ui
-                                        .selectable_value(&mut self.selected_resolution, 1, "4k")
+                                    | ui.selectable_value(&mut self.selected_resolution, 1, "2k")
                                         .changed()
                                     || ui
-                                        .selectable_value(&mut self.selected_resolution, 2, "8k")
+                                        .selectable_value(&mut self.selected_resolution, 2, "4k")
+                                        .changed()
+                                    || ui
+                                        .selectable_value(&mut self.selected_resolution, 3, "8k")
                                         .changed()
                                     || ui
                                         .selectable_value(
                                             &mut self.selected_resolution,
-                                            3,
+                                            4,
                                             "Custom",
                                         )
                                         .changed())
@@ -132,10 +134,14 @@ impl App {
                                             self.render_size[1] = 1080;
                                         }
                                         1 => {
+                                            self.render_size[0] = 2560;
+                                            self.render_size[1] = 1440;
+                                        }
+                                        2 => {
                                             self.render_size[0] = 3840;
                                             self.render_size[1] = 2160;
                                         }
-                                        2 => {
+                                        3 => {
                                             self.render_size[0] = 7680;
                                             self.render_size[1] = 4320;
                                         }
@@ -146,7 +152,7 @@ impl App {
                             });
                         ui.horizontal(|ui| {
                             ui.add_enabled_ui(
-                                self.rendering_thread.is_none() && self.selected_resolution == 3,
+                                self.rendering_thread.is_none() && self.selected_resolution == 4,
                                 |ui| {
                                     (ui.add(
                                         DragValue::new(&mut self.render_size[0])

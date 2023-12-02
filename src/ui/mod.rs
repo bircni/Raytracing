@@ -80,7 +80,7 @@ impl App {
             render_size,
             rendering_progress: Arc::new(AtomicU16::new(0)),
             render_image: image_buffer,
-            selected_resolution: 1,
+            selected_resolution: 2,
         })
     }
 
