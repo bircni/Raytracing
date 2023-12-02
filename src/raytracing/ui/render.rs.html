@@ -114,6 +114,9 @@
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::{
     atomic::{AtomicUsize, Ordering},
     Arc,
@@ -142,6 +145,7 @@
 
         <span class="kw">let </span>block_size = [render_size.<span class="number">0 </span>/ <span class="number">10</span>, render_size.<span class="number">1 </span>/ <span class="number">10</span>];
         <span class="kw">let </span>rendering_progress = <span class="self">self</span>.rendering_progress.clone();
+        <span class="kw">let </span>rendering_cancel = <span class="self">self</span>.rendering_cancel.clone();
         <span class="kw">let </span>image_buffer = <span class="self">self</span>.render_image.clone();
 
         rendering_progress.store(<span class="number">0</span>, Ordering::Relaxed);
@@ -155,6 +159,7 @@
                     (<span class="number">0</span>..render_size.<span class="number">0 </span>/ block_size[<span class="number">0</span>]).map(<span class="kw">move </span>|x_block| (x_block, y_block))
                 })
                 .par_bridge()
+                .take_any_while(|<span class="kw">_</span>| !rendering_cancel.load(Ordering::Relaxed))
                 .map(|(x_block, y_block)| {
                     <span class="macro">debug!</span>(
                         <span class="string">&quot;rendering block ({}, {}) of ({}, {}) ({:.2}%)&quot;</span>,
@@ -195,6 +200,7 @@
 
                     (pixels, x_block, y_block)
                 })
+                .take_any_while(|<span class="kw">_</span>| !rendering_cancel.load(Ordering::Relaxed))
                 .for_each_with(texture, |texture, (pixels, x_block, y_block)| {
                     texture.set_partial(
                         [

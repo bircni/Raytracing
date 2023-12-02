@@ -334,6 +334,8 @@
 <a href="#334" id="334">334</a>
 <a href="#335" id="335">335</a>
 <a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>preview;
 <span class="kw">mod </span>properties;
 <span class="kw">mod </span>render;
@@ -354,7 +356,7 @@
 <span class="kw">use </span>image::{ImageBuffer, RgbImage};
 <span class="kw">use </span>log::{info, warn};
 <span class="kw">use </span>std::path::PathBuf;
-<span class="kw">use </span>std::sync::atomic::{AtomicU16, Ordering};
+<span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::thread::JoinHandle;
 
@@ -396,6 +398,7 @@
     scene: Scene,
     render_texture: TextureHandle,
     rendering_thread: <span class="prelude-ty">Option</span>&lt;std::thread::JoinHandle&lt;()&gt;&gt;,
+    rendering_cancel: Arc&lt;AtomicBool&gt;,
     render_image: Arc&lt;Mutex&lt;RgbImage&gt;&gt;,
     opened_file: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
     open_file_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
@@ -450,6 +453,7 @@
             save_image_dialog: <span class="prelude-val">None</span>,
             render_size,
             rendering_progress: Arc::new(AtomicU16::new(<span class="number">0</span>)),
+            rendering_cancel: Arc::new(AtomicBool::new(<span class="bool-val">false</span>)),
             render_image: image_buffer,
         })
     }
@@ -491,8 +495,7 @@
     <span class="kw">fn </span>render_button(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
         <span class="kw">if </span><span class="self">self</span>.rendering_thread.is_some() {
             ui.button(<span class="string">&quot;Cancel&quot;</span>).clicked().then(|| {
-                <span class="comment">//self.rendering_thread = None;
-                </span><span class="self">self</span>.current_tab = <span class="number">0</span>;
+                <span class="self">self</span>.rendering_cancel.store(<span class="bool-val">true</span>, Ordering::Relaxed);
             });
         } <span class="kw">else </span>{
             ui.add_enabled_ui(<span class="self">self</span>.rendering_thread.is_none(), |ui| {
@@ -612,6 +615,7 @@
             .is_some_and(JoinHandle::is_finished)
             .then(|| {
                 <span class="self">self</span>.rendering_thread = <span class="prelude-val">None</span>;
+                <span class="self">self</span>.rendering_cancel.store(<span class="bool-val">false</span>, Ordering::Relaxed);
             });
 
         ctx.input(|input| input.key_pressed(Key::S) &amp;&amp; input.modifiers.ctrl)
