@@ -8,7 +8,7 @@
 #![allow(clippy::cast_sign_loss)]
 
 use anyhow::Context;
-use eframe::{IconData, Renderer};
+use eframe::Renderer;
 use log::{error, LevelFilter};
 use nalgebra::Vector3;
 use scene::Scene;
@@ -39,11 +39,15 @@ fn main() -> anyhow::Result<()> {
     eframe::run_native(
         "RayTracer",
         eframe::NativeOptions {
-            initial_window_size: Some(egui::vec2(1200.0, 900.0)),
+            viewport: egui::ViewportBuilder::default()
+                .with_inner_size(egui::vec2(1200.0, 900.0))
+                .with_icon(
+                    eframe::icon_data::from_png_bytes(&include_bytes!("../res/icon.png")[..])
+                        .expect("Could not load Icon!"),
+                )
+                .with_app_id("raytracer"),
             renderer: Renderer::Wgpu,
             depth_buffer: 32,
-            icon_data: IconData::try_from_png_bytes(include_bytes!("../res/icon.png")).ok(),
-            app_id: Some("raytracer".to_owned()),
             follow_system_theme: true,
             centered: true,
             ..Default::default()

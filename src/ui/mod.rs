@@ -22,6 +22,39 @@ use std::sync::atomic::{AtomicU16, Ordering};
 use std::sync::Arc;
 use std::thread::JoinHandle;
 
+#[derive(PartialEq, Eq)]
+enum RenderSize {
+    FullHD,
+    Wqhd,
+    Uhd1,
+    Uhd2,
+    Custom([u32; 2]),
+}
+
+impl RenderSize {
+    fn as_size(&self) -> (u32, u32) {
+        match self {
+            RenderSize::FullHD => (1920, 1080),
+            RenderSize::Wqhd => (2560, 1440),
+            RenderSize::Uhd1 => (3840, 2160),
+            RenderSize::Uhd2 => (7680, 4320),
+            &RenderSize::Custom([x, y]) => (x, y),
+        }
+    }
+}
+
+impl std::fmt::Display for RenderSize {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RenderSize::FullHD => write!(f, "Full HD"),
+            RenderSize::Wqhd => write!(f, "2k"),
+            RenderSize::Uhd1 => write!(f, "4k"),
+            RenderSize::Uhd2 => write!(f, "8k"),
+            RenderSize::Custom(_) => write!(f, "Custom"),
+        }
+    }
+}
+
 pub struct App {
     current_tab: usize,
     scene: Scene,
@@ -31,11 +64,10 @@ pub struct App {
     opened_file: Option<PathBuf>,
     open_file_dialog: Option<FileDialog>,
     save_image_dialog: Option<FileDialog>,
-    render_size: [u32; 2],
+    render_size: RenderSize,
     rendering_progress: Arc<AtomicU16>,
     preview_zoom: f32,
     preview_position: Vec2,
-    selected_resolution: i32,
 }
 
 impl App {
@@ -47,18 +79,21 @@ impl App {
                 .as_ref()
                 .context("Failed to get wgpu context")?,
         );
-        let render_size = [3840, 2160];
+        let render_size = RenderSize::FullHD;
 
-        let render_texture = cc.egui_ctx.load_texture(
-            "render",
-            ImageData::Color(Arc::new(ColorImage {
-                size: [render_size[0] as usize, render_size[1] as usize],
-                pixels: vec![Color32::BLACK; (render_size[0] * render_size[1]) as usize],
-            })),
-            TextureOptions::default(),
-        );
-
-        let image_buffer = Arc::new(Mutex::new(ImageBuffer::new(render_size[0], render_size[1])));
+        let (render_texture, image_buffer) = {
+            let render_size = render_size.as_size();
+            let texture = cc.egui_ctx.load_texture(
+                "render",
+                ImageData::Color(Arc::new(ColorImage {
+                    size: [render_size.0 as usize, render_size.1 as usize],
+                    pixels: vec![Color32::BLACK; (render_size.0 * render_size.1) as usize],
+                })),
+                TextureOptions::default(),
+            );
+            let image_buffer = Arc::new(Mutex::new(ImageBuffer::new(render_size.0, render_size.1)));
+            (texture, image_buffer)
+        };
 
         cc.egui_ctx.style_mut(|s| {
             s.text_styles.insert(
@@ -80,7 +115,6 @@ impl App {
             render_size,
             rendering_progress: Arc::new(AtomicU16::new(0)),
             render_image: image_buffer,
-            selected_resolution: 1,
         })
     }
 
@@ -190,7 +224,8 @@ impl App {
                 }
             }
 
-            let render_aspect = self.render_size[0] as f32 / self.render_size[1] as f32;
+            let render_aspect =
+                self.render_size.as_size().0 as f32 / self.render_size.as_size().1 as f32;
             let rect = Rect::from_min_size(
                 response.rect.min,
                 // keep aspect ratio
