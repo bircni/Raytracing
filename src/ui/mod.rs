@@ -18,7 +18,7 @@ use egui_file::FileDialog;
 use image::{ImageBuffer, RgbImage};
 use log::{info, warn};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU16, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use std::sync::Arc;
 use std::thread::JoinHandle;
 
@@ -60,6 +60,7 @@ pub struct App {
     scene: Scene,
     render_texture: TextureHandle,
     rendering_thread: Option<std::thread::JoinHandle<()>>,
+    rendering_cancel: Arc<AtomicBool>,
     render_image: Arc<Mutex<RgbImage>>,
     opened_file: Option<PathBuf>,
     open_file_dialog: Option<FileDialog>,
@@ -114,6 +115,7 @@ impl App {
             save_image_dialog: None,
             render_size,
             rendering_progress: Arc::new(AtomicU16::new(0)),
+            rendering_cancel: Arc::new(AtomicBool::new(false)),
             render_image: image_buffer,
         })
     }
@@ -155,8 +157,7 @@ impl App {
     fn render_button(&mut self, ui: &mut Ui) {
         if self.rendering_thread.is_some() {
             ui.button("Cancel").clicked().then(|| {
-                //self.rendering_thread = None;
-                self.current_tab = 0;
+                self.rendering_cancel.store(true, Ordering::Relaxed);
             });
         } else {
             ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
@@ -276,6 +277,7 @@ impl eframe::App for App {
             .is_some_and(JoinHandle::is_finished)
             .then(|| {
                 self.rendering_thread = None;
+                self.rendering_cancel.store(false, Ordering::Relaxed);
             });
 
         ctx.input(|input| input.key_pressed(Key::S) && input.modifiers.ctrl)
