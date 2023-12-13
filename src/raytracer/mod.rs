@@ -1,4 +1,4 @@
-use nalgebra::{Point3, Vector3};
+use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
 
 use crate::{
@@ -17,6 +17,7 @@ pub struct Hit<'a> {
     pub point: Point3<f32>,
     pub normal: Vector3<f32>,
     pub material: Option<&'a Material>,
+    pub uv: Vector2<f32>,
 }
 
 pub struct Raytracer {
@@ -50,10 +51,19 @@ impl Raytracer {
 
     fn shade(&self, hit: Option<Hit>) -> Color {
         if let Some(hit) = hit {
-            let diffuse = hit
-                .material
-                .and_then(|m| m.kd)
-                .map_or(Self::NO_MATERIAL_COLOR, Color::from);
+            let diffuse = (hit.material.and_then(|m| m.map_kd.as_ref()).map(|map| {
+                let uv = hit.uv;
+                let x = (uv.x * map.width() as f32) as u32 % map.width();
+                let y = (uv.y * map.height() as f32) as u32 % map.height();
+                let pixel = map.get_pixel(x, y);
+                Color::new(
+                    f32::from(pixel[0]) / 255.0,
+                    f32::from(pixel[1]) / 255.0,
+                    f32::from(pixel[2]) / 255.0,
+                )
+            }))
+            .or(hit.material.and_then(|m| m.kd).map(Color::from))
+            .unwrap_or(Self::NO_MATERIAL_COLOR);
             let specular = hit
                 .material
                 .and_then(|m| m.ks)

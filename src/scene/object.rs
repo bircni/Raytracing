@@ -137,11 +137,11 @@ impl Object {
                 // interpolate hit point and normal
                 let point = Point3::from((t.a * u).coords + (t.b * v).coords + (t.c * w).coords);
                 let normal = (t.a_normal * u) + (t.b_normal * v) + (t.c_normal * w);
-
-                (t, point, normal)
+                let uv = (t.a_uv * u) + (t.b_uv * v) + (t.c_uv * w);
+                (t, point, normal, uv)
             })
-            .min_by_key(|&(_, point, _)| OrderedFloat((ray.origin - point).norm_squared()))
-            .map(|(t, point, normal)| {
+            .min_by_key(|&(_, point, _, _)| OrderedFloat((ray.origin - point).norm_squared()))
+            .map(|(t, point, normal, uv)| {
                 // Transform hit point and normal back into world space
                 let point = self.transform.transform_point(&point);
                 let normal = self.transform.transform_vector(&normal);
@@ -150,6 +150,7 @@ impl Object {
                     point,
                     normal,
                     material: t.material_index.map(|i| &self.materials[i]),
+                    uv,
                 }
             })
     }
