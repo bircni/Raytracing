@@ -5,9 +5,9 @@ models:
     y: -0.1
     z: -0.5
   rotation:
-    x: 17.761688
-    y: -12.605077
-    z: -6.5614495e-7
+    x: 17.761684
+    y: -12.605079
+    z: -4.3742997e-7
   scale: 1.0
 point_lights:
 - position:
@@ -28,9 +28,9 @@ point_lights:
     b: 15.630268
 camera:
   position:
-    x: -2.0
-    y: 1.5
-    z: 5.0
+    x: -0.5
+    y: 0.0
+    z: 3.5
   look_at:
     x: 0.0
     y: 0.0

@@ -79,7 +79,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd res\test\rustbin.jpg
+map_Kd res/test/rustbin.jpg
 
 newmtl material__13
 Ns 6.000004
@@ -89,7 +89,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd res\test\skin.tif
+map_Kd res/test/skin.tif
 
 newmtl material__14
 Ns 6.000004
@@ -99,7 +99,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd res\test\stem_color.tif
+map_Kd res/test/stem_color.tif
 
 newmtl material__3
 Ns 64.000023
@@ -109,7 +109,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd res\test\body.tif
+map_Kd res/test/body.tif
 
 newmtl material__8
 Ns 2.000000

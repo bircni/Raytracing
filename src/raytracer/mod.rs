@@ -68,7 +68,7 @@ impl Raytracer {
             let diffuse = (hit.material.and_then(|m| m.map_kd.as_ref()).map(|map| {
                 let uv = hit.uv;
                 let x = (uv.x * map.width() as f32) as u32 % map.width();
-                let y = (uv.y * map.height() as f32) as u32 % map.height();
+                let y = ((1.0 - uv.y) * map.height() as f32) as u32 % map.height();
                 let pixel = map.get_pixel(x, y);
                 Color::new(
                     f32::from(pixel[0]) / 255.0,
