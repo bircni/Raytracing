@@ -1,7 +1,8 @@
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-pub use self::{camera::Camera, light::Light, object::Object, settings::Settings};
+pub use self::{camera::Camera, light::Light, object::Object, settings::Settings, skybox::Skybox};
+
 
 mod camera;
 mod light;
@@ -9,6 +10,7 @@ mod object;
 mod settings;
 mod triangle;
 mod yaml;
+mod skybox;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Scene {
