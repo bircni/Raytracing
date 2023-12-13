@@ -63,7 +63,6 @@ impl Object {
                 d: m.d,
                 illum: m.illum,
                 map_ka: load_texture(m.map_ka.as_ref()),
-
                 map_kd: load_texture(m.map_kd.as_ref()),
                 map_ks: load_texture(m.map_ks.as_ref()),
                 map_ke: load_texture(m.map_ke.as_ref()),
