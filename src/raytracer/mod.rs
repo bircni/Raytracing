@@ -42,12 +42,24 @@ impl Raytracer {
             .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
     }
 
+    fn reflect(v: nalgebra::Vector3<f32>, n: nalgebra::Vector3<f32>) -> nalgebra::Vector3<f32> {
+        2.0 * n.dot(&v) * n - v
+    }
+
     fn shade(&self, hit: Option<Hit>) -> Color {
         if let Some(hit) = hit {
             let diffuse = hit
                 .material
                 .and_then(|m| m.kd)
                 .map_or(Self::NO_MATERIAL_COLOR, Color::from);
+            let specular = hit
+                .material
+                .and_then(|m| m.ks)
+                .map_or(Self::NO_MATERIAL_COLOR, Color::from);
+            let shininess = hit
+                .material
+                .and_then(|m| m.ks.map(|ks| ks[0]))
+                .unwrap_or(0.0);
 
             let mut color = self.scene.settings.ambient_color.component_mul(&diffuse)
                 * self.scene.settings.ambient_intensity;
@@ -65,8 +77,18 @@ impl Raytracer {
                     let light_intensity =
                         light.intensity / (light.position - hit.point).norm_squared();
                     let light_reflection = light_direction.dot(&hit.normal).max(0.0);
+
+                    let view_direction = -light_ray.direction;
+                    let reflection_direction = Self::reflect(-light_direction, hit.normal);
+                    let specular_component = reflection_direction
+                        .dot(&view_direction)
+                        .max(0.0)
+                        .powf(shininess);
+
                     color +=
                         diffuse.component_mul(&light.color) * light_intensity * light_reflection;
+                    color +=
+                        specular.component_mul(&light.color) * light_intensity * specular_component;
                 }
             }
 
