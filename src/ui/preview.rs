@@ -302,7 +302,10 @@ impl CallbackTrait for PreviewRenderer {
                     .flat_map(|(i, o)| o.triangles.iter().map(move |t| (i, o, t)))
                     .map(|(i, o, t)| (i, t.material_index.and_then(|i| o.materials.get(i)), t))
                     .flat_map(|(i, m, t)| {
-                        let color = m.as_ref().and_then(|m| m.kd).unwrap_or([0.9; 3]);
+                        let color = m
+                            .as_ref()
+                            .and_then(|m| m.diffuse_color)
+                            .map_or([0.9; 3], std::convert::Into::into);
                         [
                             bytemuck::bytes_of(&[t.a.into(), t.a_normal.into(), color]),
                             bytemuck::bytes_of(&(i as u32)),
