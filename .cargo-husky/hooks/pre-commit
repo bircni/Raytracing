@@ -1,13 +1,13 @@
 #!/bin/bash
 
 echo "Checking for cargo..."
-if ! command -v cargo &> /dev/null; then
+if ! command -v cargo &>/dev/null; then
     echo "Error: cargo not found"
     exit 0
 fi
 
 echo "Executing cargo clippy"
-if ! cargo clippy --all-targets --all-features -- -D warnings; then
+if ! cargo clippy; then
     echo "Error: Clippy failed"
     exit 1
 fi

@@ -150,8 +150,11 @@ impl Object {
                 // Transform hit point and normal back into world space
                 let point = self.transform.transform_point(&point);
                 let normal = self.transform.transform_vector(&normal);
+                let direction = self.transform.transform_vector(&ray.direction);
 
                 Hit {
+                    name: self.name.as_str(),
+                    direction,
                     point,
                     normal,
                     material: t.material_index.map(|i| &self.materials[i]),
@@ -173,10 +176,18 @@ fn triangulate(
         let b = Point3::from(obj.data.position[poly.0[i].0]);
         let c = Point3::from(obj.data.position[poly.0[i + 1].0]);
 
-        let Some(computed_normal) = (a - b).cross(&(a - c)).try_normalize(f32::EPSILON) else {
-            warn!("Degenerate triangle: {:?}", poly);
-            continue;
-        };
+        let computed_normal = (a - b)
+            .cross(&(a - c))
+            .try_normalize(f32::EPSILON)
+            .unwrap_or_else(|| {
+                warn!(
+                    "Computed normal for triangle with vertices {}, {}, {} is zero",
+                    poly.0[0].0,
+                    poly.0[i].0,
+                    poly.0[i + 1].0
+                );
+                Vector3::new(0.0, 0.0, 0.0)
+            });
 
         triangles.push(Triangle::new(
             a,

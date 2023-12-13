@@ -14,6 +14,8 @@ pub struct Ray {
 
 #[derive(Debug)]
 pub struct Hit<'a> {
+    pub name: &'a str,
+    pub direction: Vector3<f32>,
     pub point: Point3<f32>,
     pub normal: Vector3<f32>,
     pub material: Option<&'a Material>,
@@ -47,8 +49,8 @@ impl Raytracer {
             .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
     }
 
-    fn reflect(v: nalgebra::Vector3<f32>, n: nalgebra::Vector3<f32>) -> nalgebra::Vector3<f32> {
-        2.0 * n.dot(&v) * n - v
+    fn reflect(incoming: Vector3<f32>, normal: Vector3<f32>) -> Vector3<f32> {
+        incoming - 2.0 * incoming.dot(&normal) * normal
     }
 
     fn shade(&self, hit: Option<Hit>, depth: u32) -> Color {
@@ -73,10 +75,6 @@ impl Raytracer {
                 .material
                 .and_then(|m| m.specular_color)
                 .map_or(Self::NO_MATERIAL_COLOR, Color::from);
-            let shininess = hit
-                .material
-                .and_then(|m| m.specular_color.map(|ks| ks[0]))
-                .unwrap_or(0.0);
 
             let mut color = self.scene.settings.ambient_color.component_mul(&diffuse)
                 * self.scene.settings.ambient_intensity;
@@ -91,44 +89,55 @@ impl Raytracer {
                 let shadow = self.raycast(light_ray).is_some();
 
                 if !shadow {
+                    // Diffuse
                     let light_intensity =
                         light.intensity / (light.position - hit.point).norm_squared();
                     let light_reflection = light_direction.dot(&hit.normal).max(0.0);
+
                     color +=
                         diffuse.component_mul(&light.color) * light_intensity * light_reflection;
 
-                    let reflection_direction = Self::reflect(-light_direction, hit.normal);
-                    let specular_component = reflection_direction
-                        .dot(&-light_ray.direction)
-                        .max(0.0)
-                        .powf(shininess);
-
+                    // Specular
                     if hit
                         .material
                         .is_some_and(|m| m.illumination_model.specular())
                     {
+                        let reflection_direction = Self::reflect(-light_direction, hit.normal);
+                        let specular_component = reflection_direction
+                            .dot(&-light_ray.direction)
+                            .max(0.0)
+                            .powf(
+                                hit.material
+                                    .and_then(|m| m.specular_exponent)
+                                    .unwrap_or(1.0),
+                            );
+
                         color += specular.component_mul(&light.color)
                             * light_intensity
                             * specular_component;
                     }
                 }
 
-                // Reflection (mirroring of light when hitting a reflective object)
+                // Reflection
                 if depth < self.max_depth
                     && hit
                         .material
                         .is_some_and(|m| m.illumination_model.reflection())
                 {
-                    let reflection_direction = -Self::reflect(light_direction, hit.normal);
-
+                    let reflection_direction = Self::reflect(hit.direction, hit.normal);
                     let reflection_ray = Ray {
                         origin: hit.point + reflection_direction * self.delta,
                         direction: reflection_direction,
                     };
 
-                    let reflection_color = self.shade(self.raycast(reflection_ray), depth + 1);
-
-                    color = reflection_color.component_mul(&specular);
+                    color = self
+                        .shade(self.raycast(reflection_ray), depth + 1)
+                        .component_mul(&color)
+                        * hit
+                            .material
+                            .and_then(|m| m.specular_exponent)
+                            .unwrap_or(1000.0)
+                        / 1000.0;
                 }
             }
 

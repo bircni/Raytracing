@@ -52,7 +52,7 @@ impl Triangle {
     pub fn intersect(&self, ray: Ray, delta: f32) -> Option<(f32, f32, f32)> {
         let ab = self.b - self.a;
         let ac = self.c - self.a;
-        let normal = ab.cross(&ac).normalize();
+        let normal = ab.cross(&ac).try_normalize(delta)?;
 
         let t = (self.a - ray.origin).dot(&normal) / ray.direction.dot(&normal);
 
@@ -89,7 +89,7 @@ impl Bounded<f32, 3> for Triangle {
         bvh::aabb::Aabb::empty()
             .grow(&self.a)
             .grow(&self.b)
-            .grow(&self.c)
+            .grow(&(self.c + Vector3::new(0.0001, 0.0001, 0.0001)))
     }
 }
 
