@@ -7,11 +7,11 @@ pub struct Material {
     pub kd: Option<[f32; 3]>,
     pub ks: Option<[f32; 3]>,
     pub ke: Option<[f32; 3]>,
-    pub km: Option<f32>,
+    pub km: Option<f32>, //bump map (reflections)
     pub tf: Option<[f32; 3]>,
     pub ns: Option<f32>,
-    pub ni: Option<f32>,
-    pub tr: Option<f32>,
+    pub ni: Option<f32>, //refraction index
+    pub tr: Option<f32>, //transparency
     pub d: Option<f32>,
     pub illum: Option<i32>,
     pub map_ka: Option<RgbImage>,
