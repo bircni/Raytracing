@@ -1,23 +1,23 @@
 models:
-- file_path: ./res/test.obj
-  position:
-    x: 0.7
-    y: -0.1
-    z: -0.5
-  rotation:
-    x: 1.6295541e-15
-    y: -0.0
-    z: 0.0
-  scale: 1.0
+  - file_path: res/test/test.obj
+    position:
+      x: 0.7
+      y: -0.1
+      z: -0.5
+    rotation:
+      x: 1.6295541e-15
+      y: -0.0
+      z: 0.0
+    scale: 1.0
 point_lights:
-- position:
-    x: 0.7
-    y: 4.7
-    z: 2.2
-  ke:
-    r: 29.605135
-    g: 28.080446
-    b: 28.896791
+  - position:
+      x: 0.7
+      y: 4.7
+      z: 2.2
+    ke:
+      r: 29.605135
+      g: 28.080446
+      b: 28.896791
 camera:
   position:
     x: 2.7

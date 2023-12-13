@@ -9,7 +9,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd /home/fabian/Downloads/miscellaneous/apple/skin.tif
+map_Kd textures/apple/skin.tif
 
 newmtl Apple_Stem
 Ns 6.000004
@@ -19,7 +19,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd /home/fabian/Downloads/miscellaneous/apple/stem_color.tif
+map_Kd textures/apple/stem_color.tif
 
 newmtl Mirror_Ball
 Ns 1000.000000
@@ -39,7 +39,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd /home/fabian/Downloads/miscellaneous/pencil/body.tif
+map_Kd textures/pencil/body.tif
 
 newmtl Pencil_Gray
 Ns 2.000000
@@ -109,7 +109,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd /home/fabian/Downloads/miscellaneous/trashbin/rustbin.jpg
+map_Kd textures/trashbin/rustbin.jpg
 
 newmtl embout
 Ns 13.000001

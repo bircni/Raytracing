@@ -28,15 +28,13 @@ pub struct Object {
     bvh: Bvh<f32, 3>,
 }
 
-fn load_texture(path: Option<&str>) -> Option<RgbImage> {
-    path.and_then(|path| {
-        image::open(path)
-            .context(format!("Failed to load image from path: {path:?}"))
-            .map(image::DynamicImage::into_rgb8)
-            .context(format!("Failed to convert image to rgb8: {path:?}"))
-            .map_err(anyhow::Error::from)
-            .ok()
-    })
+fn load_texture<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<RgbImage> {
+    Ok(image::open(path.as_ref())
+        .context(format!(
+            "Failed to load image from path: {:?}",
+            path.as_ref()
+        ))?
+        .into_rgb8())
 }
 
 impl Object {
@@ -61,7 +59,19 @@ impl Object {
                 diffuse_color: m.kd.map(Color::from),
                 specular_color: m.ks.map(Color::from),
                 specular_exponent: m.ns,
-                diffuse_texture: load_texture(m.map_kd.as_deref()),
+                diffuse_texture: {
+                    let path = m
+                        .map_kd
+                        .as_deref()
+                        .and_then(|p| path.as_ref().parent().map(|pa| pa.join(p)));
+                    path.and_then(|p| {
+                        load_texture(p.as_path())
+                            .map_err(|e| {
+                                warn!("Failed to load texture from path: {:?}: {}", p, e);
+                            })
+                            .ok()
+                    })
+                },
                 illumination_model: m
                     .illum
                     .and_then(IlluminationModel::from_i32)
