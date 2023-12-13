@@ -1,3 +1,4 @@
+use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
 
@@ -15,7 +16,6 @@ pub struct Ray {
 #[derive(Debug)]
 pub struct Hit<'a> {
     pub name: &'a str,
-    pub direction: Vector3<f32>,
     pub point: Point3<f32>,
     pub normal: Vector3<f32>,
     pub material: Option<&'a Material>,
@@ -27,6 +27,7 @@ pub struct Raytracer {
     background_color: Color,
     delta: f32,
     max_depth: u32,
+    skybox: RgbImage,
 }
 
 impl Raytracer {
@@ -38,6 +39,9 @@ impl Raytracer {
             scene,
             delta,
             max_depth: 5,
+            skybox: image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_8k.exr"))
+                .unwrap()
+                .to_rgb8(),
         }
     }
 
@@ -53,7 +57,7 @@ impl Raytracer {
         incoming - 2.0 * incoming.dot(&normal) * normal
     }
 
-    fn shade(&self, hit: Option<Hit>, depth: u32) -> Color {
+    fn shade(&self, ray: Ray, hit: Option<Hit>, depth: u32) -> Color {
         if let Some(hit) = hit {
             let diffuse = (hit
                 .material
@@ -124,26 +128,45 @@ impl Raytracer {
                         .material
                         .is_some_and(|m| m.illumination_model.reflection())
                 {
-                    let reflection_direction = Self::reflect(hit.direction, hit.normal);
+                    let reflection_direction = Self::reflect(ray.direction, hit.normal);
                     let reflection_ray = Ray {
                         origin: hit.point + reflection_direction * self.delta,
                         direction: reflection_direction,
                     };
 
-                    color = self
-                        .shade(self.raycast(reflection_ray), depth + 1)
-                        .component_mul(&color)
-                        * hit
-                            .material
-                            .and_then(|m| m.specular_exponent)
-                            .unwrap_or(1000.0)
+                    // compute fresnel based on Schlick's approximation
+                    let fresnel = 0.04 + 0.96 * (1.0 - reflection_ray.direction.dot(&hit.normal));
+                    let reflection =
+                        self.shade(reflection_ray, self.raycast(reflection_ray), depth + 1);
+
+                    // mix reflection and diffuse color based on fresnel and specular exponent
+                    let specular_exponent = hit
+                        .material
+                        .and_then(|m| m.specular_exponent)
+                        .unwrap_or(1.0)
                         / 1000.0;
+
+                    color = color.lerp(&reflection, 1.0 - fresnel.powf(specular_exponent));
                 }
             }
 
             color
         } else {
-            self.background_color
+            // environment map projection
+            let x =
+                (ray.direction.x.atan2(ray.direction.z) / (2.0 * std::f32::consts::PI) + 0.5) % 1.0;
+            let y = (ray.direction.y + 0.08).acos() / std::f32::consts::PI;
+
+            let x = (x * self.skybox.width() as f32) as u32 % self.skybox.width();
+            let y = (y * self.skybox.height() as f32) as u32 % self.skybox.height();
+
+            let pixel = self.skybox.get_pixel(x, y);
+
+            Color::new(
+                f32::from(pixel[0]) / 255.0,
+                f32::from(pixel[1]) / 255.0,
+                f32::from(pixel[2]) / 255.0,
+            ) * 1.3
         }
     }
 
@@ -156,6 +179,6 @@ impl Raytracer {
 
         let ray = self.scene.camera.ray(x, y);
         let hit = self.raycast(ray);
-        self.shade(hit, 0)
+        self.shade(ray, hit, 0)
     }
 }

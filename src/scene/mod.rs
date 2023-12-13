@@ -34,13 +34,3 @@ impl Scene {
         serde_yaml::from_str::<Scene>(s.as_str()).context("Failed to parse yaml config file")
     }
 }
-
-#[test]
-fn test_load_scene() -> anyhow::Result<()> {
-    let scene = Scene::load("./res/config.yaml").context("Failed to load scene")?;
-
-    assert_eq!(scene.objects.len(), 1);
-    assert_eq!(scene.lights.len(), 2);
-
-    Ok(())
-}

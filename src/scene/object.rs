@@ -150,11 +150,9 @@ impl Object {
                 // Transform hit point and normal back into world space
                 let point = self.transform.transform_point(&point);
                 let normal = self.transform.transform_vector(&normal);
-                let direction = self.transform.transform_vector(&ray.direction);
 
                 Hit {
                     name: self.name.as_str(),
-                    direction,
                     point,
                     normal,
                     material: t.material_index.map(|i| &self.materials[i]),
