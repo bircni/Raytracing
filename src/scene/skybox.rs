@@ -1,18 +1,24 @@
+use image::RgbImage;
+
 use crate::Color;
 
+
 #[derive(Debug, Clone, PartialEq)]
-pub enum Skybox {
-    Color(Color),
+pub struct Skybox {
+    color: Color,
 }
 
 impl Skybox {
-    pub fn new_color(color: Color) -> Self {
-        Self::Color(color)
+    pub fn new(color: Color) -> Skybox {
+        Skybox { color }
     }
 
     pub fn get_background_color(&self) -> Color {
-        match self {
-            Skybox::Color(color) => *color,
-        }
+        self.color
     }
+
+    /*
+    pub fn get_background_texture(&self) -> Option<RgbImage> {
+        self.texture.clone()
+    }*/
 }

@@ -2,7 +2,7 @@ use nalgebra::{Point3, Vector3};
 use obj::Material;
 use ordered_float::OrderedFloat;
 
-use crate::{scene::Scene, Color};
+use crate::{scene::Scene, Color, scene::Skybox};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ray {
@@ -20,15 +20,17 @@ pub struct Hit<'a> {
 pub struct Raytracer {
     scene: Scene,
     delta: f32,
+    skybox: Skybox,
 }
 
 impl Raytracer {
     const NO_MATERIAL_COLOR: Color = Color::new(0.9, 0.9, 0.9);
 
-    pub fn new(scene: Scene, delta: f32) -> Raytracer {
+    pub fn new(scene: Scene, delta: f32, skybox: Skybox) -> Raytracer {
         Raytracer {
             scene,
             delta,
+            skybox,
         }
     }
 
@@ -72,10 +74,7 @@ impl Raytracer {
         } else {
 
             // no intersection, use the color from the skybox
-            match &self.scene.settings.skybox {
-                crate::scene::Skybox::Color(color) => *color,
-            }
-            
+           self.skybox.get_background_color()
         }
     }
 
@@ -93,9 +92,7 @@ impl Raytracer {
         if let Some(hit) = hit {
             self.shade(Some(hit))
         } else {
-            match &self.scene.settings.skybox {
-                crate::scene::Skybox::Color(color) => *color,
-            }
+            self.skybox.get_background_color()
         }
     }
 }
