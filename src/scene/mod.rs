@@ -20,7 +20,6 @@ pub struct Scene {
     pub camera: Camera,
     #[serde(rename = "extra_args")]
     pub settings: Settings,
-    pub skybox: Skybox,
 }
 
 impl Scene {

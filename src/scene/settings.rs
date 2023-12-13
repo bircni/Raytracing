@@ -1,4 +1,5 @@
-use crate::Color;
+use crate::{Color, scene::skybox::Skybox};
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Settings {
     pub max_bounces: u32,
@@ -6,11 +7,12 @@ pub struct Settings {
     pub background_color: Color,
     pub ambient_color: Color,
     pub ambient_intensity: f32,
+    pub skybox: Skybox,
 }
 
 mod yaml {
     use super::Settings;
-    use crate::Color;
+    use crate::{Color, scene::Skybox};
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize)]
@@ -37,6 +39,7 @@ mod yaml {
                     .try_normalize(0.0)
                     .unwrap_or_default(),
                 ambient_intensity: yaml_extras.ambient_color.norm(),
+                skybox: Skybox::new_color(yaml_extras.background_color),
             })
         }
     }
