@@ -1,8 +1,6 @@
-use serde::{Serialize, Deserialize};
-
 use crate::Color;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Skybox {
     Color(Color),
 }
@@ -10,5 +8,11 @@ pub enum Skybox {
 impl Skybox {
     pub fn new_color(color: Color) -> Self {
         Self::Color(color)
+    }
+    
+    pub fn get_background_color(&self) -> Color {
+        match self {
+            Skybox::Color(color) => *color,
+        }
     }
 }
