@@ -2,14 +2,15 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use bvh::bvh::Bvh;
+use image::RgbImage;
 use log::warn;
 use nalgebra::{Point3, Similarity3, Vector2, Vector3};
-use obj::{Material, SimplePolygon};
+use obj::SimplePolygon;
 use ordered_float::OrderedFloat;
 
 use crate::raytracer::{Hit, Ray};
 
-use super::triangle::Triangle;
+use super::{material::Material, triangle::Triangle};
 
 #[derive(Debug, Clone)]
 pub struct Object {
@@ -18,6 +19,17 @@ pub struct Object {
     pub materials: Vec<Material>,
     pub transform: Similarity3<f32>,
     bvh: Bvh<f32, 3>,
+}
+
+fn load_texture(path: Option<&String>) -> Option<RgbImage> {
+    path.and_then(|path| {
+        image::open(path)
+            .context(format!("Failed to load image from path: {path:?}"))
+            .map(image::DynamicImage::into_rgb8)
+            .context(format!("Failed to convert image to rgb8: {path:?}"))
+            .map_err(anyhow::Error::from)
+            .ok()
+    })
 }
 
 impl Object {
@@ -32,12 +44,34 @@ impl Object {
             path.as_ref()
         ))?;
 
-        let materials: Vec<Material> = obj
+        let materials = obj
             .data
             .material_libs
             .iter()
             .flat_map(|m| &m.materials)
-            .map(|m| m.as_ref().clone())
+            .map(|m| Material {
+                name: m.name.clone(),
+                ka: m.ka,
+                kd: m.kd,
+                ks: m.ks,
+                ke: m.ke,
+                km: m.km,
+                tf: m.tf,
+                ns: m.ns,
+                ni: m.ni,
+                tr: m.tr,
+                d: m.d,
+                illum: m.illum,
+                map_ka: load_texture(m.map_ka.as_ref()),
+
+                map_kd: load_texture(m.map_kd.as_ref()),
+                map_ks: load_texture(m.map_ks.as_ref()),
+                map_ke: load_texture(m.map_ke.as_ref()),
+                map_ns: load_texture(m.map_ns.as_ref()),
+                map_d: load_texture(m.map_d.as_ref()),
+                map_bump: load_texture(m.map_bump.as_ref()),
+                map_refl: load_texture(m.map_refl.as_ref()),
+            })
             .collect::<Vec<_>>();
 
         let mut triangles = obj

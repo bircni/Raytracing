@@ -1,8 +1,10 @@
 use nalgebra::{Point3, Vector3};
-use obj::Material;
 use ordered_float::OrderedFloat;
 
-use crate::{scene::Scene, Color};
+use crate::{
+    scene::{Material, Scene},
+    Color,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ray {
@@ -10,7 +12,7 @@ pub struct Ray {
     pub direction: Vector3<f32>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Hit<'a> {
     pub point: Point3<f32>,
     pub normal: Vector3<f32>,
@@ -42,12 +44,24 @@ impl Raytracer {
             .min_by_key(|h| OrderedFloat((h.point - ray.origin).norm()))
     }
 
+    fn reflect(v: nalgebra::Vector3<f32>, n: nalgebra::Vector3<f32>) -> nalgebra::Vector3<f32> {
+        2.0 * n.dot(&v) * n - v
+    }
+
     fn shade(&self, hit: Option<Hit>) -> Color {
         if let Some(hit) = hit {
             let diffuse = hit
                 .material
                 .and_then(|m| m.kd)
                 .map_or(Self::NO_MATERIAL_COLOR, Color::from);
+            let specular = hit
+                .material
+                .and_then(|m| m.ks)
+                .map_or(Self::NO_MATERIAL_COLOR, Color::from);
+            let shininess = hit
+                .material
+                .and_then(|m| m.ks.map(|ks| ks[0]))
+                .unwrap_or(0.0);
 
             let mut color = self.scene.settings.ambient_color.component_mul(&diffuse)
                 * self.scene.settings.ambient_intensity;
@@ -65,8 +79,31 @@ impl Raytracer {
                     let light_intensity =
                         light.intensity / (light.position - hit.point).norm_squared();
                     let light_reflection = light_direction.dot(&hit.normal).max(0.0);
+
+                    //let view_direction = -light_ray.direction;
+                    let reflection_direction = Self::reflect(-light_direction, hit.normal);
+                    let specular_component = reflection_direction
+                        .dot(&-light_ray.direction)
+                        .max(0.0)
+                        .powf(shininess);
+
                     color +=
                         diffuse.component_mul(&light.color) * light_intensity * light_reflection;
+                    color +=
+                        specular.component_mul(&light.color) * light_intensity * specular_component;
+                    /* *           if depth < self.max_depth {
+                        if let Some(reflectivity) = hit.material.reflectivity {
+                            let reflection_direction =
+                                Self::reflect(-hit.ray.direction, hit.normal);
+                            let reflection_ray = Ray {
+                                origin: hit.point + reflection_direction * self.delta,
+                                direction: reflection_direction,
+                            };
+                            let reflection_color =
+                                self.shade(self.raycast(reflection_ray), depth + 1);
+                            color += reflection_color * reflectivity;
+                        }
+                    }       */
                 }
             }
 
