@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use anyhow::Context;
 use bvh::bvh::Bvh;
 use log::warn;
-use nalgebra::{Point3, Similarity3, Vector3};
+use nalgebra::{Point3, Similarity3, Vector2, Vector3};
 use obj::{Material, SimplePolygon};
 use ordered_float::OrderedFloat;
 
@@ -162,6 +162,27 @@ fn triangulate(
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
+            ),
+            poly.0[0].1.map_or_else(
+                || {
+                    warn!("No UV for vertex {}", poly.0[0].0);
+                    Vector2::new(0.0, 0.0)
+                },
+                |i| Vector2::from(obj.data.texture[i]),
+            ),
+            poly.0[i].1.map_or_else(
+                || {
+                    warn!("No UV for vertex {}", poly.0[i].0);
+                    Vector2::new(0.0, 0.0)
+                },
+                |i| Vector2::from(obj.data.texture[i]),
+            ),
+            poly.0[i + 1].1.map_or_else(
+                || {
+                    warn!("No UV for vertex {}", poly.0[i + 1].0);
+                    Vector2::new(0.0, 0.0)
+                },
+                |i| Vector2::from(obj.data.texture[i]),
             ),
             material_index,
         ));
