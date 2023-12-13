@@ -1,8 +1,10 @@
 use nalgebra::{Point3, Vector3};
-use obj::Material;
 use ordered_float::OrderedFloat;
 
-use crate::{scene::Scene, Color};
+use crate::{
+    scene::{Material, Scene},
+    Color,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ray {
@@ -10,7 +12,7 @@ pub struct Ray {
     pub direction: Vector3<f32>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Hit<'a> {
     pub point: Point3<f32>,
     pub normal: Vector3<f32>,
@@ -78,10 +80,10 @@ impl Raytracer {
                         light.intensity / (light.position - hit.point).norm_squared();
                     let light_reflection = light_direction.dot(&hit.normal).max(0.0);
 
-                    let view_direction = -light_ray.direction;
+                    //let view_direction = -light_ray.direction;
                     let reflection_direction = Self::reflect(-light_direction, hit.normal);
                     let specular_component = reflection_direction
-                        .dot(&view_direction)
+                        .dot(&-light_ray.direction)
                         .max(0.0)
                         .powf(shininess);
 
@@ -89,6 +91,19 @@ impl Raytracer {
                         diffuse.component_mul(&light.color) * light_intensity * light_reflection;
                     color +=
                         specular.component_mul(&light.color) * light_intensity * specular_component;
+                    /* *           if depth < self.max_depth {
+                        if let Some(reflectivity) = hit.material.reflectivity {
+                            let reflection_direction =
+                                Self::reflect(-hit.ray.direction, hit.normal);
+                            let reflection_ray = Ray {
+                                origin: hit.point + reflection_direction * self.delta,
+                                direction: reflection_direction,
+                            };
+                            let reflection_color =
+                                self.shade(self.raycast(reflection_ray), depth + 1);
+                            color += reflection_color * reflectivity;
+                        }
+                    }       */
                 }
             }
 

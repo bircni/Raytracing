@@ -1,10 +1,13 @@
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-pub use self::{camera::Camera, light::Light, object::Object, settings::Settings};
+pub use self::{
+    camera::Camera, light::Light, material::Material, object::Object, settings::Settings,
+};
 
 mod camera;
 mod light;
+mod material;
 mod object;
 mod settings;
 mod triangle;
