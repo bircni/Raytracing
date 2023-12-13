@@ -69,6 +69,7 @@ pub struct App {
     rendering_progress: Arc<AtomicU16>,
     preview_zoom: f32,
     preview_position: Vec2,
+    preview_activate_movement: bool,
 }
 
 impl App {
@@ -117,6 +118,7 @@ impl App {
             rendering_progress: Arc::new(AtomicU16::new(0)),
             rendering_cancel: Arc::new(AtomicBool::new(false)),
             render_image: image_buffer,
+            preview_activate_movement: false,
         })
     }
 
@@ -178,10 +180,89 @@ impl App {
                 (self.scene.settings.background_color[2] * 255.0) as u8,
             ))
             .show(ui, |ui| {
-                let (response, painter) = ui.allocate_painter(ui.available_size(), Sense::drag());
+                let (response, painter) = ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
 
                 painter.add(Preview::paint(response.rect, &self.scene));
+                if response.clicked() {
+                    self.preview_activate_movement = true; 
+                    ui.ctx().send_viewport_cmd(egui::ViewportCommand::CursorVisible(false));
+                }
+                if self.preview_activate_movement {
+                    // exit movement mode using ESC
+                    if ui.input(|i| i.key_pressed(egui::Key::Escape)) && self.preview_activate_movement {
+                        self.preview_activate_movement = false;
+                        ui.ctx().send_viewport_cmd(egui::ViewportCommand::CursorVisible(true));
+                    }
+
+                    // move mouse to center
+                    //let center = response.rect.center();
+                    //ui.ctx().send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::Locked));
+                    //ui.ctx().send_viewport_cmd(egui::ViewportCommand::CursorPosition(center));
+                    //ui.ctx().send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::None));
+                    
+                    // rotate look_at point around camera position using mouse
+                    //let delta = ui.input(|i| i.pointer.delta());
+                    //self.scene.camera.look_at -= self.scene.camera.up * delta.y * 0.01;
+                    
+
+                    // movement using keyboard
+                    if ui.input(|i| i.key_down(egui::Key::ArrowUp)) {
+                        // look up
+                        self.scene.camera.look_at += self.scene.camera.up * 0.1;
+                    }
+                    if ui.input(|i| i.key_down(egui::Key::ArrowDown)) {
+                        // look down
+                        self.scene.camera.look_at -= self.scene.camera.up * 0.1;
+                    }
+                    if ui.input(|i| i.key_down(egui::Key::ArrowLeft)) {
+                        // look left
+                        let direction = (self.scene.camera.look_at - self.scene.camera.position).normalize();
+                        self.scene.camera.look_at -= direction.cross(&self.scene.camera.up).normalize() * 0.1;
+                    }
+                    if ui.input(|i| i.key_down(egui::Key::ArrowRight)) {
+                        // look right
+                        let direction = (self.scene.camera.look_at - self.scene.camera.position).normalize();
+                        self.scene.camera.look_at += direction.cross(&self.scene.camera.up).normalize() * 0.1;
+                    }
+                    if ui.input(|i| i.key_down(egui::Key::W)) {
+                        // move camera forward
+                        let direction = (self.scene.camera.look_at - self.scene.camera.position).normalize();
+                        self.scene.camera.position += direction * 0.1;
+                        self.scene.camera.look_at += direction * 0.1;
+                    }
+                    if ui.input(|i| i.key_down(egui::Key::S)) {
+                        // move camera backward
+                        let direction = (self.scene.camera.look_at - self.scene.camera.position).normalize();
+                        self.scene.camera.position -= direction * 0.1;
+                        self.scene.camera.look_at -= direction * 0.1;
+                    }
+                    if ui.input(|i| i.key_down(egui::Key::A)) {
+                        // move camera left
+                        let direction = (self.scene.camera.look_at - self.scene.camera.position).normalize();
+                        let right = direction.cross(&self.scene.camera.up).normalize();
+                        self.scene.camera.position -= right * 0.1;
+                        self.scene.camera.look_at -= right * 0.1;
+                    }
+                    if ui.input(|i| i.key_down(egui::Key::D)) {
+                        // move camera right
+                        let direction = (self.scene.camera.look_at - self.scene.camera.position).normalize();
+                        let right = direction.cross(&self.scene.camera.up).normalize();
+                        self.scene.camera.position += right * 0.1;
+                        self.scene.camera.look_at += right * 0.1;
+                    }
+                    if ui.input(|i| i.key_down(egui::Key::Space)) {
+                        // move camera up
+                        self.scene.camera.position += self.scene.camera.up * 0.1;
+                        self.scene.camera.look_at += self.scene.camera.up * 0.1;
+                    }
+                    if ui.input(|i| i.modifiers.shift) {
+                        // move camera down
+                        self.scene.camera.position -= self.scene.camera.up * 0.1;
+                        self.scene.camera.look_at -= self.scene.camera.up * 0.1;
+                    }
+                }
             });
+        
     }
 
     fn render_result(&mut self, ui: &mut Ui) {
