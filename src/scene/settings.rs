@@ -52,7 +52,7 @@ mod yaml {
             SettingsDef {
                 max_bounces: self.max_bounces,
                 samples: self.samples,
-                background_color: self.background_color,
+                background_color: self.skybox.get_background_color(),
                 ambient_color: self.ambient_color * self.ambient_intensity,
             }
             .serialize(serializer)

@@ -19,7 +19,6 @@ pub struct Hit<'a> {
 
 pub struct Raytracer {
     scene: Scene,
-    background_color: Color,
     delta: f32,
 }
 
@@ -28,7 +27,6 @@ impl Raytracer {
 
     pub fn new(scene: Scene, delta: f32) -> Raytracer {
         Raytracer {
-            background_color: scene.settings.background_color,
             scene,
             delta,
         }
@@ -72,7 +70,12 @@ impl Raytracer {
 
             color
         } else {
-            self.background_color
+
+            // no intersection, use the color from the skybox
+            match &self.scene.settings.skybox {
+                crate::scene::Skybox::Color(color) => *color,
+            }
+            
         }
     }
 
@@ -85,6 +88,14 @@ impl Raytracer {
 
         let ray = self.scene.camera.ray(x, y);
         let hit = self.raycast(ray);
-        self.shade(hit)
+
+        // Use the skybox color if there is no intersection
+        if let Some(hit) = hit {
+            self.shade(Some(hit))
+        } else {
+            match &self.scene.settings.skybox {
+                crate::scene::Skybox::Color(color) => *color,
+            }
+        }
     }
 }
