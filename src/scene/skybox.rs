@@ -1,5 +1,8 @@
+use serde::{Serialize, Deserialize};
+
 use crate::Color;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Skybox {
     Color(Color),
 }

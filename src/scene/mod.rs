@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 pub use self::{camera::Camera, light::Light, object::Object, settings::Settings, skybox::Skybox};
 
-
 mod camera;
 mod light;
 mod object;
@@ -21,6 +20,7 @@ pub struct Scene {
     pub camera: Camera,
     #[serde(rename = "extra_args")]
     pub settings: Settings,
+    pub skybox: Skybox,
 }
 
 impl Scene {
