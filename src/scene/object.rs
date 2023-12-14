@@ -2,22 +2,39 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use bvh::bvh::Bvh;
+use image::RgbImage;
 use log::warn;
-use nalgebra::{Point3, Similarity3, Vector3};
-use obj::{Material, SimplePolygon};
+use nalgebra::{Point3, Similarity3, Vector2, Vector3};
+use obj::SimplePolygon;
 use ordered_float::OrderedFloat;
 
-use crate::raytracer::{Hit, Ray};
+use crate::{
+    raytracer::{Hit, Ray},
+    Color,
+};
 
-use super::triangle::Triangle;
+use super::{
+    material::{IlluminationModel, Material},
+    triangle::Triangle,
+};
 
 #[derive(Debug, Clone)]
 pub struct Object {
+    name: String,
     path: PathBuf,
     pub triangles: Vec<Triangle>,
     pub materials: Vec<Material>,
     pub transform: Similarity3<f32>,
     bvh: Bvh<f32, 3>,
+}
+
+fn load_texture<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<RgbImage> {
+    Ok(image::open(path.as_ref())
+        .context(format!(
+            "Failed to load image from path: {:?}",
+            path.as_ref()
+        ))?
+        .into_rgb8())
 }
 
 impl Object {
@@ -32,12 +49,37 @@ impl Object {
             path.as_ref()
         ))?;
 
-        let materials: Vec<Material> = obj
+        let materials = obj
             .data
             .material_libs
             .iter()
             .flat_map(|m| &m.materials)
-            .map(|m| m.as_ref().clone())
+            .map(|m| Material {
+                name: m.name.clone(),
+                diffuse_color: m.kd.map(Color::from),
+                specular_color: m.ks.map(Color::from),
+                specular_exponent: m.ns,
+                diffuse_texture: {
+                    let path = m
+                        .map_kd
+                        .as_deref()
+                        .and_then(|p| path.as_ref().parent().map(|pa| pa.join(p)));
+                    path.and_then(|p| {
+                        load_texture(p.as_path())
+                            .map_err(|e| {
+                                warn!("Failed to load texture from path: {:?}: {}", p, e);
+                            })
+                            .ok()
+                    })
+                },
+                illumination_model: m
+                    .illum
+                    .and_then(IlluminationModel::from_i32)
+                    .unwrap_or_else(|| {
+                        warn!("Invalid illumination model: {}", m.illum.unwrap_or(-1));
+                        IlluminationModel::default()
+                    }),
+            })
             .collect::<Vec<_>>();
 
         let mut triangles = obj
@@ -76,6 +118,13 @@ impl Object {
         let bvh = Bvh::build(triangles.as_mut_slice());
 
         Ok(Object {
+            name: obj
+                .data
+                .objects
+                .iter()
+                .map(|o| o.name.clone())
+                .collect::<Vec<_>>()
+                .join(", "),
             path: path.as_ref().to_path_buf(),
             triangles,
             materials,
@@ -103,19 +152,21 @@ impl Object {
                 // interpolate hit point and normal
                 let point = Point3::from((t.a * u).coords + (t.b * v).coords + (t.c * w).coords);
                 let normal = (t.a_normal * u) + (t.b_normal * v) + (t.c_normal * w);
-
-                (t, point, normal)
+                let uv = (t.a_uv * u) + (t.b_uv * v) + (t.c_uv * w);
+                (t, point, normal, uv)
             })
-            .min_by_key(|&(_, point, _)| OrderedFloat((ray.origin - point).norm_squared()))
-            .map(|(t, point, normal)| {
+            .min_by_key(|&(_, point, _, _)| OrderedFloat((ray.origin - point).norm_squared()))
+            .map(|(t, point, normal, uv)| {
                 // Transform hit point and normal back into world space
                 let point = self.transform.transform_point(&point);
                 let normal = self.transform.transform_vector(&normal);
 
                 Hit {
+                    name: self.name.as_str(),
                     point,
                     normal,
                     material: t.material_index.map(|i| &self.materials[i]),
+                    uv,
                 }
             })
     }
@@ -133,10 +184,18 @@ fn triangulate(
         let b = Point3::from(obj.data.position[poly.0[i].0]);
         let c = Point3::from(obj.data.position[poly.0[i + 1].0]);
 
-        let Some(computed_normal) = (a - b).cross(&(a - c)).try_normalize(f32::EPSILON) else {
-            warn!("Degenerate triangle: {:?}", poly);
-            continue;
-        };
+        let computed_normal = (a - b)
+            .cross(&(a - c))
+            .try_normalize(f32::EPSILON)
+            .unwrap_or_else(|| {
+                warn!(
+                    "Computed normal for triangle with vertices {}, {}, {} is zero",
+                    poly.0[0].0,
+                    poly.0[i].0,
+                    poly.0[i + 1].0
+                );
+                Vector3::new(0.0, 0.0, 0.0)
+            });
 
         triangles.push(Triangle::new(
             a,
@@ -144,24 +203,65 @@ fn triangulate(
             c,
             poly.0[0].2.map_or_else(
                 || {
-                    warn!("No normal for vertex: {}", poly.0[0].0);
+                    warn!(
+                        "No normal for vertex {} in {}",
+                        poly.0[0].0, obj.data.objects[0].name
+                    );
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[i].2.map_or_else(
                 || {
-                    warn!("No normal for vertex {}", poly.0[i].0);
+                    warn!(
+                        "No normal for vertex {} in {}",
+                        poly.0[i].0, obj.data.objects[0].name
+                    );
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[i + 1].2.map_or_else(
                 || {
-                    warn!("No normal for vertex {}", poly.0[i + 1].0);
+                    warn!(
+                        "No normal for vertex {} in {}",
+                        poly.0[i + 1].0,
+                        obj.data.objects[0].name
+                    );
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
+            ),
+            poly.0[0].1.map_or_else(
+                || {
+                    warn!(
+                        "No UV for vertex {} in {}",
+                        poly.0[0].0, obj.data.objects[0].name
+                    );
+                    Vector2::new(0.0, 0.0)
+                },
+                |i| Vector2::from(obj.data.texture[i]),
+            ),
+            poly.0[i].1.map_or_else(
+                || {
+                    warn!(
+                        "No UV for vertex {} in {}",
+                        poly.0[i].0, obj.data.objects[0].name
+                    );
+                    Vector2::new(0.0, 0.0)
+                },
+                |i| Vector2::from(obj.data.texture[i]),
+            ),
+            poly.0[i + 1].1.map_or_else(
+                || {
+                    warn!(
+                        "No UV for vertex {} in {}",
+                        poly.0[i + 1].0,
+                        obj.data.objects[0].name
+                    );
+                    Vector2::new(0.0, 0.0)
+                },
+                |i| Vector2::from(obj.data.texture[i]),
             ),
             material_index,
         ));

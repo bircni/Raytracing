@@ -5,11 +5,10 @@ use std::sync::{
 
 use egui::{Color32, ColorImage, ImageData, TextureOptions};
 
-use image::RgbImage;
 use log::{debug, info};
 use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 
-use crate::{raytracer::Raytracer, scene::Skybox, Color};
+use crate::raytracer::Raytracer;
 
 impl super::App {
     pub fn render(&mut self, ctx: egui::Context) {
@@ -23,8 +22,7 @@ impl super::App {
         );
 
         let texture = self.render_texture.clone();
-        let raytracer = Raytracer::new(self.scene.clone(), 1e-5, Skybox::new(Color::new(89.0, 70.0, 20.0))); //self.scene.settings.background_color
-
+        let raytracer = Raytracer::new(self.scene.clone(), 1e-5);
         let block_size = [render_size.0 / 10, render_size.1 / 10];
         let rendering_progress = self.rendering_progress.clone();
         let rendering_cancel = self.rendering_cancel.clone();

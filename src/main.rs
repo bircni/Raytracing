@@ -34,7 +34,7 @@ fn main() -> anyhow::Result<()> {
     )
     .context("Failed to initialize logger")?;
 
-    let scene = Scene::load("./res/config.yaml").context("Failed to load scene")?;
+    let scene = Scene::load("./res/test/config.yaml").context("Failed to load scene")?;
 
     eframe::run_native(
         "RayTracer",
