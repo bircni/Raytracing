@@ -14,7 +14,7 @@ fi
 
 echo "Executing cargo fmt"
 if ! cargo fmt --all -- --check; then
-    echo "Error: cargo fmt failed"
+    echo "Error: Format failed"
     exit 1
 fi
 
