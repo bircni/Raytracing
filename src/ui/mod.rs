@@ -72,6 +72,8 @@ pub struct App {
     preview_activate_movement: bool,
     movement_speed: f32,
     look_sensitivity: f32,
+    pause_delta: bool,
+    pause_count: i32,
 }
 
 impl App {
@@ -123,6 +125,8 @@ impl App {
             preview_activate_movement: false,
             movement_speed: 0.1,
             look_sensitivity: 0.007,
+            pause_delta: false,
+            pause_count: 0,
         })
     }
 
@@ -197,6 +201,8 @@ impl App {
                         .send_viewport_cmd(egui::ViewportCommand::CursorVisible(false));
                 }
                 if self.preview_activate_movement {
+                    ui.ctx()
+                        .send_viewport_cmd(egui::ViewportCommand::CursorVisible(false));
                     self.move_camera(ui, &response);
                 }
             });
@@ -213,6 +219,7 @@ impl App {
         }
         if response.hover_pos().is_none() {
             // move mouse to center
+            self.pause_delta = true;
             let center = response.rect.center();
             ui.ctx()
                 .send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::Locked));
@@ -227,12 +234,21 @@ impl App {
         let direction = (self.scene.camera.look_at - self.scene.camera.position).normalize();
         let right = direction.cross(&self.scene.camera.up).normalize();
         let up = right.cross(&direction).normalize();
-        // move look_at point in a sphere around camera with constant distance 1 using mouse
-        let new_point =
-            self.scene.camera.position + direction + right * delta.x * self.look_sensitivity
-                - up * delta.y * self.look_sensitivity;
-        self.scene.camera.look_at =
-            self.scene.camera.position + (new_point - self.scene.camera.position).normalize();
+        if self.pause_delta {
+            self.pause_count += 1;
+            if self.pause_count > 5 {
+                self.pause_delta = false;
+                self.pause_count = 0;
+            }
+        }
+        if !self.pause_delta {
+            // move look_at point in a sphere around camera with constant distance 1 using mouse
+            let new_point =
+                self.scene.camera.position + direction + right * delta.x * self.look_sensitivity
+                    - up * delta.y * self.look_sensitivity;
+            self.scene.camera.look_at =
+                self.scene.camera.position + (new_point - self.scene.camera.position).normalize();
+        }
         self.scene.camera.fov = (self.scene.camera.fov - (ui.input(|i| i.scroll_delta.y) * 0.001))
             .clamp(0.0_f32.to_radians(), 180.0_f32.to_radians());
         // movement using keyboard
