@@ -124,7 +124,7 @@ impl App {
             render_image: image_buffer,
             preview_activate_movement: false,
             movement_speed: 0.1,
-            look_sensitivity: 0.007,
+            look_sensitivity: 0.001,
             pause_delta: false,
             pause_count: 0,
         })
