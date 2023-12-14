@@ -1,5 +1,15 @@
 models:
-  - file_path: res/test/test.obj
+  - file_path: res/test/1.obj
+    position:
+      x: 0.7
+      y: -0.1
+      z: -0.5
+    rotation:
+      x: 1.6295541e-15
+      y: -0.0
+      z: 0.0
+    scale: 1.0
+  - file_path: res/test/2.obj
     position:
       x: 0.7
       y: -0.1
