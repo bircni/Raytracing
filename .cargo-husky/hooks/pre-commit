@@ -18,5 +18,4 @@ if ! cargo fmt --all -- --check; then
     exit 1
 fi
 
-echo "Everything looks good"
 exit 0
