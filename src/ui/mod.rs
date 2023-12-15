@@ -275,7 +275,7 @@ impl App {
         // movement using keyboard
         ui.input(|i| {
             // reset look_at point facing [0, 0, 0]
-            i.key_pressed(Key::F).then(|| {
+            i.key_down(Key::F).then(|| {
                 self.scene.camera.look_at = OPoint::origin();
             });
             // lower sensitivity and clamp so it cant go negative
