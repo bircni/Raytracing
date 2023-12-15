@@ -199,6 +199,7 @@ impl App {
                 }
                 if response.clicked() {
                     self.preview_activate_movement = true;
+                    response.request_focus();
                     ui.ctx()
                         .send_viewport_cmd(egui::ViewportCommand::CursorGrab(
                             egui::CursorGrab::Confined,
@@ -214,9 +215,17 @@ impl App {
                         format!("WASD to move camera\nQE to change movement speed {:?}\nYC to change look sensitivity {:?}\nF to reset look_to point facing [0, 0, 0]\nESC to exit movement mode", self.movement_speed, self.look_sensitivity),
                     );
                     ui.ctx()
-                        .send_viewport_cmd(egui::ViewportCommand::CursorVisible(false));
-                    self.move_camera(ui, &response);
-                }
+                    .send_viewport_cmd(egui::ViewportCommand::CursorVisible(false));
+                self.move_camera(ui, &response);
+            }
+            if !response.has_focus() && self.preview_activate_movement {
+                // exit movement mode when tabbed out
+                self.preview_activate_movement = false;
+                ui.ctx()
+                    .send_viewport_cmd(egui::ViewportCommand::CursorVisible(true));
+                ui.ctx()
+                    .send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::None));  
+            }
             });
     }
 
