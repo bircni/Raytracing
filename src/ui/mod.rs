@@ -273,77 +273,79 @@ impl App {
         self.scene.camera.fov = (self.scene.camera.fov - (ui.input(|i| i.scroll_delta.y) * 0.001))
             .clamp(0.0_f32.to_radians(), 180.0_f32.to_radians());
         // movement using keyboard
-        if ui.input(|i| i.key_pressed(egui::Key::F)) {
+        ui.input(|i| {
             // reset look_at point facing [0, 0, 0]
-            self.scene.camera.look_at = OPoint::origin();
-        }
-        if ui.input(|i| i.key_pressed(egui::Key::Y)) {
+            i.key_pressed(Key::F).then(|| {
+                self.scene.camera.look_at = OPoint::origin();
+            });
             // lower sensitivity and clamp so it cant go negative
-            self.look_sensitivity = (self.look_sensitivity - 0.0001_f32).max(0.0);
-            warn!("Look sensitivity: {}", self.look_sensitivity);
-        }
-        if ui.input(|i| i.key_pressed(egui::Key::C)) {
+            i.key_pressed(Key::Y).then(|| {
+                self.look_sensitivity = (self.look_sensitivity - 0.0001_f32).max(0.0);
+                warn!("Look sensitivity: {}", self.look_sensitivity);
+            });
             // higher sensitivity and clamp so it cant go too high
-            self.look_sensitivity = (self.look_sensitivity + 0.0001_f32).min(0.5);
-            warn!("Look sensitivity: {}", self.look_sensitivity);
-        }
-        if ui.input(|i| i.key_pressed(egui::Key::Q)) {
+            i.key_pressed(Key::C).then(|| {
+                self.look_sensitivity = (self.look_sensitivity + 0.0001_f32).min(0.5);
+                warn!("Look sensitivity: {}", self.look_sensitivity);
+            });
             // lower movement speed and clamp so it cant go negative
-            self.movement_speed = (self.movement_speed - 0.005_f32).max(0.0);
-            warn!("Movement speed: {}", self.movement_speed);
-        }
-        if ui.input(|i| i.key_pressed(egui::Key::E)) {
+            i.key_down(Key::Q).then(|| {
+                self.movement_speed = (self.movement_speed - 0.005_f32).max(0.0);
+                warn!("Movement speed: {}", self.movement_speed);
+            });
             // higher movement speed and clamp so it cant go too high
-            self.movement_speed = (self.movement_speed + 0.005_f32).min(1.0);
-            warn!("Movement speed: {}", self.movement_speed);
-        }
-        if ui.input(|i| i.key_down(egui::Key::ArrowUp)) {
+            i.key_down(Key::E).then(|| {
+                self.movement_speed = (self.movement_speed + 0.005_f32).min(1.0);
+                warn!("Movement speed: {}", self.movement_speed);
+            });
             // look up
-            self.scene.camera.look_at += up * self.look_sensitivity;
-        }
-        if ui.input(|i| i.key_down(egui::Key::ArrowDown)) {
+            i.key_down(Key::ArrowUp).then(|| {
+                self.scene.camera.look_at += up * self.look_sensitivity;
+            });
             // look down
             // calculate up vector of camera
-            self.scene.camera.look_at -= up * self.look_sensitivity;
-        }
-        if ui.input(|i| i.key_down(egui::Key::ArrowLeft)) {
+            i.key_down(Key::ArrowDown).then(|| {
+                self.scene.camera.look_at -= up * self.look_sensitivity;
+            });
             // look left
-            self.scene.camera.look_at -= right * self.look_sensitivity;
-        }
-        if ui.input(|i| i.key_down(egui::Key::ArrowRight)) {
+            i.key_down(Key::ArrowLeft).then(|| {
+                self.scene.camera.look_at -= right * self.look_sensitivity;
+            });
             // look right
-            self.scene.camera.look_at += right * self.look_sensitivity;
-        }
-        if ui.input(|i| i.key_down(egui::Key::W)) {
+            i.key_down(Key::ArrowRight).then(|| {
+                self.scene.camera.look_at += right * self.look_sensitivity;
+            });
             // move camera forward
-            self.scene.camera.position += direction * self.movement_speed;
-            self.scene.camera.look_at += direction * self.movement_speed;
-        }
-        if ui.input(|i| i.key_down(egui::Key::S)) {
+            i.key_down(Key::W).then(|| {
+                self.scene.camera.position += direction * self.movement_speed;
+                self.scene.camera.look_at += direction * self.movement_speed;
+            });
             // move camera backward
-            self.scene.camera.position -= direction * self.movement_speed;
-            self.scene.camera.look_at -= direction * self.movement_speed;
-        }
-        if ui.input(|i| i.key_down(egui::Key::A)) {
+            i.key_down(Key::S).then(|| {
+                self.scene.camera.position -= direction * self.movement_speed;
+                self.scene.camera.look_at -= direction * self.movement_speed;
+            });
             // move camera left
-            self.scene.camera.position -= right * self.movement_speed;
-            self.scene.camera.look_at -= right * self.movement_speed;
-        }
-        if ui.input(|i| i.key_down(egui::Key::D)) {
+            i.key_down(Key::A).then(|| {
+                self.scene.camera.position -= right * self.movement_speed;
+                self.scene.camera.look_at -= right * self.movement_speed;
+            });
             // move camera right
-            self.scene.camera.position += right * self.movement_speed;
-            self.scene.camera.look_at += right * self.movement_speed;
-        }
-        if ui.input(|i| i.key_down(egui::Key::Space)) {
+            i.key_down(Key::D).then(|| {
+                self.scene.camera.position += right * self.movement_speed;
+                self.scene.camera.look_at += right * self.movement_speed;
+            });
             // move camera up
-            self.scene.camera.position += self.scene.camera.up * self.movement_speed;
-            self.scene.camera.look_at += self.scene.camera.up * self.movement_speed;
-        }
-        if ui.input(|i| i.modifiers.shift) {
+            i.key_down(Key::Space).then(|| {
+                self.scene.camera.position += self.scene.camera.up * self.movement_speed;
+                self.scene.camera.look_at += self.scene.camera.up * self.movement_speed;
+            });
             // move camera down
-            self.scene.camera.position -= self.scene.camera.up * self.movement_speed;
-            self.scene.camera.look_at -= self.scene.camera.up * self.movement_speed;
-        }
+            i.modifiers.shift.then(|| {
+                self.scene.camera.position -= self.scene.camera.up * self.movement_speed;
+                self.scene.camera.look_at -= self.scene.camera.up * self.movement_speed;
+            });
+        });
     }
 
     fn render_result(&mut self, ui: &mut Ui) {
