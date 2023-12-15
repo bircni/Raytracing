@@ -198,14 +198,7 @@ impl App {
                     });
                 }
                 if response.clicked() {
-                    self.preview_activate_movement = true;
-                    response.request_focus();
-                    ui.ctx()
-                        .send_viewport_cmd(egui::ViewportCommand::CursorGrab(
-                            egui::CursorGrab::Confined,
-                        ));
-                    ui.ctx()
-                        .send_viewport_cmd(egui::ViewportCommand::CursorVisible(false));
+                   self.change_preview_movement(ui, &response, true);
                 }
                 if self.preview_activate_movement {
                     painter.debug_text(
@@ -220,11 +213,7 @@ impl App {
             }
             if !response.has_focus() && self.preview_activate_movement {
                 // exit movement mode when tabbed out
-                self.preview_activate_movement = false;
-                ui.ctx()
-                    .send_viewport_cmd(egui::ViewportCommand::CursorVisible(true));
-                ui.ctx()
-                    .send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::None));  
+                self.change_preview_movement(ui, &response, false);
             }
             });
     }
@@ -232,11 +221,7 @@ impl App {
     fn move_camera(&mut self, ui: &mut Ui, response: &egui::Response) {
         if ui.input(|i| i.key_pressed(egui::Key::Escape)) && self.preview_activate_movement {
             // exit movement mode using ESC
-            self.preview_activate_movement = false;
-            ui.ctx()
-                .send_viewport_cmd(egui::ViewportCommand::CursorVisible(true));
-            ui.ctx()
-                .send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::None));
+            self.change_preview_movement(ui, response, false);
         }
         if response.hover_pos().is_none() {
             // move mouse to center
@@ -431,6 +416,17 @@ impl App {
             .unwrap_or_else(|e| {
                 warn!("Failed to save config: {}", e);
             });
+    }
+
+    fn change_preview_movement(&mut self, ui: &mut Ui, response: &egui::Response, activate: bool) {
+        self.preview_activate_movement = activate;
+        if activate {
+            response.request_focus();
+        }
+        ui.ctx()
+            .send_viewport_cmd(egui::ViewportCommand::CursorVisible(!activate));
+        ui.ctx()
+            .send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::None));
     }
 }
 
