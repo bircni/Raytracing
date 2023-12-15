@@ -11,12 +11,13 @@ use egui::{
     mutex::Mutex, pos2, Align, CursorIcon, Frame, Layout, ProgressBar, Rect, Rounding, Stroke, Vec2,
 };
 use egui::{
-    Button, CentralPanel, Color32, ColorImage, ImageData, Key, Sense, TextStyle, TextureHandle,
-    TextureOptions, Ui,
+    Align2, Button, CentralPanel, Color32, ColorImage, ImageData, Key, Sense, TextStyle,
+    TextureHandle, TextureOptions, Ui,
 };
 use egui_file::FileDialog;
 use image::{ImageBuffer, RgbImage};
 use log::{info, warn};
+use nalgebra::OPoint;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use std::sync::Arc;
@@ -191,6 +192,11 @@ impl App {
                 let (response, painter) =
                     ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
                 painter.add(Preview::paint(response.rect, &self.scene));
+                if response.hover_pos().is_some() && !self.preview_activate_movement {
+                    egui::show_tooltip(ui.ctx(), egui::Id::new("preview_tooltip"), |ui| {
+                        ui.label("Click to change camera position");
+                    });
+                }
                 if response.clicked() {
                     self.preview_activate_movement = true;
                     ui.ctx()
@@ -201,6 +207,12 @@ impl App {
                         .send_viewport_cmd(egui::ViewportCommand::CursorVisible(false));
                 }
                 if self.preview_activate_movement {
+                    painter.debug_text(
+                        pos2(response.rect.left(), response.rect.top()),
+                        Align2::LEFT_TOP,
+                        Color32::WHITE,
+                        format!("WASD to move camera\nQE to change movement speed {:?}\nYC to change look sensitivity {:?}\nF to reset look_to point facing [0, 0, 0]\nESC to exit movement mode", self.movement_speed, self.look_sensitivity),
+                    );
                     ui.ctx()
                         .send_viewport_cmd(egui::ViewportCommand::CursorVisible(false));
                     self.move_camera(ui, &response);
@@ -252,6 +264,10 @@ impl App {
         self.scene.camera.fov = (self.scene.camera.fov - (ui.input(|i| i.scroll_delta.y) * 0.001))
             .clamp(0.0_f32.to_radians(), 180.0_f32.to_radians());
         // movement using keyboard
+        if ui.input(|i| i.key_pressed(egui::Key::F)) {
+            // reset look_at point facing [0, 0, 0]
+            self.scene.camera.look_at = OPoint::origin();
+        }
         if ui.input(|i| i.key_pressed(egui::Key::Y)) {
             // lower sensitivity and clamp so it cant go negative
             self.look_sensitivity = (self.look_sensitivity - 0.0001_f32).max(0.0);
