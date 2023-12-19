@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use egui::{
     color_picker, hex_color, include_image, Align, Button, Color32, ColorImage, DragValue,
-    FontFamily, ImageButton, ImageData, Layout, RichText, ScrollArea, SidePanel, Slider, TextStyle,
+    FontFamily, ImageButton, ImageData, Layout, RichText, ScrollArea, SidePanel, Slider,
     TextureOptions, Ui,
 };
 use egui_file::FileDialog;
@@ -198,10 +198,7 @@ impl App {
     fn lights(&mut self, ui: &mut Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
-                ui.label(
-                    RichText::new(format!("Lights ({})", self.scene.lights.len()))
-                        .text_style(TextStyle::Name("subheading".into())),
-                )
+                ui.label(RichText::new(format!("Lights ({})", self.scene.lights.len())).size(16.0))
             });
 
             self.scene
