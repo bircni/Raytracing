@@ -31,7 +31,7 @@ point_lights:
       y: 4.7
       z: 2.2
     Ke:
-      r: 29.605135 //falsche werte bitte als 0. Werte angeben
+      r: 29.605135 #falsche werte bitte als 0. Werte angeben
       g: 28.080446
       b: 28.896791
 camera:
