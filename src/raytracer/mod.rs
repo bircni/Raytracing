@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
@@ -40,6 +42,14 @@ impl Raytracer {
             skybox: image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_8k.exr"))
                 .expect("Failed to load skybox image")
                 .to_rgb8(),
+        }
+    }
+
+pub fn update_skybox(&mut self, path: &str) {
+        if let Ok(image) = image::open(Path::new(path)) {
+            self.skybox = image.to_rgb8();
+        } else {
+            eprintln!("Failed to load skybox image");
         }
     }
 
