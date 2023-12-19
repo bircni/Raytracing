@@ -1,0 +1,77 @@
+models:
+- file_path: res/test/1.obj
+  position:
+    x: 0.7
+    y: -0.1
+    z: -0.5
+  rotation:
+    x: 1.6295541e-15
+    y: -0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+- file_path: res/test/2.obj
+  position:
+    x: 0.7
+    y: -0.1
+    z: -0.5
+  rotation:
+    x: 1.6295541e-15
+    y: -0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+point_lights:
+- position:
+    x: 7.3
+    y: 3.1
+    z: 2.2
+  Ke:
+    r: 26.64462
+    g: 25.272402
+    b: 26.007113
+- position:
+    x: -0.5
+    y: 0.7
+    z: 2.6
+  Ke:
+    r: 3.0
+    g: 3.0
+    b: 3.0
+- position:
+    x: -0.8
+    y: 2.3
+    z: -0.8
+  Ke:
+    r: 5.0
+    g: 5.0
+    b: 5.0
+camera:
+  position:
+    x: 3.3535953
+    y: 2.2771485
+    z: 9.899967
+  look_at:
+    x: 3.0951505
+    y: 2.0842779
+    z: 8.95339
+  up_vec:
+    x: 0.0
+    y: 1.0
+    z: 0.0
+  field_of_view: 48.701416
+extra_args:
+  max_bounces: 3
+  samples: 64
+  background_color:
+    r: 0.5694601
+    g: 0.6880153
+    b: 0.72564244
+  ambient_color:
+    r: 0.21685298
+    g: 0.16886003
+    b: 0.14555264
