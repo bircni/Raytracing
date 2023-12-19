@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, usize};
 
 use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
@@ -45,11 +45,19 @@ impl Raytracer {
         }
     }
 
-pub fn update_skybox(&mut self, path: &str) {
-        if let Ok(image) = image::open(Path::new(path)) {
-            self.skybox = image.to_rgb8();
-        } else {
-            eprintln!("Failed to load skybox image");
+pub fn load_skybox(&mut self, index: usize) {
+        if index == 0 {
+            self.skybox = image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_8k.exr"))
+                .expect("Failed to load skybox image")
+                .to_rgb8();
+        } else if index == 1 {
+            self.skybox = image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_4k.exr"))
+                .expect("Failed to load skybox image")
+                .to_rgb8();
+        } else if index == 2 {
+            self.skybox = image::load_from_memory(include_bytes!("../../res/studio_small_08_4k.exr"))
+                .expect("Failed to load skybox image")
+                .to_rgb8();
         }
     }
 
