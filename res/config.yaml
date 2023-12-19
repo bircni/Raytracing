@@ -51,4 +51,3 @@ extra_args:
     r: 0.17478774
     g: 0.17023797
     b: 0.08521756
-  skybox_texture: "res/skybox_texture_sky.jpg"

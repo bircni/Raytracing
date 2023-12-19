@@ -1,5 +1,3 @@
-use std::{path::Path, usize};
-
 use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
@@ -39,26 +37,34 @@ impl Raytracer {
             scene,
             delta,
             max_depth: 5,
-            skybox: image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_8k.exr"))
+            skybox: image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_4k.exr"))
                 .expect("Failed to load skybox image")
                 .to_rgb8(),
         }
     }
 
 pub fn load_skybox(&mut self, skybox_option: String) {
-        if skybox_option == "Scythian Tombs 2 (8k)" {
-            self.skybox = image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_8k.exr"))
+        if skybox_option == "Scythian Tombs 2 (4k)" {
+            self.skybox = image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_4k.exr"))
                 .expect("Failed to load skybox image")
                 .to_rgb8();
-        } else if skybox_option == "Scythian Tombs 2 (4k)" {
-            self.skybox = image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_4k.exr"))
+        } else if skybox_option == "Rainforest Trail (4k)" {
+            self.skybox = image::load_from_memory(include_bytes!("../../res/rainforest_trail_4k.exr"))
                 .expect("Failed to load skybox image")
                 .to_rgb8();
         } else if skybox_option == "Studio Small 08 (4k)" {
             self.skybox = image::load_from_memory(include_bytes!("../../res/studio_small_08_4k.exr"))
                 .expect("Failed to load skybox image")
                 .to_rgb8();
-        }
+        } else if skybox_option == "Kloppenheim 02 (4k)" {
+            self.skybox = image::load_from_memory(include_bytes!("../../res/kloppenheim_02_4k.exr"))
+                .expect("Failed to load skybox image")
+                .to_rgb8();
+        } else if skybox_option == "Circus Arena (4k)" {
+            self.skybox = image::load_from_memory(include_bytes!("../../res/circus_arena_4k.exr"))
+                .expect("Failed to load skybox image")
+                .to_rgb8();
+        } //add more skyboxes here
     }
 
     fn raycast(&self, ray: Ray) -> Option<Hit> {

@@ -185,14 +185,20 @@ impl App {
                     .selected_text(self.skybox_option.clone())
                     .show_ui(ui, |ui| {
                         (ui.selectable_value(
-                            &mut self.skybox_option, "Scythian Tombs 2 (8k)".to_string(), "Scythian Tombs 2 (8k)",
+                            &mut self.skybox_option, "Scythian Tombs 2 (4k)".to_string(), "Scythian Tombs 2 (4k)",
                         )
                         .changed()
                         | ui.selectable_value(
-                            &mut self.skybox_option, "Scythian Tombs 2 (4k)".to_string(), "Scythian Tombs 2 (4k)",
+                            &mut self.skybox_option, "Rainforest Trail (4k)".to_string(), "Rainforest Trail (4k)",
                         ).changed()
                         | ui.selectable_value(
                             &mut self.skybox_option, "Studio Small 08 (4k)".to_string(), "Studio Small 08 (4k)",
+                        ).changed()
+                        | ui.selectable_value(
+                            &mut self.skybox_option, "Kloppenheim 02 (4k)".to_string(), "Kloppenheim 02 (4k)",
+                        ).changed()
+                        | ui.selectable_value(
+                            &mut self.skybox_option, "Circus Arena (4k)".to_string(), "Circus Arena (4k)",
                         ).changed())
                         .then(|| {
                             self.scene.settings.skybox_option = self.skybox_option.clone();

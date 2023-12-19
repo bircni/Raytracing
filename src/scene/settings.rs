@@ -40,7 +40,7 @@ mod yaml {
                     .try_normalize(0.0)
                     .unwrap_or_default(),
                 ambient_intensity: yaml_extras.ambient_color.norm(),
-                skybox_option: "Scythian Tombs 2 (8k)".to_string(),
+                skybox_option: "Scythian Tombs 2 (4k)".to_string(),
             })
         }
     }
