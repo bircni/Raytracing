@@ -7,6 +7,7 @@ pub struct Settings {
     pub background_color: Color,
     pub ambient_color: Color,
     pub ambient_intensity: f32,
+    pub skybox_option: String,
 
 }
 
@@ -39,6 +40,7 @@ mod yaml {
                     .try_normalize(0.0)
                     .unwrap_or_default(),
                 ambient_intensity: yaml_extras.ambient_color.norm(),
+                skybox_option: "Scythian Tombs 2 (8k)".to_string(),
             })
         }
     }

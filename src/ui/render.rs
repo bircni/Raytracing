@@ -28,8 +28,8 @@ impl super::App {
         let rendering_cancel = self.rendering_cancel.clone();
         let image_buffer = self.render_image.clone();
 
-        raytracer.load_skybox(self.skybox_index);
-        
+        raytracer.load_skybox(self.skybox_option.clone());
+
         rendering_progress.store(0, Ordering::Relaxed);
 
         self.rendering_thread = Some(std::thread::spawn(move || {

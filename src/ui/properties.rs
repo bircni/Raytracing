@@ -179,6 +179,28 @@ impl App {
                 });
             });
 
+            ui.label("Skybox:");
+            ui.vertical(|ui| {
+                egui::ComboBox::from_id_source(1)
+                    .selected_text(self.skybox_option.clone())
+                    .show_ui(ui, |ui| {
+                        (ui.selectable_value(
+                            &mut self.skybox_option, "Scythian Tombs 2 (8k)".to_string(), "Scythian Tombs 2 (8k)",
+                        )
+                        .changed()
+                        | ui.selectable_value(
+                            &mut self.skybox_option, "Scythian Tombs 2 (4k)".to_string(), "Scythian Tombs 2 (4k)",
+                        ).changed()
+                        | ui.selectable_value(
+                            &mut self.skybox_option, "Studio Small 08 (4k)".to_string(), "Studio Small 08 (4k)",
+                        ).changed())
+                        .then(|| {
+                            self.scene.settings.skybox_option = self.skybox_option.clone();
+                        });
+                    });
+            });
+
+
             ui.label("Background Color:");
             color_picker::color_edit_button_rgb(ui, self.scene.settings.background_color.as_mut());
 

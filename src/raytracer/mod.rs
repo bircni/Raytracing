@@ -45,16 +45,16 @@ impl Raytracer {
         }
     }
 
-pub fn load_skybox(&mut self, index: u32) {
-        if index == 0 {
+pub fn load_skybox(&mut self, skybox_option: String) {
+        if skybox_option == "Scythian Tombs 2 (8k)" {
             self.skybox = image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_8k.exr"))
                 .expect("Failed to load skybox image")
                 .to_rgb8();
-        } else if index == 1 {
+        } else if skybox_option == "Scythian Tombs 2 (4k)" {
             self.skybox = image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_4k.exr"))
                 .expect("Failed to load skybox image")
                 .to_rgb8();
-        } else if index == 2 {
+        } else if skybox_option == "Studio Small 08 (4k)" {
             self.skybox = image::load_from_memory(include_bytes!("../../res/studio_small_08_4k.exr"))
                 .expect("Failed to load skybox image")
                 .to_rgb8();
