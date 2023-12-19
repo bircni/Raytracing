@@ -8,7 +8,7 @@ use egui::{
 use egui_file::FileDialog;
 use image::RgbImage;
 use log::warn;
-use nalgebra::{coordinates::XYZ, Similarity3};
+use nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
 
 use crate::scene::{Light, Object};
 
@@ -294,11 +294,11 @@ impl App {
                 });
 
                 ui.label("Position");
-                xyz_drag_value(ui, &mut o.transform.isometry.translation);
+                xyz_drag_value(ui, &mut o.translation);
 
                 ui.label("Rotation");
                 ui.horizontal(|ui| {
-                    let (mut x, mut y, mut z) = o.transform.isometry.rotation.euler_angles();
+                    let (mut x, mut y, mut z) = o.rotation.euler_angles();
 
                     [&mut x, &mut y, &mut z]
                         .iter_mut()
@@ -312,22 +312,12 @@ impl App {
                             .changed()
                         })
                         .then(|| {
-                            o.transform.isometry.rotation =
-                                nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
+                            o.rotation = nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
                         })
                 });
 
                 ui.label("Scale");
-                let mut scale = o.transform.scaling();
-                ui.add(
-                    DragValue::new(&mut scale)
-                        .clamp_range(f32::EPSILON..=f32::INFINITY)
-                        .speed(0.01),
-                )
-                .changed()
-                .then(|| {
-                    o.transform.set_scaling(scale);
-                });
+                xyz_drag_value(ui, &mut o.scale);
             }
 
             for o in objects_to_remove {
@@ -351,7 +341,12 @@ impl App {
                 if let Some(dialog) = &mut self.open_file_dialog {
                     if dialog.show(ui.ctx()).selected() {
                         if let Some(file) = dialog.path() {
-                            match Object::from_obj(file, Similarity3::identity()) {
+                            match Object::from_obj(
+                                file,
+                                Translation3::identity(),
+                                UnitQuaternion::identity(),
+                                Scale3::identity(),
+                            ) {
                                 Ok(object) => {
                                     self.scene.objects.push(object);
                                 }

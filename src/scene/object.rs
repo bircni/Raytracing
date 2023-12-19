@@ -4,7 +4,9 @@ use anyhow::Context;
 use bvh::bvh::Bvh;
 use image::RgbImage;
 use log::warn;
-use nalgebra::{Point3, Similarity3, Vector2, Vector3};
+use nalgebra::{
+    Affine3, Isometry3, Point3, Scale3, Translation3, UnitQuaternion, Vector2, Vector3,
+};
 use obj::SimplePolygon;
 use ordered_float::OrderedFloat;
 
@@ -24,7 +26,9 @@ pub struct Object {
     path: PathBuf,
     pub triangles: Vec<Triangle>,
     pub materials: Vec<Material>,
-    pub transform: Similarity3<f32>,
+    pub translation: Translation3<f32>,
+    pub rotation: UnitQuaternion<f32>,
+    pub scale: Scale3<f32>,
     bvh: Bvh<f32, 3>,
 }
 
@@ -40,7 +44,9 @@ fn load_texture<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<RgbImage> 
 impl Object {
     pub fn from_obj<P: AsRef<std::path::Path>>(
         path: P,
-        transform: Similarity3<f32>,
+        translation: Translation3<f32>,
+        rotation: UnitQuaternion<f32>,
+        scale: Scale3<f32>,
     ) -> anyhow::Result<Object> {
         let mut obj = obj::Obj::load(path.as_ref())
             .context(format!("Failed to load obj from path: {:?}", path.as_ref()))?;
@@ -128,16 +134,25 @@ impl Object {
             path: path.as_ref().to_path_buf(),
             triangles,
             materials,
-            transform,
+            translation,
+            rotation,
+            scale,
             bvh,
         })
+    }
+
+    pub fn transform(&self) -> Affine3<f32> {
+        Affine3::from_matrix_unchecked(
+            Isometry3::from_parts(self.translation, self.rotation).to_homogeneous()
+                * self.scale.to_homogeneous(),
+        )
     }
 
     pub fn intersect(&self, ray: Ray, delta: f32) -> Option<Hit> {
         // Transform ray into object space
         let ray = Ray {
-            origin: self.transform.inverse_transform_point(&ray.origin),
-            direction: self.transform.inverse_transform_vector(&ray.direction),
+            origin: self.transform().inverse_transform_point(&ray.origin),
+            direction: self.transform().inverse_transform_vector(&ray.direction),
         };
 
         self.bvh
@@ -158,8 +173,8 @@ impl Object {
             .min_by_key(|&(_, point, _, _)| OrderedFloat((ray.origin - point).norm_squared()))
             .map(|(t, point, normal, uv)| {
                 // Transform hit point and normal back into world space
-                let point = self.transform.transform_point(&point);
-                let normal = self.transform.transform_vector(&normal);
+                let point = self.transform().transform_point(&point);
+                let normal = self.transform().transform_vector(&normal);
 
                 Hit {
                     name: self.name.as_str(),
@@ -273,7 +288,7 @@ mod yaml {
     use std::path::PathBuf;
 
     use anyhow::Context;
-    use nalgebra::{Point3, Similarity3, Translation3, UnitQuaternion, Vector3};
+    use nalgebra::{Point3, Scale3, Translation3, UnitQuaternion, Vector3};
     use serde::{Deserialize, Serialize};
 
     use super::Object;
@@ -285,7 +300,8 @@ mod yaml {
         pub position: Point3<f32>,
         #[serde(with = "super::super::yaml::vector")]
         pub rotation: Vector3<f32>,
-        pub scale: f32,
+        #[serde(with = "super::super::yaml::vector")]
+        pub scale: Vector3<f32>,
     }
 
     impl<'de> serde::Deserialize<'de> for Object {
@@ -295,22 +311,25 @@ mod yaml {
         {
             let yaml_object = ObjectDef::deserialize(deserializer)?;
 
-            let transform = Similarity3::from_parts(
-                Translation3::from(yaml_object.position.coords),
-                UnitQuaternion::from_euler_angles(
-                    yaml_object.rotation.x * std::f32::consts::PI * 2.0 / 360.0,
-                    yaml_object.rotation.y * std::f32::consts::PI * 2.0 / 360.0,
-                    yaml_object.rotation.z * std::f32::consts::PI * 2.0 / 360.0,
-                ),
-                yaml_object.scale,
+            let translation = Translation3::from(yaml_object.position.coords);
+            let rotation = UnitQuaternion::from_euler_angles(
+                yaml_object.rotation.x * std::f32::consts::PI * 2.0 / 360.0,
+                yaml_object.rotation.y * std::f32::consts::PI * 2.0 / 360.0,
+                yaml_object.rotation.z * std::f32::consts::PI * 2.0 / 360.0,
             );
+            let scale = Scale3::from(yaml_object.scale);
 
-            Object::from_obj(yaml_object.file_path.as_path(), transform)
-                .context(format!(
-                    "Failed to load object from path: {:?}",
-                    yaml_object.file_path
-                ))
-                .map_err(serde::de::Error::custom)
+            Object::from_obj(
+                yaml_object.file_path.as_path(),
+                translation,
+                rotation,
+                scale,
+            )
+            .context(format!(
+                "Failed to load object from path: {:?}",
+                yaml_object.file_path
+            ))
+            .map_err(serde::de::Error::custom)
         }
     }
 
@@ -319,17 +338,17 @@ mod yaml {
         where
             S: serde::Serializer,
         {
-            let rotation = self.transform.isometry.rotation.euler_angles();
+            let rotation = self.rotation.euler_angles();
 
             ObjectDef {
                 file_path: self.path.clone(),
-                position: Point3::from(self.transform.isometry.translation.vector),
+                position: self.translation.vector.into(),
                 rotation: Vector3::new(
                     rotation.0.to_degrees(),
                     rotation.1.to_degrees(),
                     rotation.2.to_degrees(),
                 ),
-                scale: self.transform.scaling(),
+                scale: self.scale.vector,
             }
             .serialize(serializer)
         }

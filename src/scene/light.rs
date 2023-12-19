@@ -21,7 +21,7 @@ mod yaml {
     pub struct LightDef {
         #[serde(with = "super::super::yaml::point")]
         pub position: Point3<f32>,
-        #[serde(with = "super::super::yaml::color")]
+        #[serde(with = "super::super::yaml::color", rename = "Ke")]
         pub ke: Color,
     }
 

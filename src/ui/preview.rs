@@ -375,7 +375,7 @@ impl CallbackTrait for PreviewRenderer {
             self.scene
                 .objects
                 .iter()
-                .map(|o| o.transform.to_homogeneous())
+                .map(|o| o.transform().to_homogeneous())
                 .chain(std::iter::repeat(Isometry3::identity().to_homogeneous()))
                 .take(MAX_OBJECTS)
                 .flat_map(|m| bytemuck::cast_slice(m.as_slice()).to_vec())
