@@ -12,7 +12,6 @@ mod object;
 mod settings;
 mod triangle;
 mod yaml;
-mod skybox;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Scene {
