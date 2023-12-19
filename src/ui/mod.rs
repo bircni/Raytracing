@@ -69,6 +69,7 @@ pub struct App {
     rendering_progress: Arc<AtomicU16>,
     preview_zoom: f32,
     preview_position: Vec2,
+    skybox_index: u32,
 }
 
 impl App {
@@ -117,6 +118,7 @@ impl App {
             rendering_progress: Arc::new(AtomicU16::new(0)),
             rendering_cancel: Arc::new(AtomicBool::new(false)),
             render_image: image_buffer,
+            skybox_index: 2,
         })
     }
 

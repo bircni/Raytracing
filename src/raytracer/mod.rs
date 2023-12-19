@@ -45,7 +45,7 @@ impl Raytracer {
         }
     }
 
-pub fn load_skybox(&mut self, index: usize) {
+pub fn load_skybox(&mut self, index: u32) {
         if index == 0 {
             self.skybox = image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_8k.exr"))
                 .expect("Failed to load skybox image")
