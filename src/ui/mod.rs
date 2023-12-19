@@ -412,7 +412,7 @@ impl App {
     fn save_scene(&mut self) {
         serde_yaml::to_string(&self.scene)
             .context("Failed to serialize scene")
-            .and_then(|str| std::fs::write("res/config.yaml", str).context("Failed to save config"))
+            .and_then(|str| std::fs::write(&self.scene.path, str).context("Failed to save config"))
             .unwrap_or_else(|e| {
                 warn!("Failed to save config: {}", e);
             });
