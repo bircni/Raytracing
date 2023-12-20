@@ -41,7 +41,8 @@ mod tests {
     #[test]
     fn test_load_scene() -> anyhow::Result<()> {
         // test loading of scene
-        let scene = Scene::load("./res/test_config.yaml").context("Failed to load scene")?;
+        let scene =
+            Scene::load("./res/e2e-test/test_config.yaml").context("Failed to load scene")?;
 
         // test loading of objects
         assert_eq!(scene.objects.len(), 1);
