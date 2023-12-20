@@ -198,7 +198,7 @@ impl App {
                     });
                 }
                 if response.clicked() {
-                   self.change_preview_movement(ui, &response, true);
+                    self.change_preview_movement(ui, &response, true);
                 }
                 if self.preview_activate_movement {
                     painter.debug_text(
@@ -266,22 +266,18 @@ impl App {
             // lower sensitivity and clamp so it cant go negative
             i.key_pressed(Key::Y).then(|| {
                 self.look_sensitivity = (self.look_sensitivity - 0.0001_f32).max(0.0);
-                warn!("Look sensitivity: {}", self.look_sensitivity);
             });
             // higher sensitivity and clamp so it cant go too high
             i.key_pressed(Key::C).then(|| {
                 self.look_sensitivity = (self.look_sensitivity + 0.0001_f32).min(0.5);
-                warn!("Look sensitivity: {}", self.look_sensitivity);
             });
             // lower movement speed and clamp so it cant go negative
             i.key_down(Key::Q).then(|| {
                 self.movement_speed = (self.movement_speed - 0.005_f32).max(0.0);
-                warn!("Movement speed: {}", self.movement_speed);
             });
             // higher movement speed and clamp so it cant go too high
             i.key_down(Key::E).then(|| {
                 self.movement_speed = (self.movement_speed + 0.005_f32).min(1.0);
-                warn!("Movement speed: {}", self.movement_speed);
             });
             // look up
             i.key_down(Key::ArrowUp).then(|| {
