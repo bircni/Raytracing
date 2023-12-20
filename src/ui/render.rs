@@ -27,8 +27,8 @@ impl super::App {
         let rendering_progress = self.rendering_progress.clone();
         let rendering_cancel = self.rendering_cancel.clone();
         let image_buffer = self.render_image.clone();
-
-        raytracer.load_skybox(self.skybox);
+        // Fabian: correct path?
+        raytracer.load_skybox(self.skybox, "./res/test/skybox");
 
         rendering_progress.store(0, Ordering::Relaxed);
 

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use egui::{
     color_picker, hex_color, include_image, Align, Button, Color32, ColorImage, DragValue,
-    FontFamily, ImageButton, ImageData, Layout, RichText, ScrollArea, SidePanel, Slider, TextStyle,
+    FontFamily, ImageButton, ImageData, Layout, RichText, ScrollArea, SidePanel, Slider,
     TextureOptions, Ui,
 };
 use egui_file::FileDialog;
@@ -42,9 +42,22 @@ impl App {
                                 ))
                                 .tint(hex_color!("#ffffff")),
                             )
+                            .on_hover_text("Save Scene")
                             .clicked()
                             .then(|| {
                                 self.save_scene();
+                            });
+                            ui.add_sized(
+                                [20.0, 20.0],
+                                ImageButton::new(include_image!(
+                                    "../../res/icons/download-solid.svg"
+                                ))
+                                .tint(hex_color!("#ffffff")),
+                            )
+                            .on_hover_text("Download all Skyboxes")
+                            .clicked()
+                            .then(|| {
+                                Skybox::download_all("./res/test/skybox");
                             });
                         });
                     });
@@ -260,10 +273,7 @@ impl App {
     fn lights(&mut self, ui: &mut Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
-                ui.label(
-                    RichText::new(format!("Lights ({})", self.scene.lights.len()))
-                        .text_style(TextStyle::Name("subheading".into())),
-                )
+                ui.label(RichText::new(format!("Lights ({})", self.scene.lights.len())).size(16.0))
             });
 
             self.scene
@@ -276,7 +286,11 @@ impl App {
                     ui.separator();
 
                     ui.horizontal(|ui| {
-                        ui.label(RichText::new(format!("Light {n}")).size(14.0));
+                        ui.label(
+                            RichText::new(format!("Light {n}"))
+                                .size(14.0)
+                                .family(FontFamily::Monospace),
+                        );
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             remove = ui
                                 .add_sized(
