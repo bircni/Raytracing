@@ -19,10 +19,13 @@ use egui_file::FileDialog;
 use image::{ImageBuffer, RgbImage};
 use log::{info, warn};
 use nalgebra::OPoint;
+use std::fs::File;
+use std::io::Write;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use std::sync::Arc;
 use std::thread::JoinHandle;
+use strum::IntoEnumIterator;
 
 #[derive(PartialEq, Eq)]
 enum RenderSize {
@@ -77,6 +80,7 @@ pub struct App {
     pause_delta: bool,
     pause_count: i32,
     skybox: Skybox,
+    download_thread: Option<std::thread::JoinHandle<()>>,
 }
 
 impl App {
@@ -131,6 +135,7 @@ impl App {
             pause_delta: false,
             pause_count: 0,
             skybox: Skybox::None,
+            download_thread: None,
         })
     }
 
@@ -431,6 +436,31 @@ impl App {
         ui.ctx()
             .send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::None));
     }
+
+    fn download_skyboxes<P: AsRef<std::path::Path>>(&mut self, path: P) {
+        let path = path.as_ref().to_path_buf();
+        if self.download_thread.is_none() {
+            self.download_thread = Some(std::thread::spawn(move || {
+                for skybox in Skybox::iter() {
+                    if let Some(url) = skybox.get_url() {
+                        info!("Downloading skybox from: {}", url);
+                        let file_path = format!("{}/{skybox}.exr", path.display());
+                        if let Ok(_file) = File::open(&file_path) {}
+                        {
+                            let img_bytes = reqwest::blocking::get(url)
+                                .expect("FAILED TO GET IMAGE")
+                                .bytes()
+                                .expect("FAILED TO GET BYTES");
+                            let mut file =
+                                File::create(&file_path).expect("Failed to create file for saving");
+                            file.write_all(&img_bytes).expect("Failed to write to file");
+                            info!("Downloaded and saved skybox to: {}", file_path);
+                        }
+                    }
+                }
+            }));
+        }
+    }
 }
 
 impl eframe::App for App {
@@ -441,6 +471,13 @@ impl eframe::App for App {
             .then(|| {
                 self.rendering_thread = None;
                 self.rendering_cancel.store(false, Ordering::Relaxed);
+            });
+
+        self.download_thread
+            .as_ref()
+            .is_some_and(JoinHandle::is_finished)
+            .then(|| {
+                self.download_thread = None;
             });
 
         ctx.input(|input| input.key_pressed(Key::S) && input.modifiers.ctrl)

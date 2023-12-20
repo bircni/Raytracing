@@ -57,7 +57,9 @@ impl App {
                             .on_hover_text("Download all Skyboxes")
                             .clicked()
                             .then(|| {
-                                Skybox::download_all("./res/test/skybox");
+                                self.download_skyboxes(
+                                    self.scene.path.parent().expect("ERROR").join("skybox"),
+                                );
                             });
                         });
                     });

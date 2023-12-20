@@ -6,7 +6,6 @@ use std::{
 use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
-use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
@@ -67,27 +66,6 @@ impl Skybox {
             }
         }
     }
-
-    // print all urls
-    pub fn download_all(path: &str) {
-        for skybox in Skybox::iter() {
-            if let Some(url) = skybox.get_url() {
-                log::info!("Downloading skybox from: {}", url);
-                let file_path = format!("{path}/{skybox}.exr");
-                if let Ok(_file) = File::open(&file_path) {}
-                {
-                    let img_bytes = reqwest::blocking::get(url)
-                        .expect("FAILED TO GET IMAGE")
-                        .bytes()
-                        .expect("FAILED TO GET BYTES");
-                    let mut file =
-                        File::create(&file_path).expect("Failed to create file for saving");
-                    file.write_all(&img_bytes).expect("Failed to write to file");
-                    log::info!("Downloaded and saved skybox to: {}", file_path);
-                }
-            }
-        }
-    }
 }
 
 impl std::fmt::Display for Skybox {
@@ -115,15 +93,15 @@ impl Raytracer {
         }
     }
 
-    pub fn load_skybox(&mut self, skybox: Skybox, save_path: &str) {
+    pub fn load_skybox<P: AsRef<std::path::Path>>(&mut self, skybox: Skybox, save_path: P) {
         if skybox == Skybox::None {
             return;
         }
-        if let Err(e) = create_dir_all(save_path) {
+        if let Err(e) = create_dir_all(&save_path) {
             log::error!("Failed to create directory: {}", e);
             return;
         }
-        let file_path = format!("{}/{}.exr", save_path, skybox.clone());
+        let file_path = format!("{}/{}.exr", save_path.as_ref().display(), skybox.clone());
         if let Ok(mut file) = File::open(&file_path) {
             log::info!("Loading skybox from file: {}", file_path);
             let mut img_bytes = Vec::new();
