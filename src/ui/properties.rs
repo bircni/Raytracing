@@ -10,7 +10,10 @@ use image::RgbImage;
 use log::warn;
 use nalgebra::{coordinates::XYZ, Similarity3};
 
-use crate::scene::{Light, Object};
+use crate::{
+    raytracer::Skybox,
+    scene::{Light, Object},
+};
 
 use super::{App, RenderSize};
 
@@ -99,116 +102,17 @@ impl App {
 
             ui.separator();
 
-            ui.label("Render Size:");
+            self.render_options(ui);
 
-            ui.vertical(|ui| {
-                let mut render_size = self.render_size.as_size();
-                ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
-                    ui.vertical(|ui| {
-                        egui::ComboBox::from_id_source(0)
-                            .selected_text(format!("{}", self.render_size))
-                            .show_ui(ui, |ui| {
-                                (ui.selectable_value(
-                                    &mut self.render_size,
-                                    RenderSize::FullHD,
-                                    format!("{}", RenderSize::FullHD),
-                                )
-                                .changed()
-                                    | ui.selectable_value(
-                                        &mut self.render_size,
-                                        RenderSize::Wqhd,
-                                        format!("{}", RenderSize::Wqhd),
-                                    )
-                                    .changed()
-                                    || ui
-                                        .selectable_value(
-                                            &mut self.render_size,
-                                            RenderSize::Uhd1,
-                                            format!("{}", RenderSize::Uhd1),
-                                        )
-                                        .changed()
-                                    || ui
-                                        .selectable_value(
-                                            &mut self.render_size,
-                                            RenderSize::Uhd2,
-                                            format!("{}", RenderSize::Uhd2),
-                                        )
-                                        .changed()
-                                    || ui
-                                        .selectable_value(
-                                            &mut self.render_size,
-                                            RenderSize::Custom([render_size.0, render_size.1]),
-                                            format!("{}", RenderSize::Custom([0, 0])),
-                                        )
-                                        .changed())
-                                .then(|| {
-                                    self.change_render_size();
-                                });
-                            });
-                        ui.horizontal(|ui| {
-                            ui.add_enabled_ui(
-                                self.rendering_thread.is_none()
-                                    && matches!(self.render_size, RenderSize::Custom(_)),
-                                |ui| {
-                                    let (x, y) = match &mut self.render_size {
-                                        RenderSize::Custom([x, y]) => (x, y),
-                                        _ => (&mut render_size.0, &mut render_size.1),
-                                    };
-                                    (ui.add(
-                                        DragValue::new(x)
-                                            .speed(1.0)
-                                            .clamp_range(10..=8192)
-                                            .prefix("w: "),
-                                    )
-                                    .changed()
-                                        || ui
-                                            .add(
-                                                DragValue::new(y)
-                                                    .speed(1.0)
-                                                    .clamp_range(10..=8192)
-                                                    .prefix("h: "),
-                                            )
-                                            .changed())
-                                    .then(|| {
-                                        self.change_render_size();
-                                    });
-                                },
-                            );
-                        });
-                    });
-                });
+            self.skybox_options(ui);
+
+            ui.add_enabled_ui(self.skybox == Skybox::None, |ui| {
+                ui.label("Background Color:");
+                color_picker::color_edit_button_rgb(
+                    ui,
+                    self.scene.settings.background_color.as_mut(),
+                );
             });
-
-            ui.label("Skybox:");
-            ui.vertical(|ui| {
-                egui::ComboBox::from_id_source(1)
-                    .selected_text(self.skybox_option.clone())
-                    .show_ui(ui, |ui| {
-                        (ui.selectable_value(
-                            &mut self.skybox_option, "Scythian Tombs 2 (4k)".to_string(), "Scythian Tombs 2 (4k)",
-                        )
-                        .changed()
-                        | ui.selectable_value(
-                            &mut self.skybox_option, "Rainforest Trail (4k)".to_string(), "Rainforest Trail (4k)",
-                        ).changed()
-                        | ui.selectable_value(
-                            &mut self.skybox_option, "Studio Small 08 (4k)".to_string(), "Studio Small 08 (4k)",
-                        ).changed()
-                        | ui.selectable_value(
-                            &mut self.skybox_option, "Kloppenheim 02 (4k)".to_string(), "Kloppenheim 02 (4k)",
-                        ).changed()
-                        | ui.selectable_value(
-                            &mut self.skybox_option, "Circus Arena (4k)".to_string(), "Circus Arena (4k)",
-                        ).changed())
-                        .then(|| {
-                            self.scene.settings.skybox_option = self.skybox_option.clone();
-                        });
-                    });
-            });
-
-
-            ui.label("Background Color:");
-            color_picker::color_edit_button_rgb(ui, self.scene.settings.background_color.as_mut());
 
             ui.label("Ambient Color:");
             color_picker::color_edit_button_rgb(ui, self.scene.settings.ambient_color.as_mut());
@@ -220,6 +124,136 @@ impl App {
             );
 
             ui.separator();
+        });
+    }
+
+    fn render_options(&mut self, ui: &mut Ui) {
+        ui.label("Render Size:");
+        ui.vertical(|ui| {
+            let mut render_size = self.render_size.as_size();
+            ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
+                ui.vertical(|ui| {
+                    egui::ComboBox::from_id_source(0)
+                        .selected_text(format!("{}", self.render_size))
+                        .show_ui(ui, |ui| {
+                            (ui.selectable_value(
+                                &mut self.render_size,
+                                RenderSize::FullHD,
+                                format!("{}", RenderSize::FullHD),
+                            )
+                            .changed()
+                                | ui.selectable_value(
+                                    &mut self.render_size,
+                                    RenderSize::Wqhd,
+                                    format!("{}", RenderSize::Wqhd),
+                                )
+                                .changed()
+                                || ui
+                                    .selectable_value(
+                                        &mut self.render_size,
+                                        RenderSize::Uhd1,
+                                        format!("{}", RenderSize::Uhd1),
+                                    )
+                                    .changed()
+                                || ui
+                                    .selectable_value(
+                                        &mut self.render_size,
+                                        RenderSize::Uhd2,
+                                        format!("{}", RenderSize::Uhd2),
+                                    )
+                                    .changed()
+                                || ui
+                                    .selectable_value(
+                                        &mut self.render_size,
+                                        RenderSize::Custom([render_size.0, render_size.1]),
+                                        format!("{}", RenderSize::Custom([0, 0])),
+                                    )
+                                    .changed())
+                            .then(|| {
+                                self.change_render_size();
+                            });
+                        });
+                    ui.horizontal(|ui| {
+                        ui.add_enabled_ui(
+                            self.rendering_thread.is_none()
+                                && matches!(self.render_size, RenderSize::Custom(_)),
+                            |ui| {
+                                let (x, y) = match &mut self.render_size {
+                                    RenderSize::Custom([x, y]) => (x, y),
+                                    _ => (&mut render_size.0, &mut render_size.1),
+                                };
+                                (ui.add(
+                                    DragValue::new(x)
+                                        .speed(1.0)
+                                        .clamp_range(10..=8192)
+                                        .prefix("w: "),
+                                )
+                                .changed()
+                                    || ui
+                                        .add(
+                                            DragValue::new(y)
+                                                .speed(1.0)
+                                                .clamp_range(10..=8192)
+                                                .prefix("h: "),
+                                        )
+                                        .changed())
+                                .then(|| {
+                                    self.change_render_size();
+                                });
+                            },
+                        );
+                    });
+                });
+            });
+        });
+    }
+
+    fn skybox_options(&mut self, ui: &mut Ui) {
+        ui.label("Skybox:");
+        ui.vertical(|ui| {
+            egui::ComboBox::from_id_source(1)
+                .selected_text(format!("{}", self.skybox))
+                .show_ui(ui, |ui| {
+                    (ui.selectable_value(
+                        &mut self.skybox,
+                        Skybox::None,
+                        format!("{}", Skybox::None),
+                    )
+                    .changed()
+                        | ui.selectable_value(
+                            &mut self.skybox,
+                            Skybox::ScythianTombs2,
+                            format!("{}", Skybox::ScythianTombs2),
+                        )
+                        .changed()
+                        | ui.selectable_value(
+                            &mut self.skybox,
+                            Skybox::RainforestTrail,
+                            format!("{}", Skybox::RainforestTrail),
+                        )
+                        .changed()
+                        | ui.selectable_value(
+                            &mut self.skybox,
+                            Skybox::StudioSmall08,
+                            format!("{}", Skybox::StudioSmall08),
+                        )
+                        .changed()
+                        | ui.selectable_value(
+                            &mut self.skybox,
+                            Skybox::Kloppenheim02,
+                            format!("{}", Skybox::Kloppenheim02),
+                        )
+                        .changed()
+                        | ui.selectable_value(
+                            &mut self.skybox,
+                            Skybox::CircusArena,
+                            format!("{}", Skybox::CircusArena),
+                        )
+                        .changed())
+                    .then(|| {
+                        self.scene.settings.skybox = self.skybox;
+                    });
+                });
         });
     }
 

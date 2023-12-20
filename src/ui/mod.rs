@@ -4,6 +4,7 @@ mod render;
 
 use self::preview::Preview;
 
+use crate::raytracer::Skybox;
 use crate::scene::Scene;
 use anyhow::Context;
 use eframe::CreationContext;
@@ -69,7 +70,7 @@ pub struct App {
     rendering_progress: Arc<AtomicU16>,
     preview_zoom: f32,
     preview_position: Vec2,
-    skybox_option: String,
+    skybox: Skybox,
 }
 
 impl App {
@@ -118,7 +119,7 @@ impl App {
             rendering_progress: Arc::new(AtomicU16::new(0)),
             rendering_cancel: Arc::new(AtomicBool::new(false)),
             render_image: image_buffer,
-            skybox_option: "Scythian Tombs 2 (8k)".to_string(),
+            skybox: Skybox::None,
         })
     }
 

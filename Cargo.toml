@@ -61,6 +61,7 @@ color-hex = "0.2.0"
 # BVH
 # mal schauen wann die version auch auf crates.io ist
 bvh = { git = "https://github.com/svenstaro/bvh.git" }
+reqwest = { version = "0.11.23", features = ["blocking"] }
 
 [dev-dependencies]
 cargo-husky = { version = "1.5.0", default-features = false, features = [

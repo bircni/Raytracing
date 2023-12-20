@@ -26,7 +26,53 @@ pub struct Raytracer {
     scene: Scene,
     delta: f32,
     max_depth: u32,
-    skybox: RgbImage,
+    skybox_image: Option<RgbImage>,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
+pub enum Skybox {
+    None,
+    ScythianTombs2,
+    RainforestTrail,
+    StudioSmall08,
+    Kloppenheim02,
+    CircusArena,
+}
+
+impl Skybox {
+    fn get_url(&self) -> &str {
+        match self {
+            Skybox::None => "",
+            Skybox::ScythianTombs2 => {
+                "https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/scythian_tombs_puresky_4k.exr"
+            }
+            Skybox::RainforestTrail => {
+                "https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/rainforest_trail_4k.exr"
+            }
+            Skybox::StudioSmall08 => {
+                "https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/studio_small_08_4k.exr"
+            }
+            Skybox::Kloppenheim02 => {
+                "https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/kloppenheim_02_4k.exr"
+            }
+            Skybox::CircusArena => {
+                "https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/circus_arena_4k.exr"
+            }
+        }
+    }
+}
+
+impl std::fmt::Display for Skybox {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Skybox::None => write!(f, "None"),
+            Skybox::ScythianTombs2 => write!(f, "Scythian Tombs 2 (4k)"),
+            Skybox::RainforestTrail => write!(f, "Rainforest Trail (4k)"),
+            Skybox::StudioSmall08 => write!(f, "Studio Small (4k)"),
+            Skybox::Kloppenheim02 => write!(f, "Kloppenheim (4k)"),
+            Skybox::CircusArena => write!(f, "Circus Arena (4k)"),
+        }
+    }
 }
 
 impl Raytracer {
@@ -37,34 +83,25 @@ impl Raytracer {
             scene,
             delta,
             max_depth: 5,
-            skybox: image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_4k.exr"))
-                .expect("Failed to load skybox image")
-                .to_rgb8(),
+            skybox_image: None,
         }
     }
 
-pub fn load_skybox(&mut self, skybox_option: String) {
-        if skybox_option == "Scythian Tombs 2 (4k)" {
-            self.skybox = image::load_from_memory(include_bytes!("../../res/scythian_tombs_2_4k.exr"))
+    pub fn load_skybox(&mut self, skybox: Skybox) {
+        if skybox == Skybox::None {
+            return;
+        }
+        log::info!("Loading skybox: {}", skybox);
+        let img_bytes = reqwest::blocking::get(skybox.get_url())
+            .expect("FAILED TO GET IMAGE")
+            .bytes()
+            .expect("FAILED TO GET BYTES");
+        log::info!("Loaded skybox: {}", skybox);
+        self.skybox_image = Some(
+            image::load_from_memory(&img_bytes)
                 .expect("Failed to load skybox image")
-                .to_rgb8();
-        } else if skybox_option == "Rainforest Trail (4k)" {
-            self.skybox = image::load_from_memory(include_bytes!("../../res/rainforest_trail_4k.exr"))
-                .expect("Failed to load skybox image")
-                .to_rgb8();
-        } else if skybox_option == "Studio Small 08 (4k)" {
-            self.skybox = image::load_from_memory(include_bytes!("../../res/studio_small_08_4k.exr"))
-                .expect("Failed to load skybox image")
-                .to_rgb8();
-        } else if skybox_option == "Kloppenheim 02 (4k)" {
-            self.skybox = image::load_from_memory(include_bytes!("../../res/kloppenheim_02_4k.exr"))
-                .expect("Failed to load skybox image")
-                .to_rgb8();
-        } else if skybox_option == "Circus Arena (4k)" {
-            self.skybox = image::load_from_memory(include_bytes!("../../res/circus_arena_4k.exr"))
-                .expect("Failed to load skybox image")
-                .to_rgb8();
-        } //add more skyboxes here
+                .to_rgb8(),
+        );
     }
 
     fn raycast(&self, ray: Ray) -> Option<Hit> {
@@ -179,16 +216,20 @@ pub fn load_skybox(&mut self, skybox_option: String) {
                 (ray.direction.x.atan2(ray.direction.z) / (2.0 * std::f32::consts::PI) + 0.5) % 1.0;
             let y = (ray.direction.y + 0.08).acos() / std::f32::consts::PI;
 
-            let x = (x * self.skybox.width() as f32) as u32 % self.skybox.width();
-            let y = (y * self.skybox.height() as f32) as u32 % self.skybox.height();
+            if let Some(skybox) = &self.skybox_image {
+                let x = (x * skybox.width() as f32) as u32 % skybox.width();
+                let y = (y * skybox.height() as f32) as u32 % skybox.height();
 
-            let pixel = self.skybox.get_pixel(x, y);
+                let pixel = skybox.get_pixel(x, y);
 
-            Color::new(
-                f32::from(pixel[0]) / 255.0,
-                f32::from(pixel[1]) / 255.0,
-                f32::from(pixel[2]) / 255.0,
-            ) * 1.3
+                Color::new(
+                    f32::from(pixel[0]) / 255.0,
+                    f32::from(pixel[1]) / 255.0,
+                    f32::from(pixel[2]) / 255.0,
+                )
+            } else {
+                self.scene.settings.background_color
+            }
         }
     }
 
