@@ -49,7 +49,6 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
-map_Ks /home/fabian/Downloads/Audi/brake_di.png
 
 newmtl glass_clear.003
 Ns 1000.000000
@@ -100,7 +99,6 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Bump -bm 0.200000 /home/fabian/Downloads/D:/blender tutorial/AppData/Roaming/Blender Foundation/Blender/2.93/scripts/addons/Tranportation/data/vehicles/Sedan/Audi A7/textures/Leather_003_NRM.jpg
 
 newmtl leather_brun.003
 Ns 159.999985
@@ -111,7 +109,6 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Bump -bm 0.200000 /home/fabian/Downloads/D:/blender tutorial/AppData/Roaming/Blender Foundation/Blender/2.93/scripts/addons/Tranportation/data/vehicles/Sedan/Audi A7/textures/Leather_003_NRM.jpg
 
 newmtl leather_grey.003
 Ns 159.999985
@@ -122,7 +119,6 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Bump -bm 0.200000 /home/fabian/Downloads/D:/blender tutorial/AppData/Roaming/Blender Foundation/Blender/2.93/scripts/addons/Tranportation/data/vehicles/Sedan/Audi A7/textures/Leather_003_NRM.jpg
 
 newmtl ledBlue.003
 Ns 11.111113

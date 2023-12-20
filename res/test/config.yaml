@@ -1,36 +1,42 @@
 models:
-  - file_path: res/test/1.obj
-    position:
-      x: 0.7
-      y: -0.1
-      z: -0.5
-    rotation:
-      x: 1.6295541e-15
-      y: -0.0
-      z: 0.0
-    scale: 1.0
-  - file_path: res/test/2.obj
-    position:
-      x: 0.7
-      y: -0.1
-      z: -0.5
-    rotation:
-      x: 1.6295541e-15
-      y: -0.0
-      z: 0.0
-    scale: 1.0
+- file_path: res/test/1.obj
+  position:
+    x: 0.7
+    y: -0.1
+    z: -0.5
+  rotation:
+    x: 1.6295541e-15
+    y: -0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+- file_path: res/test/2.obj
+  position:
+    x: 0.7
+    y: -0.1
+    z: -0.5
+  rotation:
+    x: 1.6295541e-15
+    y: -0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
 point_lights:
-  - position:
-      x: 0.7
-      y: 4.7
-      z: 2.2
-    ke:
-      r: 29.605135
-      g: 28.080446
-      b: 28.896791
+- position:
+    x: 0.7
+    y: 4.7
+    z: 2.2
+  Ke:
+    r: 29.605135
+    g: 28.080446
+    b: 28.896791
 camera:
   position:
-    x: 2.7
+    x: -14.0
     y: 1.5
     z: 7.6
   look_at:

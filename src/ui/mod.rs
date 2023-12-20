@@ -12,12 +12,13 @@ use egui::{
     mutex::Mutex, pos2, Align, CursorIcon, Frame, Layout, ProgressBar, Rect, Rounding, Stroke, Vec2,
 };
 use egui::{
-    Button, CentralPanel, Color32, ColorImage, ImageData, Key, Sense, TextStyle, TextureHandle,
-    TextureOptions, Ui,
+    Align2, Button, CentralPanel, Color32, ColorImage, ImageData, Key, Sense, TextStyle,
+    TextureHandle, TextureOptions, Ui,
 };
 use egui_file::FileDialog;
 use image::{ImageBuffer, RgbImage};
 use log::{info, warn};
+use nalgebra::OPoint;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use std::sync::Arc;
@@ -70,6 +71,11 @@ pub struct App {
     rendering_progress: Arc<AtomicU16>,
     preview_zoom: f32,
     preview_position: Vec2,
+    preview_activate_movement: bool,
+    movement_speed: f32,
+    look_sensitivity: f32,
+    pause_delta: bool,
+    pause_count: i32,
     skybox: Skybox,
 }
 
@@ -119,6 +125,11 @@ impl App {
             rendering_progress: Arc::new(AtomicU16::new(0)),
             rendering_cancel: Arc::new(AtomicBool::new(false)),
             render_image: image_buffer,
+            preview_activate_movement: false,
+            movement_speed: 0.1,
+            look_sensitivity: 0.001,
+            pause_delta: false,
+            pause_count: 0,
             skybox: Skybox::None,
         })
     }
@@ -181,10 +192,148 @@ impl App {
                 (self.scene.settings.background_color[2] * 255.0) as u8,
             ))
             .show(ui, |ui| {
-                let (response, painter) = ui.allocate_painter(ui.available_size(), Sense::drag());
-
+                let (response, painter) =
+                    ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
                 painter.add(Preview::paint(response.rect, &self.scene));
+                if response.hover_pos().is_some() && !self.preview_activate_movement {
+                    egui::show_tooltip(ui.ctx(), egui::Id::new("preview_tooltip"), |ui| {
+                        ui.label("Click to change camera position");
+                    });
+                }
+                if response.clicked() {
+                   self.change_preview_movement(ui, &response, true);
+                }
+                if self.preview_activate_movement {
+                    painter.debug_text(
+                        pos2(response.rect.left(), response.rect.top()),
+                        Align2::LEFT_TOP,
+                        Color32::WHITE,
+                        format!("WASD to move camera\nQE to change movement speed {:?}\nYC to change look sensitivity {:?}\nF to reset look_to point facing [0, 0, 0]\nESC to exit movement mode", self.movement_speed, self.look_sensitivity),
+                    );
+                    ui.ctx()
+                    .send_viewport_cmd(egui::ViewportCommand::CursorVisible(false));
+                self.move_camera(ui, &response);
+            }
+            if !response.has_focus() && self.preview_activate_movement {
+                // exit movement mode when tabbed out
+                self.change_preview_movement(ui, &response, false);
+            }
             });
+    }
+
+    fn move_camera(&mut self, ui: &mut Ui, response: &egui::Response) {
+        if ui.input(|i| i.key_pressed(egui::Key::Escape)) && self.preview_activate_movement {
+            // exit movement mode using ESC
+            self.change_preview_movement(ui, response, false);
+        }
+        if response.hover_pos().is_none() {
+            // move mouse to center
+            self.pause_delta = true;
+            let center = response.rect.center();
+            ui.ctx()
+                .send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::Locked));
+            ui.ctx()
+                .send_viewport_cmd(egui::ViewportCommand::CursorPosition(center));
+            ui.ctx()
+                .send_viewport_cmd(egui::ViewportCommand::CursorGrab(
+                    egui::CursorGrab::Confined,
+                ));
+        }
+        let delta = ui.input(|i| i.pointer.delta()); // rotate look_at point around camera position using mouse
+        let direction = (self.scene.camera.look_at - self.scene.camera.position).normalize();
+        let right = direction.cross(&self.scene.camera.up).normalize();
+        let up = right.cross(&direction).normalize();
+        if self.pause_delta {
+            self.pause_count += 1;
+            if self.pause_count > 5 {
+                self.pause_delta = false;
+                self.pause_count = 0;
+            }
+        }
+        if !self.pause_delta {
+            // move look_at point in a sphere around camera with constant distance 1 using mouse
+            let new_point =
+                self.scene.camera.position + direction + right * delta.x * self.look_sensitivity
+                    - up * delta.y * self.look_sensitivity;
+            self.scene.camera.look_at =
+                self.scene.camera.position + (new_point - self.scene.camera.position).normalize();
+        }
+        self.scene.camera.fov = (self.scene.camera.fov - (ui.input(|i| i.scroll_delta.y) * 0.001))
+            .clamp(0.0_f32.to_radians(), 180.0_f32.to_radians());
+        // movement using keyboard
+        ui.input(|i| {
+            // reset look_at point facing [0, 0, 0]
+            i.key_down(Key::F).then(|| {
+                self.scene.camera.look_at = OPoint::origin();
+            });
+            // lower sensitivity and clamp so it cant go negative
+            i.key_pressed(Key::Y).then(|| {
+                self.look_sensitivity = (self.look_sensitivity - 0.0001_f32).max(0.0);
+                warn!("Look sensitivity: {}", self.look_sensitivity);
+            });
+            // higher sensitivity and clamp so it cant go too high
+            i.key_pressed(Key::C).then(|| {
+                self.look_sensitivity = (self.look_sensitivity + 0.0001_f32).min(0.5);
+                warn!("Look sensitivity: {}", self.look_sensitivity);
+            });
+            // lower movement speed and clamp so it cant go negative
+            i.key_down(Key::Q).then(|| {
+                self.movement_speed = (self.movement_speed - 0.005_f32).max(0.0);
+                warn!("Movement speed: {}", self.movement_speed);
+            });
+            // higher movement speed and clamp so it cant go too high
+            i.key_down(Key::E).then(|| {
+                self.movement_speed = (self.movement_speed + 0.005_f32).min(1.0);
+                warn!("Movement speed: {}", self.movement_speed);
+            });
+            // look up
+            i.key_down(Key::ArrowUp).then(|| {
+                self.scene.camera.look_at += up * self.look_sensitivity;
+            });
+            // look down
+            // calculate up vector of camera
+            i.key_down(Key::ArrowDown).then(|| {
+                self.scene.camera.look_at -= up * self.look_sensitivity;
+            });
+            // look left
+            i.key_down(Key::ArrowLeft).then(|| {
+                self.scene.camera.look_at -= right * self.look_sensitivity;
+            });
+            // look right
+            i.key_down(Key::ArrowRight).then(|| {
+                self.scene.camera.look_at += right * self.look_sensitivity;
+            });
+            // move camera forward
+            i.key_down(Key::W).then(|| {
+                self.scene.camera.position += direction * self.movement_speed;
+                self.scene.camera.look_at += direction * self.movement_speed;
+            });
+            // move camera backward
+            i.key_down(Key::S).then(|| {
+                self.scene.camera.position -= direction * self.movement_speed;
+                self.scene.camera.look_at -= direction * self.movement_speed;
+            });
+            // move camera left
+            i.key_down(Key::A).then(|| {
+                self.scene.camera.position -= right * self.movement_speed;
+                self.scene.camera.look_at -= right * self.movement_speed;
+            });
+            // move camera right
+            i.key_down(Key::D).then(|| {
+                self.scene.camera.position += right * self.movement_speed;
+                self.scene.camera.look_at += right * self.movement_speed;
+            });
+            // move camera up
+            i.key_down(Key::Space).then(|| {
+                self.scene.camera.position += self.scene.camera.up * self.movement_speed;
+                self.scene.camera.look_at += self.scene.camera.up * self.movement_speed;
+            });
+            // move camera down
+            i.modifiers.shift.then(|| {
+                self.scene.camera.position -= self.scene.camera.up * self.movement_speed;
+                self.scene.camera.look_at -= self.scene.camera.up * self.movement_speed;
+            });
+        });
     }
 
     fn render_result(&mut self, ui: &mut Ui) {
@@ -266,10 +415,21 @@ impl App {
     fn save_scene(&mut self) {
         serde_yaml::to_string(&self.scene)
             .context("Failed to serialize scene")
-            .and_then(|str| std::fs::write("res/config.yaml", str).context("Failed to save config"))
+            .and_then(|str| std::fs::write(&self.scene.path, str).context("Failed to save config"))
             .unwrap_or_else(|e| {
                 warn!("Failed to save config: {}", e);
             });
+    }
+
+    fn change_preview_movement(&mut self, ui: &mut Ui, response: &egui::Response, activate: bool) {
+        self.preview_activate_movement = activate;
+        if activate {
+            response.request_focus();
+        }
+        ui.ctx()
+            .send_viewport_cmd(egui::ViewportCommand::CursorVisible(!activate));
+        ui.ctx()
+            .send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::None));
     }
 }
 

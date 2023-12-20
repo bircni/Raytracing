@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
@@ -15,6 +17,8 @@ mod yaml;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Scene {
+    #[serde(skip)]
+    pub path: PathBuf,
     #[serde(rename = "models")]
     pub objects: Vec<Object>,
     #[serde(rename = "point_lights")]
@@ -31,6 +35,11 @@ impl Scene {
             path.as_ref().display()
         ))?;
 
-        serde_yaml::from_str::<Scene>(s.as_str()).context("Failed to parse yaml config file")
+        serde_yaml::from_str::<Scene>(s.as_str())
+            .context("Failed to parse yaml config file")
+            .map(|mut scene| {
+                scene.path = path.as_ref().to_path_buf();
+                scene
+            })
     }
 }
