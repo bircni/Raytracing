@@ -93,7 +93,11 @@ impl Raytracer {
         }
     }
 
-    pub fn load_skybox<P: AsRef<std::path::Path>>(&mut self, skybox: Skybox, save_path: P) {
+    pub fn load_skybox<P: AsRef<std::path::Path>>(
+        &mut self,
+        skybox: Skybox,
+        save_path: P,
+    ) -> anyhow::Result<()> {
         if skybox == Skybox::None {
             return;
         }
