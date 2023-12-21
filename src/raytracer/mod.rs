@@ -163,6 +163,16 @@ impl Raytracer {
         incoming - 2.0 * incoming.dot(&normal) * normal
     }
 
+    fn refract(incident_ray: Vector3<f32>, surface_normal: Vector3<f32>, eta: f32) -> Vector3<f32> {
+        let cos_theta_i = -surface_normal.dot(&incident_ray);
+        let sin_theta_t_squared = eta.powi(2) * (1.0 - cos_theta_i.powi(2));
+        if sin_theta_t_squared > 1.0 {
+            return Vector3::zeros();
+        }
+        let cos_theta_t = (1.0 - sin_theta_t_squared).sqrt();
+        eta * incident_ray + (eta * cos_theta_i - cos_theta_t) * surface_normal
+    }
+
     fn shade(&self, ray: Ray, hit: Option<Hit>, depth: u32) -> Color {
         if let Some(hit) = hit {
             let diffuse = (hit
@@ -253,6 +263,30 @@ impl Raytracer {
                         / 1000.0;
 
                     color = color.lerp(&reflection, 1.0 - fresnel.powf(specular_exponent));
+                }
+
+                // Transparency
+                if depth < self.max_depth
+                    && hit
+                        .material
+                        .is_some_and(|m| m.illumination_model.transparency())
+                {
+                    let refraction_direction = Self::refract(
+                        ray.direction,
+                        hit.normal,
+                        hit.material.unwrap().transparency.unwrap(),
+                    );
+                    let refraction_ray = Ray {
+                        origin: hit.point + refraction_direction * self.delta,
+                        direction: refraction_direction,
+                    };
+
+                    let refraction =
+                        self.shade(refraction_ray, self.raycast(refraction_ray), depth + 1);
+
+                    // mix refraction and current color based on transparency
+                    let transparency = hit.material.unwrap().transparency.unwrap();
+                    color = color.lerp(&refraction, transparency);
                 }
             }
 
