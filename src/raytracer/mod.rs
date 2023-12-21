@@ -259,15 +259,15 @@ impl Raytracer {
             color
         } else {
             // environment map projection
-            let x =
-                (ray.direction.x.atan2(ray.direction.z) / (2.0 * std::f32::consts::PI) + 0.5) % 1.0;
-            let y = (ray.direction.y + 0.08).acos() / std::f32::consts::PI;
+            let ray_dir = ray.direction.normalize();
+            let x = 0.5 + ray_dir.z.atan2(ray_dir.x) / (2.0 * std::f32::consts::PI);
+            let y = 0.5 - ray_dir.y.asin() / std::f32::consts::PI;
 
             if let Some(skybox) = &self.skybox_image {
-                let x = (x * skybox.width() as f32) as u32 % skybox.width();
-                let y = (y * skybox.height() as f32) as u32 % skybox.height();
-
-                let pixel = skybox.get_pixel(x, y);
+                let pixel = skybox.get_pixel(
+                    (x * skybox.width() as f32) as u32 % skybox.width(),
+                    (y * skybox.height() as f32) as u32 % skybox.height(),
+                );
 
                 Color::new(
                     f32::from(pixel[0]) / 255.0,
