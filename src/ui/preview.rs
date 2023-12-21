@@ -259,6 +259,7 @@ struct ShaderLight {
     intensity: f32,
 }
 
+#[allow(clippy::expect_used)]
 impl CallbackTrait for PreviewRenderer {
     #[allow(clippy::too_many_lines)]
     fn prepare(

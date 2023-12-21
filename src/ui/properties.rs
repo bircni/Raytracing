@@ -57,9 +57,11 @@ impl App {
                             .on_hover_text("Download all Skyboxes")
                             .clicked()
                             .then(|| {
-                                self.download_skyboxes(
-                                    self.scene.path.parent().expect("ERROR").join("skybox"),
-                                );
+                                if let Some(skybox_path) = self.scene.path.parent() {
+                                    self.download_skyboxes(skybox_path.join("skybox"));
+                                } else {
+                                    warn!("Failed to download skyboxes: scene path is not set");
+                                }
                             });
                         });
                     });
@@ -121,7 +123,7 @@ impl App {
 
             self.skybox_options(ui);
 
-            ui.add_enabled_ui(self.skybox == Skybox::None, |ui| {
+            ui.add_enabled_ui(self.scene.settings.skybox.is_none(), |ui| {
                 ui.label("Background Color:");
                 color_picker::color_edit_button_rgb(
                     ui,
@@ -225,48 +227,45 @@ impl App {
 
     fn skybox_options(&mut self, ui: &mut Ui) {
         ui.label("Skybox:");
+        let mut skybox = self.scene.settings.skybox;
         ui.vertical(|ui| {
             egui::ComboBox::from_id_source(1)
-                .selected_text(format!("{}", self.skybox))
+                .selected_text(format!("{}", skybox.unwrap_or(Skybox::None)))
                 .show_ui(ui, |ui| {
-                    (ui.selectable_value(
-                        &mut self.skybox,
-                        Skybox::None,
-                        format!("{}", Skybox::None),
-                    )
-                    .changed()
+                    (ui.selectable_value(&mut skybox, None, format!("{}", Skybox::None))
+                        .changed()
                         | ui.selectable_value(
-                            &mut self.skybox,
-                            Skybox::ScythianTombs2,
+                            &mut skybox,
+                            Some(Skybox::ScythianTombs2),
                             format!("{}", Skybox::ScythianTombs2),
                         )
                         .changed()
                         | ui.selectable_value(
-                            &mut self.skybox,
-                            Skybox::RainforestTrail,
+                            &mut skybox,
+                            Some(Skybox::RainforestTrail),
                             format!("{}", Skybox::RainforestTrail),
                         )
                         .changed()
                         | ui.selectable_value(
-                            &mut self.skybox,
-                            Skybox::StudioSmall08,
+                            &mut skybox,
+                            Some(Skybox::StudioSmall08),
                             format!("{}", Skybox::StudioSmall08),
                         )
                         .changed()
                         | ui.selectable_value(
-                            &mut self.skybox,
-                            Skybox::Kloppenheim02,
+                            &mut skybox,
+                            Some(Skybox::Kloppenheim02),
                             format!("{}", Skybox::Kloppenheim02),
                         )
                         .changed()
                         | ui.selectable_value(
-                            &mut self.skybox,
-                            Skybox::CircusArena,
+                            &mut skybox,
+                            Some(Skybox::CircusArena),
                             format!("{}", Skybox::CircusArena),
                         )
                         .changed())
                     .then(|| {
-                        self.scene.settings.skybox = self.skybox;
+                        self.scene.settings.skybox = skybox;
                     });
                 });
         });

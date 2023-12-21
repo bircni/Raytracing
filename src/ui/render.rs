@@ -5,12 +5,13 @@ use std::sync::{
 
 use egui::{Color32, ColorImage, ImageData, TextureOptions};
 
-use log::{debug, info};
+use log::{debug, info, warn};
 use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 
 use crate::raytracer::Raytracer;
 
 impl super::App {
+    #[allow(clippy::too_many_lines)]
     pub fn render(&mut self, ctx: egui::Context) {
         let render_size = self.render_size.as_size();
         self.render_texture.set(
@@ -27,11 +28,22 @@ impl super::App {
         let rendering_progress = self.rendering_progress.clone();
         let rendering_cancel = self.rendering_cancel.clone();
         let image_buffer = self.render_image.clone();
-        // Fabian: correct path?
-        raytracer.load_skybox(
-            self.skybox,
-            self.scene.path.parent().expect("ERROR").join("skybox"),
-        );
+        if let Some(skybox_path) = self.scene.path.parent() {
+            if let Some(skybox) = self.scene.settings.skybox {
+                let res = raytracer.load_skybox(skybox, skybox_path.join("skybox"));
+                if res.is_err() {
+                    warn!(
+                        "Failed to load skybox: {}",
+                        res.err()
+                            .unwrap_or_else(|| anyhow::Error::msg("unknown error"))
+                    );
+                }
+            } else {
+                warn!("Failed to load skybox: scene has no skybox");
+            }
+        } else {
+            warn!("Failed to load skybox: scene path is not a file");
+        }
 
         rendering_progress.store(0, Ordering::Relaxed);
 

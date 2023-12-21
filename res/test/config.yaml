@@ -1,55 +1,69 @@
 models:
-  - file_path: res/test/1.obj
-    position:
-      x: 0.7
-      y: -0.1
-      z: -0.5
-    rotation:
-      x: 1.6295541e-15
-      y: -0.0
-      z: 0.0
-    scale:
-      x: 1.0
-      y: 1.0
-      z: 1.0
-  - file_path: res/test/2.obj
-    position:
-      x: 0.7
-      y: -0.1
-      z: -0.5
-    rotation:
-      x: 1.6295541e-15
-      y: -0.0
-      z: 0.0
-    scale:
-      x: 1.0
-      y: 1.0
-      z: 1.0
+- file_path: res/test/1.obj
+  position:
+    x: 0.7
+    y: -0.1
+    z: -0.5
+  rotation:
+    x: 1.6295541e-15
+    y: -0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+- file_path: res/test/2.obj
+  position:
+    x: 0.7
+    y: -0.1
+    z: -0.5
+  rotation:
+    x: 0.000008648687
+    y: -0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
 point_lights:
-  - position:
-      x: 0.7
-      y: 4.7
-      z: 2.2
-    Ke:
-      r: 29.605135
-      g: 28.080446
-      b: 28.896791
+- position:
+    x: -2.0
+    y: 3.5
+    z: -0.8
+  Ke:
+    r: 26.64462
+    g: 25.272402
+    b: 26.007113
+- position:
+    x: 5.0
+    y: 2.8
+    z: 1.2
+  Ke:
+    r: 6.0
+    g: 6.0
+    b: 6.0
+- position:
+    x: 5.0
+    y: -0.3
+    z: -4.0
+  Ke:
+    r: 1.9601774
+    g: 1.7454913
+    b: 1.7454913
 camera:
   position:
-    x: -14.0
-    y: 1.5
-    z: 7.6
+    x: 7.250971
+    y: 3.5694153
+    z: 6.2339253
   look_at:
-    x: 0.5
-    y: -2.0
-    z: 0.0
+    x: 6.650792
+    y: 3.144998
+    z: 5.5559464
   up_vec:
     x: 0.0
     y: 1.0
     z: 0.0
   field_of_view: 48.701416
-  width: 1920
-  height: 1080
 extra_args:
   max_bounces: 3
   samples: 64

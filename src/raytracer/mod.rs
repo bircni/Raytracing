@@ -99,39 +99,56 @@ impl Raytracer {
         save_path: P,
     ) -> anyhow::Result<()> {
         if skybox == Skybox::None {
-            return;
+            return Ok(());
         }
         if let Err(e) = create_dir_all(&save_path) {
             log::error!("Failed to create directory: {}", e);
-            return;
+            return Err(anyhow::anyhow!("Failed to create directory: {}", e));
         }
         let file_path = format!("{}/{}.exr", save_path.as_ref().display(), skybox.clone());
         if let Ok(mut file) = File::open(&file_path) {
             log::info!("Loading skybox from file: {}", file_path);
             let mut img_bytes = Vec::new();
-            file.read_to_end(&mut img_bytes)
-                .expect("Failed to read from file");
-            log::info!("Loaded skybox from file: {}", file_path);
-            self.skybox_image = Some(
-                image::load_from_memory(&img_bytes)
-                    .expect("Failed to load skybox image from file")
-                    .to_rgb8(),
-            );
+            if file.read_to_end(&mut img_bytes).is_ok() {
+                log::info!("Loaded skybox from file: {}", file_path);
+                if let Ok(image) = image::load_from_memory(&img_bytes) {
+                    self.skybox_image = Some(image.to_rgb8());
+                    return Ok(());
+                }
+            }
+            log::error!("Failed to read skybox file: {}", file_path);
+            return Err(anyhow::anyhow!("Failed to read skybox file: {}", file_path));
         } else if let Some(url) = skybox.get_url() {
             log::info!("Downloading skybox from: {}", url);
-            let img_bytes = reqwest::blocking::get(url)
-                .expect("FAILED TO GET IMAGE")
-                .bytes()
-                .expect("FAILED TO GET BYTES");
-            let mut file = File::create(&file_path).expect("Failed to create file for saving");
-            file.write_all(&img_bytes).expect("Failed to write to file");
-            log::info!("Downloaded and saved skybox to: {}", file_path);
-            self.skybox_image = Some(
-                image::load_from_memory(&img_bytes)
-                    .expect("Failed to load skybox image")
-                    .to_rgb8(),
-            );
+            match reqwest::blocking::get(url) {
+                Ok(response) => match response.bytes() {
+                    Ok(img_bytes) => {
+                        if let Ok(mut file) = File::create(&file_path) {
+                            if file.write_all(&img_bytes).is_ok() {
+                                log::info!("Downloaded and saved skybox to: {}", file_path);
+                                if let Ok(image) = image::load_from_memory(&img_bytes) {
+                                    self.skybox_image = Some(image.to_rgb8());
+                                    return Ok(());
+                                }
+                            }
+                        }
+                        return Err(anyhow::anyhow!(
+                            "Failed to save skybox to file: {}",
+                            file_path
+                        ));
+                    }
+                    Err(e) => {
+                        log::error!("Failed to get skybox bytes: {}", e);
+                        return Err(anyhow::anyhow!("Failed to get skybox bytes: {}", e));
+                    }
+                },
+                Err(e) => {
+                    log::error!("Failed to download skybox: {}", e);
+                    return Err(anyhow::anyhow!("Failed to download skybox: {}", e));
+                }
+            }
         }
+        Err(anyhow::anyhow!("Failed to get skybox url"))
     }
 
     fn raycast(&self, ray: Ray) -> Option<Hit> {
