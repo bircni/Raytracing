@@ -195,8 +195,14 @@ impl App {
                 (self.scene.settings.background_color[2] * 255.0) as u8,
             ))
             .show(ui, |ui| {
+                let available_size = ui.available_size();
+                let width = available_size.x;
+                let u =self.render_size.as_size();
+                let t0 = u.0 as f32;
+                let t1 = u.1 as f32;
+                let height = (available_size.x / t0) * t1;
                 let (response, painter) =
-                    ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
+                    ui.allocate_painter(Vec2 { x: width, y: height }, Sense::click_and_drag());
                 painter.add(Preview::paint(response.rect, &self.scene));
                 if response.hover_pos().is_some() && !self.preview_activate_movement {
                     egui::show_tooltip(ui.ctx(), egui::Id::new("preview_tooltip"), |ui| {
