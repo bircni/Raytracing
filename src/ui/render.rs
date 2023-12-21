@@ -37,12 +37,15 @@ impl super::App {
                         res.err()
                             .unwrap_or_else(|| anyhow::Error::msg("unknown error"))
                     );
+                    self.change_info_text("Failed to load skybox");
                 }
             } else {
                 warn!("Failed to load skybox: scene has no skybox");
+                self.change_info_text("Failed to load skybox: scene has no skybox");
             }
         } else {
             warn!("Failed to load skybox: scene path is not a file");
+            self.change_info_text("Failed to load skybox: scene path is not a file");
         }
 
         rendering_progress.store(0, Ordering::Relaxed);

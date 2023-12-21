@@ -59,7 +59,6 @@ impl std::fmt::Display for RenderSize {
         }
     }
 }
-
 pub struct App {
     current_tab: usize,
     scene: Scene,
@@ -80,6 +79,7 @@ pub struct App {
     pause_delta: bool,
     pause_count: i32,
     download_thread: Option<std::thread::JoinHandle<()>>,
+    info_text: Option<String>,
 }
 
 impl App {
@@ -134,6 +134,7 @@ impl App {
             pause_delta: false,
             pause_count: 0,
             download_thread: None,
+            info_text: None,
         })
     }
 
@@ -441,9 +442,14 @@ impl App {
             .send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::None));
     }
 
+    fn change_info_text(&mut self, text: &str) {
+        self.info_text = Some(text.to_string());
+    }
+
     fn download_skyboxes<P: AsRef<std::path::Path>>(&mut self, path: P) {
         let path = path.as_ref().to_path_buf();
         if self.download_thread.is_none() {
+            self.change_info_text("Downloading skyboxes");
             self.download_thread = Some(std::thread::spawn(move || {
                 for skybox in Skybox::iter() {
                     if let Some(url) = skybox.get_url() {
@@ -540,8 +546,8 @@ impl eframe::App for App {
             match self.current_tab {
                 0 => {
                     self.properties(ui);
-
                     self.preview(ui);
+                    self.info_bar(ui);
                 }
 
                 1 => {
