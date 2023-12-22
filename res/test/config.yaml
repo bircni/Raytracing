@@ -31,9 +31,9 @@ point_lights:
     y: 3.5
     z: -0.8
   Ke:
-    r: 0.5773503
-    g: 0.5773503
-    b: 0.5773503
+    r: 0.57735026
+    g: 0.57735026
+    b: 0.57735026
   intensity: 40.0
 - position:
     x: 5.5
@@ -49,9 +49,9 @@ point_lights:
     y: 4.0
     z: 1.6
   Ke:
-    r: 0.5788865
-    g: 0.577031
-    b: 0.5761298
+    r: 0.57888657
+    g: 0.5770311
+    b: 0.57612985
   intensity: 23.0
 camera:
   position:
@@ -78,3 +78,4 @@ extra_args:
     r: 0.36257717
     g: 0.2823332
     b: 0.24336334
+  skybox: Rainforest Trail

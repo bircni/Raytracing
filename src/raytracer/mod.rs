@@ -66,6 +66,32 @@ impl Skybox {
             }
         }
     }
+
+    pub fn as_string(self) -> String {
+        match self {
+            Skybox::None => "None".to_string(),
+            Skybox::ScythianTombs2 => "Scythian Tombs".to_string(),
+            Skybox::RainforestTrail => "Rainforest Trail".to_string(),
+            Skybox::StudioSmall08 => "Studio Small".to_string(),
+            Skybox::Kloppenheim02 => "Kloppenheim".to_string(),
+            Skybox::CircusArena => "Circus Arena".to_string(),
+        }
+    }
+
+    pub fn from_string(s: Option<String>) -> Option<Skybox> {
+        match s {
+            Some(st) => match st.as_str() {
+                "None" => Some(Skybox::None),
+                "Scythian Tombs" => Some(Skybox::ScythianTombs2),
+                "Rainforest Trail" => Some(Skybox::RainforestTrail),
+                "Studio Small" => Some(Skybox::StudioSmall08),
+                "Kloppenheim" => Some(Skybox::Kloppenheim02),
+                "Circus Arena" => Some(Skybox::CircusArena),
+                _ => None,
+            },
+            None => None,
+        }
+    }
 }
 
 impl std::fmt::Display for Skybox {
