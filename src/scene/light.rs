@@ -23,6 +23,7 @@ mod yaml {
         pub position: Point3<f32>,
         #[serde(with = "super::super::yaml::color", rename = "Ke")]
         pub ke: Color,
+        pub intensity: f32,
     }
 
     impl<'de> Deserialize<'de> for Light {
@@ -33,7 +34,7 @@ mod yaml {
             LightDef::deserialize(deserializer).map(|yaml_light| Light {
                 position: yaml_light.position,
                 color: yaml_light.ke.try_normalize(0.0).unwrap_or_default(),
-                intensity: yaml_light.ke.norm(),
+                intensity: yaml_light.intensity,
             })
         }
     }
@@ -45,7 +46,8 @@ mod yaml {
         {
             LightDef {
                 position: self.position,
-                ke: self.color * self.intensity,
+                ke: self.color,
+                intensity: self.intensity,
             }
             .serialize(serializer)
         }

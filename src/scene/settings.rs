@@ -12,7 +12,7 @@ pub struct Settings {
 
 mod yaml {
     use super::Settings;
-    use crate::Color;
+    use crate::{raytracer::Skybox, Color};
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize)]
@@ -23,6 +23,7 @@ mod yaml {
         pub background_color: Color,
         #[serde(with = "super::super::yaml::color")]
         pub ambient_color: Color,
+        pub skybox: Option<String>,
     }
 
     impl<'de> Deserialize<'de> for Settings {
@@ -39,7 +40,7 @@ mod yaml {
                     .try_normalize(0.0)
                     .unwrap_or_default(),
                 ambient_intensity: yaml_extras.ambient_color.norm(),
-                skybox: None,
+                skybox: Skybox::from_string(yaml_extras.skybox),
             })
         }
     }
@@ -54,6 +55,7 @@ mod yaml {
                 samples: self.samples,
                 background_color: self.background_color,
                 ambient_color: self.ambient_color * self.ambient_intensity,
+                skybox: Some(self.skybox.unwrap_or(Skybox::None).as_string()),
             }
             .serialize(serializer)
         }

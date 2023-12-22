@@ -1,69 +1,72 @@
 models:
-- file_path: res/test/1.obj
-  position:
-    x: 0.7
-    y: -0.1
-    z: -0.5
-  rotation:
-    x: 1.6295541e-15
-    y: -0.0
-    z: 0.0
-  scale:
-    x: 1.0
-    y: 1.0
-    z: 1.0
-- file_path: res/test/2.obj
-  position:
-    x: 0.7
-    y: -0.1
-    z: -0.5
-  rotation:
-    x: 0.000008648687
-    y: -0.0
-    z: 0.0
-  scale:
-    x: 1.0
-    y: 1.0
-    z: 1.0
+  - file_path: res/test/1.obj
+    position:
+      x: 0.7
+      y: -0.1
+      z: -0.5
+    rotation:
+      x: 1.6295541e-15
+      y: -0.0
+      z: 0.0
+    scale:
+      x: 1.0
+      y: 1.0
+      z: 1.0
+  - file_path: res/test/2.obj
+    position:
+      x: 0.7
+      y: -0.1
+      z: -0.5
+    rotation:
+      x: 0.000008648687
+      y: -0.0
+      z: 0.0
+    scale:
+      x: 1.0
+      y: 1.0
+      z: 1.0
 point_lights:
-- position:
-    x: -2.0
-    y: 3.5
-    z: -0.8
-  Ke:
-    r: 23.092005
-    g: 21.902748
-    b: 22.539497
-- position:
-    x: 5.0
-    y: 2.8
-    z: 1.2
-  Ke:
-    r: 6.0000005
-    g: 6.0000005
-    b: 6.0000005
-- position:
-    x: 5.1
-    y: 1.3
-    z: -4.0
-  Ke:
-    r: 4.353039
-    g: 3.8762774
-    b: 3.8762774
+  - position:
+      x: -2.0
+      y: 3.5
+      z: -0.8
+    Ke:
+      r: 0.57735026
+      g: 0.57735026
+      b: 0.57735026
+    intensity: 40.0
+  - position:
+      x: 5.5
+      y: 0.3
+      z: -4.5
+    Ke:
+      r: 0.672333
+      g: 0.24602187
+      b: 0.6981702
+    intensity: 22.0
+  - position:
+      x: 2.0
+      y: 4.0
+      z: 1.6
+    Ke:
+      r: 0.57888657
+      g: 0.5770311
+      b: 0.57612985
+    intensity: 23.0
 camera:
   position:
     x: 9.715837
     y: 3.5684555
     z: 3.4572468
   look_at:
-    x: 8.884091
-    y: 3.1330183
-    z: 3.1128716
+    x: 6.650202
+    y: 3.1350665
+    z: 5.5627937
   up_vec:
     x: 0.0
     y: 1.0
     z: 0.0
-  field_of_view: 48.701416
+  field_of_view: 63.02536
 extra_args:
   max_bounces: 3
   samples: 64
@@ -72,6 +75,7 @@ extra_args:
     g: 0.16975576
     b: 0.18631159
   ambient_color:
-    r: 0.21685298
-    g: 0.16886003
-    b: 0.14555264
+    r: 0.36257717
+    g: 0.2823332
+    b: 0.24336334
+  skybox: Rainforest Trail
