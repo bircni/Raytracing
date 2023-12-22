@@ -1,5 +1,5 @@
 use bvh::{aabb::Bounded, bounding_hierarchy::BHShape};
-use nalgebra::{Point3, Vector3};
+use nalgebra::{Point3, Vector2, Vector3};
 
 use crate::raytracer::Ray;
 
@@ -11,11 +11,16 @@ pub struct Triangle {
     pub a_normal: Vector3<f32>,
     pub b_normal: Vector3<f32>,
     pub c_normal: Vector3<f32>,
+    pub a_uv: Vector2<f32>,
+    pub b_uv: Vector2<f32>,
+    pub c_uv: Vector2<f32>,
     pub material_index: Option<usize>,
     bvh_index: usize,
 }
 
 impl Triangle {
+    //quick fix for linter
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         a: Point3<f32>,
         b: Point3<f32>,
@@ -23,6 +28,9 @@ impl Triangle {
         a_normal: Vector3<f32>,
         b_normal: Vector3<f32>,
         c_normal: Vector3<f32>,
+        a_uv: Vector2<f32>,
+        b_uv: Vector2<f32>,
+        c_uv: Vector2<f32>,
         material_index: Option<usize>,
     ) -> Self {
         Self {
@@ -32,6 +40,9 @@ impl Triangle {
             a_normal,
             b_normal,
             c_normal,
+            a_uv,
+            b_uv,
+            c_uv,
             material_index,
             bvh_index: 0,
         }
@@ -41,7 +52,7 @@ impl Triangle {
     pub fn intersect(&self, ray: Ray, delta: f32) -> Option<(f32, f32, f32)> {
         let ab = self.b - self.a;
         let ac = self.c - self.a;
-        let normal = ab.cross(&ac).normalize();
+        let normal = ab.cross(&ac).try_normalize(delta)?;
 
         let t = (self.a - ray.origin).dot(&normal) / ray.direction.dot(&normal);
 
@@ -78,7 +89,7 @@ impl Bounded<f32, 3> for Triangle {
         bvh::aabb::Aabb::empty()
             .grow(&self.a)
             .grow(&self.b)
-            .grow(&self.c)
+            .grow(&(self.c + Vector3::new(0.0001, 0.0001, 0.0001)))
     }
 }
 

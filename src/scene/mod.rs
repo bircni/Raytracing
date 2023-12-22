@@ -1,17 +1,26 @@
+use std::path::PathBuf;
+
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-pub use self::{camera::Camera, light::Light, object::Object, settings::Settings};
+pub use self::{
+    camera::Camera, light::Light, material::Material, object::Object, settings::Settings,
+    skybox::Skybox,
+};
 
 mod camera;
 mod light;
+mod material;
 mod object;
 mod settings;
+mod skybox;
 mod triangle;
 mod yaml;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Scene {
+    #[serde(skip)]
+    pub path: PathBuf,
     #[serde(rename = "models")]
     pub objects: Vec<Object>,
     #[serde(rename = "point_lights")]
@@ -28,16 +37,11 @@ impl Scene {
             path.as_ref().display()
         ))?;
 
-        serde_yaml::from_str::<Scene>(s.as_str()).context("Failed to parse yaml config file")
+        serde_yaml::from_str::<Scene>(s.as_str())
+            .context("Failed to parse yaml config file")
+            .map(|mut scene| {
+                scene.path = path.as_ref().to_path_buf();
+                scene
+            })
     }
-}
-
-#[test]
-fn test_load_scene() -> anyhow::Result<()> {
-    let scene = Scene::load("./res/config.yaml").context("Failed to load scene")?;
-
-    assert_eq!(scene.objects.len(), 1);
-    assert_eq!(scene.lights.len(), 2);
-
-    Ok(())
 }

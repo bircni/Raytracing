@@ -11,6 +11,7 @@ use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 use crate::raytracer::Raytracer;
 
 impl super::App {
+    #[allow(clippy::too_many_lines)]
     pub fn render(&mut self, ctx: egui::Context) {
         let render_size = self.render_size.as_size();
         self.render_texture.set(
@@ -22,11 +23,13 @@ impl super::App {
         );
 
         let texture = self.render_texture.clone();
-        let raytracer = Raytracer::new(self.scene.clone(), 1e-5);
+        let raytracer = Raytracer::new(self.scene.clone(), 1e-5, 5);
 
         let block_size = [render_size.0 / 10, render_size.1 / 10];
+
         let rendering_progress = self.rendering_progress.clone();
         let rendering_cancel = self.rendering_cancel.clone();
+
         let image_buffer = self.render_image.clone();
 
         rendering_progress.store(0, Ordering::Relaxed);

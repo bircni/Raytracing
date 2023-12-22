@@ -4,7 +4,7 @@ mod render;
 
 use self::preview::Preview;
 
-use crate::scene::Scene;
+use crate::scene::{Scene, Skybox};
 use anyhow::Context;
 use eframe::CreationContext;
 use egui::{
@@ -75,6 +75,7 @@ pub struct App {
     look_sensitivity: f32,
     pause_delta: bool,
     pause_count: i32,
+    skybox_file_dialog: Option<FileDialog>,
 }
 
 impl App {
@@ -110,8 +111,8 @@ impl App {
         });
 
         Ok(Self {
-            current_tab: 0,
             scene,
+            current_tab: 0,
             preview_zoom: 0.0,
             preview_position: Vec2::ZERO,
             render_texture,
@@ -128,6 +129,7 @@ impl App {
             look_sensitivity: 0.001,
             pause_delta: false,
             pause_count: 0,
+            skybox_file_dialog: None,
         })
     }
 
@@ -183,11 +185,14 @@ impl App {
     fn preview(&mut self, ui: &mut Ui) {
         Frame::canvas(ui.style())
             .outer_margin(10.0)
-            .fill(Color32::from_rgb(
-                (self.scene.settings.background_color[0] * 255.0) as u8,
-                (self.scene.settings.background_color[1] * 255.0) as u8,
-                (self.scene.settings.background_color[2] * 255.0) as u8,
-            ))
+            .fill(match self.scene.settings.skybox {
+                    Skybox::Image { ..} => Color32::GRAY,
+                    Skybox::Color(c) => Color32::from_rgb(
+                        (c.x * 255.0) as u8,
+                        (c.y * 255.0) as u8,
+                        (c.z * 255.0) as u8,
+                    )
+                })
             .show(ui, |ui| {
                 let (response, painter) =
                     ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
@@ -412,7 +417,7 @@ impl App {
     fn save_scene(&mut self) {
         serde_yaml::to_string(&self.scene)
             .context("Failed to serialize scene")
-            .and_then(|str| std::fs::write("res/config.yaml", str).context("Failed to save config"))
+            .and_then(|str| std::fs::write(&self.scene.path, str).context("Failed to save config"))
             .unwrap_or_else(|e| {
                 warn!("Failed to save config: {}", e);
             });

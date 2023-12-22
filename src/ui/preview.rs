@@ -259,6 +259,7 @@ struct ShaderLight {
     intensity: f32,
 }
 
+#[allow(clippy::expect_used)]
 impl CallbackTrait for PreviewRenderer {
     #[allow(clippy::too_many_lines)]
     fn prepare(
@@ -302,7 +303,10 @@ impl CallbackTrait for PreviewRenderer {
                     .flat_map(|(i, o)| o.triangles.iter().map(move |t| (i, o, t)))
                     .map(|(i, o, t)| (i, t.material_index.and_then(|i| o.materials.get(i)), t))
                     .flat_map(|(i, m, t)| {
-                        let color = m.as_ref().and_then(|m| m.kd).unwrap_or([0.9; 3]);
+                        let color = m
+                            .as_ref()
+                            .and_then(|m| m.diffuse_color)
+                            .map_or([0.9; 3], std::convert::Into::into);
                         [
                             bytemuck::bytes_of(&[t.a.into(), t.a_normal.into(), color]),
                             bytemuck::bytes_of(&(i as u32)),
@@ -372,7 +376,7 @@ impl CallbackTrait for PreviewRenderer {
             self.scene
                 .objects
                 .iter()
-                .map(|o| o.transform.to_homogeneous())
+                .map(|o| o.transform().to_homogeneous())
                 .chain(std::iter::repeat(Isometry3::identity().to_homogeneous()))
                 .take(MAX_OBJECTS)
                 .flat_map(|m| bytemuck::cast_slice(m.as_slice()).to_vec())
