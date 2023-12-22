@@ -186,7 +186,7 @@ impl App {
         Frame::canvas(ui.style())
             .outer_margin(10.0)
             .fill(match self.scene.settings.skybox {
-                    Skybox::Image { ..} => Color32::WHITE,
+                    Skybox::Image { ..} => Color32::GRAY,
                     Skybox::Color(c) => Color32::from_rgb(
                         (c.x * 255.0) as u8,
                         (c.y * 255.0) as u8,
