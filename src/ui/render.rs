@@ -5,7 +5,7 @@ use std::sync::{
 
 use egui::{Color32, ColorImage, ImageData, TextureOptions};
 
-use log::{debug, info, warn};
+use log::{debug, info};
 use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 
 use crate::raytracer::Raytracer;
@@ -23,27 +23,14 @@ impl super::App {
         );
 
         let texture = self.render_texture.clone();
-        let mut raytracer = Raytracer::new(self.scene.clone(), 1e-5);
+        let raytracer = Raytracer::new(self.scene.clone(), 1e-5, 5);
+
         let block_size = [render_size.0 / 10, render_size.1 / 10];
+
         let rendering_progress = self.rendering_progress.clone();
         let rendering_cancel = self.rendering_cancel.clone();
+
         let image_buffer = self.render_image.clone();
-        if let Some(skybox_path) = self.scene.path.parent() {
-            if let Some(skybox) = self.scene.settings.skybox {
-                let res = raytracer.load_skybox(skybox, skybox_path.join("skybox"));
-                if res.is_err() {
-                    warn!(
-                        "Failed to load skybox: {}",
-                        res.err()
-                            .unwrap_or_else(|| anyhow::Error::msg("unknown error"))
-                    );
-                }
-            } else {
-                warn!("Failed to load skybox: scene has no skybox");
-            }
-        } else {
-            warn!("Failed to load skybox: scene path is not a file");
-        }
 
         rendering_progress.store(0, Ordering::Relaxed);
 

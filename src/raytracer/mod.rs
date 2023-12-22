@@ -1,15 +1,8 @@
-use std::{
-    fs::{create_dir_all, File},
-    io::{Read, Write},
-};
-
-use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
-use strum_macros::EnumIter;
 
 use crate::{
-    scene::{Material, Scene},
+    scene::{Material, Scene, Skybox},
     Color,
 };
 
@@ -32,149 +25,17 @@ pub struct Raytracer {
     scene: Scene,
     delta: f32,
     max_depth: u32,
-    skybox_image: Option<RgbImage>,
-}
-
-#[derive(PartialEq, Eq, Debug, Clone, Copy, EnumIter)]
-pub enum Skybox {
-    None,
-    ScythianTombs2,
-    RainforestTrail,
-    StudioSmall08,
-    Kloppenheim02,
-    CircusArena,
-}
-
-impl Skybox {
-    pub fn get_url(&self) -> Option<&str> {
-        match self {
-            Skybox::None => None,
-            Skybox::ScythianTombs2 => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/scythian_tombs_puresky_4k.exr")
-            }
-            Skybox::RainforestTrail => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/rainforest_trail_4k.exr")
-            }
-            Skybox::StudioSmall08 => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/studio_small_08_4k.exr")
-            }
-            Skybox::Kloppenheim02 => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/kloppenheim_02_4k.exr")
-            }
-            Skybox::CircusArena => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/circus_arena_4k.exr")
-            }
-        }
-    }
-
-    pub fn as_string(self) -> String {
-        match self {
-            Skybox::None => "None".to_string(),
-            Skybox::ScythianTombs2 => "Scythian Tombs".to_string(),
-            Skybox::RainforestTrail => "Rainforest Trail".to_string(),
-            Skybox::StudioSmall08 => "Studio Small".to_string(),
-            Skybox::Kloppenheim02 => "Kloppenheim".to_string(),
-            Skybox::CircusArena => "Circus Arena".to_string(),
-        }
-    }
-
-    pub fn from_string(s: Option<String>) -> Option<Skybox> {
-        match s {
-            Some(st) => match st.as_str() {
-                "None" => Some(Skybox::None),
-                "Scythian Tombs" => Some(Skybox::ScythianTombs2),
-                "Rainforest Trail" => Some(Skybox::RainforestTrail),
-                "Studio Small" => Some(Skybox::StudioSmall08),
-                "Kloppenheim" => Some(Skybox::Kloppenheim02),
-                "Circus Arena" => Some(Skybox::CircusArena),
-                _ => None,
-            },
-            None => None,
-        }
-    }
-}
-
-impl std::fmt::Display for Skybox {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Skybox::None => write!(f, "None"),
-            Skybox::ScythianTombs2 => write!(f, "Scythian Tombs"),
-            Skybox::RainforestTrail => write!(f, "Rainforest Trail"),
-            Skybox::StudioSmall08 => write!(f, "Studio Small"),
-            Skybox::Kloppenheim02 => write!(f, "Kloppenheim"),
-            Skybox::CircusArena => write!(f, "Circus Arena"),
-        }
-    }
 }
 
 impl Raytracer {
     const NO_MATERIAL_COLOR: Color = Color::new(0.9, 0.9, 0.9);
 
-    pub fn new(scene: Scene, delta: f32) -> Raytracer {
+    pub fn new(scene: Scene, delta: f32, max_depth: u32) -> Raytracer {
         Raytracer {
             scene,
             delta,
-            max_depth: 5,
-            skybox_image: None,
+            max_depth,
         }
-    }
-
-    pub fn load_skybox<P: AsRef<std::path::Path>>(
-        &mut self,
-        skybox: Skybox,
-        save_path: P,
-    ) -> anyhow::Result<()> {
-        if skybox == Skybox::None {
-            return Ok(());
-        }
-        if let Err(e) = create_dir_all(&save_path) {
-            log::error!("Failed to create directory: {}", e);
-            return Err(anyhow::anyhow!("Failed to create directory: {}", e));
-        }
-        let file_path = format!("{}/{}.exr", save_path.as_ref().display(), skybox.clone());
-        if let Ok(mut file) = File::open(&file_path) {
-            log::info!("Loading skybox from file: {}", file_path);
-            let mut img_bytes = Vec::new();
-            if file.read_to_end(&mut img_bytes).is_ok() {
-                log::info!("Loaded skybox from file: {}", file_path);
-                if let Ok(image) = image::load_from_memory(&img_bytes) {
-                    self.skybox_image = Some(image.to_rgb8());
-                    return Ok(());
-                }
-            }
-            log::error!("Failed to read skybox file: {}", file_path);
-            return Err(anyhow::anyhow!("Failed to read skybox file: {}", file_path));
-        } else if let Some(url) = skybox.get_url() {
-            log::info!("Downloading skybox from: {}", url);
-            match reqwest::blocking::get(url) {
-                Ok(response) => match response.bytes() {
-                    Ok(img_bytes) => {
-                        if let Ok(mut file) = File::create(&file_path) {
-                            if file.write_all(&img_bytes).is_ok() {
-                                log::info!("Downloaded and saved skybox to: {}", file_path);
-                                if let Ok(image) = image::load_from_memory(&img_bytes) {
-                                    self.skybox_image = Some(image.to_rgb8());
-                                    return Ok(());
-                                }
-                            }
-                        }
-                        return Err(anyhow::anyhow!(
-                            "Failed to save skybox to file: {}",
-                            file_path
-                        ));
-                    }
-                    Err(e) => {
-                        log::error!("Failed to get skybox bytes: {}", e);
-                        return Err(anyhow::anyhow!("Failed to get skybox bytes: {}", e));
-                    }
-                },
-                Err(e) => {
-                    log::error!("Failed to download skybox: {}", e);
-                    return Err(anyhow::anyhow!("Failed to download skybox: {}", e));
-                }
-            }
-        }
-        Err(anyhow::anyhow!("Failed to get skybox url"))
     }
 
     fn raycast(&self, ray: Ray) -> Option<Hit> {
@@ -284,24 +145,25 @@ impl Raytracer {
 
             color
         } else {
-            // environment map projection
-            let ray_dir = ray.direction.normalize();
-            let x = 0.5 + ray_dir.z.atan2(ray_dir.x) / (2.0 * std::f32::consts::PI);
-            let y = 0.5 - ray_dir.y.asin() / std::f32::consts::PI;
+            match &self.scene.settings.skybox {
+                Skybox::Image { image, .. } => {
+                    // environment map projection
+                    let ray_dir = ray.direction.normalize();
+                    let x = 0.5 + ray_dir.z.atan2(ray_dir.x) / (2.0 * std::f32::consts::PI);
+                    let y = 0.5 - ray_dir.y.asin() / std::f32::consts::PI;
 
-            if let Some(skybox) = &self.skybox_image {
-                let pixel = skybox.get_pixel(
-                    (x * skybox.width() as f32) as u32 % skybox.width(),
-                    (y * skybox.height() as f32) as u32 % skybox.height(),
-                );
+                    let pixel = image.get_pixel(
+                        (x * image.width() as f32) as u32 % image.width(),
+                        (y * image.height() as f32) as u32 % image.height(),
+                    );
 
-                Color::new(
-                    f32::from(pixel[0]) / 255.0,
-                    f32::from(pixel[1]) / 255.0,
-                    f32::from(pixel[2]) / 255.0,
-                )
-            } else {
-                self.scene.settings.background_color
+                    Color::new(
+                        f32::from(pixel[0]) / 255.0,
+                        f32::from(pixel[1]) / 255.0,
+                        f32::from(pixel[2]) / 255.0,
+                    )
+                }
+                Skybox::Color(color) => *color,
             }
         }
     }

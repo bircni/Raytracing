@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 pub use self::{
     camera::Camera, light::Light, material::Material, object::Object, settings::Settings,
+    skybox::Skybox,
 };
 
 mod camera;
@@ -12,6 +13,7 @@ mod light;
 mod material;
 mod object;
 mod settings;
+mod skybox;
 mod triangle;
 mod yaml;
 

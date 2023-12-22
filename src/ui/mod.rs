@@ -4,8 +4,7 @@ mod render;
 
 use self::preview::Preview;
 
-use crate::raytracer::Skybox;
-use crate::scene::Scene;
+use crate::scene::{Scene, Skybox};
 use anyhow::Context;
 use eframe::CreationContext;
 use egui::{
@@ -19,13 +18,10 @@ use egui_file::FileDialog;
 use image::{ImageBuffer, RgbImage};
 use log::{info, warn};
 use nalgebra::OPoint;
-use std::fs::{metadata, File};
-use std::io::Write;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use std::sync::Arc;
 use std::thread::JoinHandle;
-use strum::IntoEnumIterator;
 
 #[derive(PartialEq, Eq)]
 enum RenderSize {
@@ -79,7 +75,7 @@ pub struct App {
     look_sensitivity: f32,
     pause_delta: bool,
     pause_count: i32,
-    download_thread: Option<std::thread::JoinHandle<()>>,
+    skybox_file_dialog: Option<FileDialog>,
 }
 
 impl App {
@@ -115,8 +111,8 @@ impl App {
         });
 
         Ok(Self {
-            current_tab: 0,
             scene,
+            current_tab: 0,
             preview_zoom: 0.0,
             preview_position: Vec2::ZERO,
             render_texture,
@@ -133,7 +129,7 @@ impl App {
             look_sensitivity: 0.001,
             pause_delta: false,
             pause_count: 0,
-            download_thread: None,
+            skybox_file_dialog: None,
         })
     }
 
@@ -189,11 +185,14 @@ impl App {
     fn preview(&mut self, ui: &mut Ui) {
         Frame::canvas(ui.style())
             .outer_margin(10.0)
-            .fill(Color32::from_rgb(
-                (self.scene.settings.background_color[0] * 255.0) as u8,
-                (self.scene.settings.background_color[1] * 255.0) as u8,
-                (self.scene.settings.background_color[2] * 255.0) as u8,
-            ))
+            .fill(match self.scene.settings.skybox {
+                    Skybox::Image { ..} => Color32::WHITE,
+                    Skybox::Color(c) => Color32::from_rgb(
+                        (c.x * 255.0) as u8,
+                        (c.y * 255.0) as u8,
+                        (c.z * 255.0) as u8,
+                    )
+                })
             .show(ui, |ui| {
                 let (response, painter) =
                     ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
@@ -434,43 +433,6 @@ impl App {
         ui.ctx()
             .send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::None));
     }
-
-    fn download_skyboxes<P: AsRef<std::path::Path>>(&mut self, path: P) {
-        let path = path.as_ref().to_path_buf();
-        if self.download_thread.is_none() {
-            self.download_thread = Some(std::thread::spawn(move || {
-                for skybox in Skybox::iter() {
-                    if let Some(url) = skybox.get_url() {
-                        info!("Downloading skybox from: {}", url);
-                        let file_path = format!("{}/{skybox}.exr", path.display());
-                        if let Ok(metadata) = metadata(&file_path) {
-                            if metadata.is_file() {
-                                log::info!("Skybox file already exists at: {}", file_path);
-                            } else if let Ok(response) = reqwest::blocking::get(url) {
-                                if let Ok(img_bytes) = response.bytes() {
-                                    if let Ok(mut file) = File::create(&file_path) {
-                                        if file.write_all(&img_bytes).is_ok() {
-                                            log::info!(
-                                                "Downloaded and saved skybox to: {}",
-                                                file_path
-                                            );
-                                        }
-                                    }
-                                } else {
-                                    log::error!("Failed to get bytes from response");
-                                }
-                            } else {
-                                log::error!("Failed to get response");
-                            }
-                        } else {
-                            log::error!("Failed to check if the file exists");
-                        }
-                    }
-                }
-                info!("Finished downloading skyboxes");
-            }));
-        }
-    }
 }
 
 impl eframe::App for App {
@@ -481,13 +443,6 @@ impl eframe::App for App {
             .then(|| {
                 self.rendering_thread = None;
                 self.rendering_cancel.store(false, Ordering::Relaxed);
-            });
-
-        self.download_thread
-            .as_ref()
-            .is_some_and(JoinHandle::is_finished)
-            .then(|| {
-                self.download_thread = None;
             });
 
         ctx.input(|input| input.key_pressed(Key::S) && input.modifiers.ctrl)
