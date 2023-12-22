@@ -62,11 +62,13 @@
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
 </pre></div><pre class="rust"><code><span class="attr">#![warn(clippy::pedantic)]
 #![warn(clippy::perf)]
 #![warn(clippy::style)]
 #![deny(clippy::all)]
 #![deny(clippy::unwrap_used)]
+#![deny(clippy::expect_used)]
 #![allow(clippy::cast_precision_loss)]
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_sign_loss)]
@@ -98,7 +100,7 @@
     )
     .context(<span class="string">&quot;Failed to initialize logger&quot;</span>)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>scene = Scene::load(<span class="string">&quot;./res/config.yaml&quot;</span>).context(<span class="string">&quot;Failed to load scene&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>scene = Scene::load(<span class="string">&quot;./res/test/config.yaml&quot;</span>).context(<span class="string">&quot;Failed to load scene&quot;</span>)<span class="question-mark">?</span>;
 
     eframe::run_native(
         <span class="string">&quot;RayTracer&quot;</span>,
@@ -106,8 +108,8 @@
             viewport: egui::ViewportBuilder::default()
                 .with_inner_size(egui::vec2(<span class="number">1200.0</span>, <span class="number">900.0</span>))
                 .with_icon(
-                    eframe::icon_data::from_png_bytes(<span class="kw-2">&amp;</span><span class="macro">include_bytes!</span>(<span class="string">&quot;../res/icon.png&quot;</span>)[..])
-                        .expect(<span class="string">&quot;Could not load Icon!&quot;</span>),
+                    eframe::icon_data::from_png_bytes(<span class="macro">include_bytes!</span>(<span class="string">&quot;../res/icon.png&quot;</span>))
+                        .unwrap_or_default(),
                 )
                 .with_app_id(<span class="string">&quot;raytracer&quot;</span>),
             renderer: Renderer::Wgpu,

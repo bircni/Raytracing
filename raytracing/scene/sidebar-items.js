@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["camera","light","object","settings","triangle","yaml"],"struct":["Scene"]};
+window.SIDEBAR_ITEMS = {"mod":["camera","light","material","object","settings","skybox","triangle","yaml"],"struct":["Scene"]};

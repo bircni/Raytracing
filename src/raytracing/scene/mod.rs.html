@@ -41,20 +41,33 @@
 <a href="#41" id="41">41</a>
 <a href="#42" id="42">42</a>
 <a href="#43" id="43">43</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Context;
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
+
+<span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
-<span class="kw">pub use </span><span class="self">self</span>::{camera::Camera, light::Light, object::Object, settings::Settings};
+<span class="kw">pub use </span><span class="self">self</span>::{
+    camera::Camera, light::Light, material::Material, object::Object, settings::Settings,
+    skybox::Skybox,
+};
 
 <span class="kw">mod </span>camera;
 <span class="kw">mod </span>light;
+<span class="kw">mod </span>material;
 <span class="kw">mod </span>object;
 <span class="kw">mod </span>settings;
+<span class="kw">mod </span>skybox;
 <span class="kw">mod </span>triangle;
 <span class="kw">mod </span>yaml;
 
 <span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>Scene {
+    <span class="attr">#[serde(skip)]
+    </span><span class="kw">pub </span>path: PathBuf,
     <span class="attr">#[serde(rename = <span class="string">&quot;models&quot;</span>)]
     </span><span class="kw">pub </span>objects: Vec&lt;Object&gt;,
     <span class="attr">#[serde(rename = <span class="string">&quot;point_lights&quot;</span>)]
@@ -71,17 +84,12 @@
             path.as_ref().display()
         ))<span class="question-mark">?</span>;
 
-        serde_yaml::from_str::&lt;Scene&gt;(s.as_str()).context(<span class="string">&quot;Failed to parse yaml config file&quot;</span>)
+        serde_yaml::from_str::&lt;Scene&gt;(s.as_str())
+            .context(<span class="string">&quot;Failed to parse yaml config file&quot;</span>)
+            .map(|<span class="kw-2">mut </span>scene| {
+                scene.path = path.as_ref().to_path_buf();
+                scene
+            })
     }
-}
-
-<span class="attr">#[test]
-</span><span class="kw">fn </span>test_load_scene() -&gt; anyhow::Result&lt;()&gt; {
-    <span class="kw">let </span>scene = Scene::load(<span class="string">&quot;./res/config.yaml&quot;</span>).context(<span class="string">&quot;Failed to load scene&quot;</span>)<span class="question-mark">?</span>;
-
-    <span class="macro">assert_eq!</span>(scene.objects.len(), <span class="number">1</span>);
-    <span class="macro">assert_eq!</span>(scene.lights.len(), <span class="number">2</span>);
-
-    <span class="prelude-val">Ok</span>(())
 }
 </code></pre></div></section></main></body></html>

@@ -496,13 +496,18 @@
 <a href="#496" id="496">496</a>
 <a href="#497" id="497">497</a>
 <a href="#498" id="498">498</a>
+<a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
+<a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>preview;
 <span class="kw">mod </span>properties;
 <span class="kw">mod </span>render;
 
 <span class="kw">use </span><span class="self">self</span>::preview::Preview;
 
-<span class="kw">use </span><span class="kw">crate</span>::scene::Scene;
+<span class="kw">use </span><span class="kw">crate</span>::scene::{Scene, Skybox};
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>eframe::CreationContext;
 <span class="kw">use </span>egui::{
@@ -573,6 +578,7 @@
     look_sensitivity: f32,
     pause_delta: bool,
     pause_count: i32,
+    skybox_file_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
 }
 
 <span class="kw">impl </span>App {
@@ -608,8 +614,8 @@
         });
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            current_tab: <span class="number">0</span>,
             scene,
+            current_tab: <span class="number">0</span>,
             preview_zoom: <span class="number">0.0</span>,
             preview_position: Vec2::ZERO,
             render_texture,
@@ -626,6 +632,7 @@
             look_sensitivity: <span class="number">0.001</span>,
             pause_delta: <span class="bool-val">false</span>,
             pause_count: <span class="number">0</span>,
+            skybox_file_dialog: <span class="prelude-val">None</span>,
         })
     }
 
@@ -681,11 +688,14 @@
     <span class="kw">fn </span>preview(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
         Frame::canvas(ui.style())
             .outer_margin(<span class="number">10.0</span>)
-            .fill(Color32::from_rgb(
-                (<span class="self">self</span>.scene.settings.background_color[<span class="number">0</span>] * <span class="number">255.0</span>) <span class="kw">as </span>u8,
-                (<span class="self">self</span>.scene.settings.background_color[<span class="number">1</span>] * <span class="number">255.0</span>) <span class="kw">as </span>u8,
-                (<span class="self">self</span>.scene.settings.background_color[<span class="number">2</span>] * <span class="number">255.0</span>) <span class="kw">as </span>u8,
-            ))
+            .fill(<span class="kw">match </span><span class="self">self</span>.scene.settings.skybox {
+                    Skybox::Image { ..} =&gt; Color32::GRAY,
+                    Skybox::Color(c) =&gt; Color32::from_rgb(
+                        (c.x * <span class="number">255.0</span>) <span class="kw">as </span>u8,
+                        (c.y * <span class="number">255.0</span>) <span class="kw">as </span>u8,
+                        (c.z * <span class="number">255.0</span>) <span class="kw">as </span>u8,
+                    )
+                })
             .show(ui, |ui| {
                 <span class="kw">let </span>(response, painter) =
                     ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
@@ -910,7 +920,7 @@
     <span class="kw">fn </span>save_scene(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         serde_yaml::to_string(<span class="kw-2">&amp;</span><span class="self">self</span>.scene)
             .context(<span class="string">&quot;Failed to serialize scene&quot;</span>)
-            .and_then(|str| std::fs::write(<span class="string">&quot;res/config.yaml&quot;</span>, str).context(<span class="string">&quot;Failed to save config&quot;</span>))
+            .and_then(|str| std::fs::write(<span class="kw-2">&amp;</span><span class="self">self</span>.scene.path, str).context(<span class="string">&quot;Failed to save config&quot;</span>))
             .unwrap_or_else(|e| {
                 <span class="macro">warn!</span>(<span class="string">&quot;Failed to save config: {}&quot;</span>, e);
             });

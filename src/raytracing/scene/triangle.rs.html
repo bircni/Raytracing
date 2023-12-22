@@ -91,8 +91,19 @@
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>bvh::{aabb::Bounded, bounding_hierarchy::BHShape};
-<span class="kw">use </span>nalgebra::{Point3, Vector3};
+<span class="kw">use </span>nalgebra::{Point3, Vector2, Vector3};
 
 <span class="kw">use </span><span class="kw">crate</span>::raytracer::Ray;
 
@@ -104,18 +115,26 @@
     <span class="kw">pub </span>a_normal: Vector3&lt;f32&gt;,
     <span class="kw">pub </span>b_normal: Vector3&lt;f32&gt;,
     <span class="kw">pub </span>c_normal: Vector3&lt;f32&gt;,
+    <span class="kw">pub </span>a_uv: Vector2&lt;f32&gt;,
+    <span class="kw">pub </span>b_uv: Vector2&lt;f32&gt;,
+    <span class="kw">pub </span>c_uv: Vector2&lt;f32&gt;,
     <span class="kw">pub </span>material_index: <span class="prelude-ty">Option</span>&lt;usize&gt;,
     bvh_index: usize,
 }
 
 <span class="kw">impl </span>Triangle {
-    <span class="kw">pub fn </span>new(
+    <span class="comment">//quick fix for linter
+    </span><span class="attr">#[allow(clippy::too_many_arguments)]
+    </span><span class="kw">pub fn </span>new(
         a: Point3&lt;f32&gt;,
         b: Point3&lt;f32&gt;,
         c: Point3&lt;f32&gt;,
         a_normal: Vector3&lt;f32&gt;,
         b_normal: Vector3&lt;f32&gt;,
         c_normal: Vector3&lt;f32&gt;,
+        a_uv: Vector2&lt;f32&gt;,
+        b_uv: Vector2&lt;f32&gt;,
+        c_uv: Vector2&lt;f32&gt;,
         material_index: <span class="prelude-ty">Option</span>&lt;usize&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
@@ -125,6 +144,9 @@
             a_normal,
             b_normal,
             c_normal,
+            a_uv,
+            b_uv,
+            c_uv,
             material_index,
             bvh_index: <span class="number">0</span>,
         }
@@ -134,7 +156,7 @@
     </span><span class="kw">pub fn </span>intersect(<span class="kw-2">&amp;</span><span class="self">self</span>, ray: Ray, delta: f32) -&gt; <span class="prelude-ty">Option</span>&lt;(f32, f32, f32)&gt; {
         <span class="kw">let </span>ab = <span class="self">self</span>.b - <span class="self">self</span>.a;
         <span class="kw">let </span>ac = <span class="self">self</span>.c - <span class="self">self</span>.a;
-        <span class="kw">let </span>normal = ab.cross(<span class="kw-2">&amp;</span>ac).normalize();
+        <span class="kw">let </span>normal = ab.cross(<span class="kw-2">&amp;</span>ac).try_normalize(delta)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>t = (<span class="self">self</span>.a - ray.origin).dot(<span class="kw-2">&amp;</span>normal) / ray.direction.dot(<span class="kw-2">&amp;</span>normal);
 
@@ -171,7 +193,7 @@
         bvh::aabb::Aabb::empty()
             .grow(<span class="kw-2">&amp;</span><span class="self">self</span>.a)
             .grow(<span class="kw-2">&amp;</span><span class="self">self</span>.b)
-            .grow(<span class="kw-2">&amp;</span><span class="self">self</span>.c)
+            .grow(<span class="kw-2">&amp;</span>(<span class="self">self</span>.c + Vector3::new(<span class="number">0.0001</span>, <span class="number">0.0001</span>, <span class="number">0.0001</span>)))
     }
 }
 

@@ -410,6 +410,10 @@
 <a href="#410" id="410">410</a>
 <a href="#411" id="411">411</a>
 <a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::borrow::Cow;
 
 <span class="kw">use </span>egui::{Rect, Shape};
@@ -671,7 +675,8 @@
     intensity: f32,
 }
 
-<span class="kw">impl </span>CallbackTrait <span class="kw">for </span>PreviewRenderer {
+<span class="attr">#[allow(clippy::expect_used)]
+</span><span class="kw">impl </span>CallbackTrait <span class="kw">for </span>PreviewRenderer {
     <span class="attr">#[allow(clippy::too_many_lines)]
     </span><span class="kw">fn </span>prepare(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -714,7 +719,10 @@
                     .flat_map(|(i, o)| o.triangles.iter().map(<span class="kw">move </span>|t| (i, o, t)))
                     .map(|(i, o, t)| (i, t.material_index.and_then(|i| o.materials.get(i)), t))
                     .flat_map(|(i, m, t)| {
-                        <span class="kw">let </span>color = m.as_ref().and_then(|m| m.kd).unwrap_or([<span class="number">0.9</span>; <span class="number">3</span>]);
+                        <span class="kw">let </span>color = m
+                            .as_ref()
+                            .and_then(|m| m.diffuse_color)
+                            .map_or([<span class="number">0.9</span>; <span class="number">3</span>], std::convert::Into::into);
                         [
                             bytemuck::bytes_of(<span class="kw-2">&amp;</span>[t.a.into(), t.a_normal.into(), color]),
                             bytemuck::bytes_of(<span class="kw-2">&amp;</span>(i <span class="kw">as </span>u32)),
@@ -784,7 +792,7 @@
             <span class="self">self</span>.scene
                 .objects
                 .iter()
-                .map(|o| o.transform.to_homogeneous())
+                .map(|o| o.transform().to_homogeneous())
                 .chain(std::iter::repeat(Isometry3::identity().to_homogeneous()))
                 .take(MAX_OBJECTS)
                 .flat_map(|m| bytemuck::cast_slice(m.as_slice()).to_vec())
