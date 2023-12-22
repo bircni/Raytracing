@@ -47,12 +47,17 @@ impl App {
                         ui.heading("Properties");
 
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            let tint_color = if ui.visuals().dark_mode {
+                                    hex_color!("#ffffff")
+                                } else {
+                                    hex_color!("#000000")
+                                };
                             ui.add_sized(
                                 [20.0, 20.0],
                                 ImageButton::new(include_image!(
                                     "../../res/icons/floppy-disk-solid.svg"
                                 ))
-                                .tint(hex_color!("#ffffff")),
+                                .tint(tint_color),
                             )
                             .on_hover_text("Save Scene")
                             .clicked()
@@ -64,7 +69,7 @@ impl App {
                                 ImageButton::new(include_image!(
                                     "../../res/icons/download-solid.svg"
                                 ))
-                                .tint(hex_color!("#ffffff")),
+                                .tint(tint_color),
                             )
                             .on_hover_text("Download all Skyboxes")
                             .clicked()
