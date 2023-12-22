@@ -17,6 +17,10 @@ use crate::{
 
 use super::{App, RenderSize};
 
+pub const SMALL_SPACE: f32 = 2.5;
+pub const MEDIUM_SPACE: f32 = 5.0;
+pub const LARGE_SPACE: f32 = 10.0;
+
 fn xyz_drag_value(ui: &mut Ui, value: &mut XYZ<f32>) {
     ui.horizontal(|ui| {
         ui.add(DragValue::new(&mut value.x).speed(0.1).prefix("x: "));
@@ -48,10 +52,10 @@ impl App {
 
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             let tint_color = if ui.visuals().dark_mode {
-                                    hex_color!("#ffffff")
-                                } else {
-                                    hex_color!("#000000")
-                                };
+                                hex_color!("#ffffff")
+                            } else {
+                                hex_color!("#000000")
+                            };
                             ui.add_sized(
                                 [20.0, 20.0],
                                 ImageButton::new(include_image!(
@@ -83,21 +87,23 @@ impl App {
                         });
                     });
 
-                    ui.add_space(5.0);
+                    ui.add_space(crate::ui::properties::MEDIUM_SPACE);
 
                     self.camera_settings(ui);
 
-                    ui.add_space(10.0);
+                    ui.add_space(crate::ui::properties::LARGE_SPACE);
 
                     self.scene_settings(ui);
 
-                    ui.add_space(10.0);
+                    ui.add_space(crate::ui::properties::LARGE_SPACE);
 
                     self.lights(ui);
 
-                    ui.add_space(10.0);
+                    ui.add_space(crate::ui::properties::LARGE_SPACE);
 
                     self.objects(ui);
+
+                    ui.add_space(crate::ui::properties::SMALL_SPACE);
                 });
             });
     }
@@ -112,18 +118,26 @@ impl App {
 
             ui.vertical(|ui| {
                 ui.label("Position:");
+                ui.add_space(crate::ui::properties::SMALL_SPACE);
                 xyz_drag_value(ui, &mut self.scene.camera.position);
 
+                ui.add_space(crate::ui::properties::MEDIUM_SPACE);
+
                 ui.label("Look at:");
+                ui.add_space(crate::ui::properties::SMALL_SPACE);
                 xyz_drag_value(ui, &mut self.scene.camera.look_at);
 
+                ui.add_space(crate::ui::properties::MEDIUM_SPACE);
+
                 ui.label("Field of View:");
+                ui.add_space(crate::ui::properties::SMALL_SPACE);
                 ui.add(
                     Slider::new(&mut self.scene.camera.fov, 0.0..=std::f32::consts::PI)
                         .step_by(0.01)
                         .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
                         .clamp_to_range(true),
                 );
+                ui.add_space(crate::ui::properties::SMALL_SPACE);
             });
         });
     }
@@ -138,31 +152,42 @@ impl App {
 
             self.render_options(ui);
 
+            ui.add_space(crate::ui::properties::MEDIUM_SPACE);
+
             self.skybox_options(ui);
+
+            ui.add_space(crate::ui::properties::MEDIUM_SPACE);
 
             ui.add_enabled_ui(self.scene.settings.skybox.is_none(), |ui| {
                 ui.label("Background Color:");
+                ui.add_space(crate::ui::properties::SMALL_SPACE);
                 color_picker::color_edit_button_rgb(
                     ui,
                     self.scene.settings.background_color.as_mut(),
                 );
             });
 
+            ui.add_space(crate::ui::properties::MEDIUM_SPACE);
+
             ui.label("Ambient Color:");
+            ui.add_space(crate::ui::properties::SMALL_SPACE);
             color_picker::color_edit_button_rgb(ui, self.scene.settings.ambient_color.as_mut());
 
+            ui.add_space(crate::ui::properties::MEDIUM_SPACE);
+
             ui.label("Ambient Intensitiy:");
+            ui.add_space(crate::ui::properties::SMALL_SPACE);
             ui.add(
                 Slider::new(&mut self.scene.settings.ambient_intensity, 0.0..=1.0)
                     .clamp_to_range(true),
             );
-
-            ui.separator();
+            ui.add_space(crate::ui::properties::SMALL_SPACE);
         });
     }
 
     fn render_options(&mut self, ui: &mut Ui) {
         ui.label("Render Size:");
+        ui.add_space(crate::ui::properties::SMALL_SPACE);
         ui.vertical(|ui| {
             let mut render_size = self.render_size.as_size();
             ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
@@ -207,6 +232,7 @@ impl App {
                                 self.change_render_size();
                             });
                         });
+                    ui.add_space(crate::ui::properties::MEDIUM_SPACE);
                     ui.horizontal(|ui| {
                         ui.add_enabled_ui(
                             self.rendering_thread.is_none()
@@ -244,6 +270,7 @@ impl App {
 
     fn skybox_options(&mut self, ui: &mut Ui) {
         ui.label("Skybox:");
+        ui.add_space(crate::ui::properties::SMALL_SPACE);
         let mut skybox = self.scene.settings.skybox;
         ui.vertical(|ui| {
             egui::ComboBox::from_id_source(1)
@@ -309,6 +336,7 @@ impl App {
                                 .size(14.0)
                                 .family(FontFamily::Monospace),
                         );
+                        ui.add_space(crate::ui::properties::SMALL_SPACE);
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             remove = ui
                                 .add_sized(
@@ -323,13 +351,22 @@ impl App {
                     });
 
                     ui.label("Position:");
+                    ui.add_space(crate::ui::properties::SMALL_SPACE);
                     xyz_drag_value(ui, &mut light.position);
 
+                    ui.add_space(crate::ui::properties::MEDIUM_SPACE);
+
                     ui.label("Intensity:");
+                    ui.add_space(crate::ui::properties::SMALL_SPACE);
                     ui.add(Slider::new(&mut light.intensity, 0.0..=100.0).clamp_to_range(true));
 
+                    ui.add_space(crate::ui::properties::MEDIUM_SPACE);
+
                     ui.label("Color:");
+                    ui.add_space(crate::ui::properties::SMALL_SPACE);
                     color_picker::color_edit_button_rgb(ui, light.color.as_mut());
+
+                    ui.add_space(crate::ui::properties::MEDIUM_SPACE);
 
                     remove.then_some(n)
                 })
@@ -340,6 +377,7 @@ impl App {
                 });
 
             ui.separator();
+            ui.add_space(crate::ui::properties::SMALL_SPACE);
             ui.vertical_centered(|ui| {
                 ui.add(Button::new(RichText::new("+ Add Light")).frame(false))
                     .clicked()
@@ -367,12 +405,15 @@ impl App {
             for (n, o) in self.scene.objects.iter_mut().enumerate() {
                 ui.separator();
 
+                ui.add_space(crate::ui::properties::SMALL_SPACE);
+
                 ui.horizontal(|ui| {
                     ui.label(
                         RichText::new(format!("Object {} ({} ▲)", n, o.triangles.len()))
                             .size(14.0)
                             .family(FontFamily::Monospace),
                     );
+                    ui.add_space(crate::ui::properties::SMALL_SPACE);
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
                             .add_sized(
@@ -388,9 +429,12 @@ impl App {
                 });
 
                 ui.label("Position");
+                ui.add_space(crate::ui::properties::SMALL_SPACE);
                 xyz_drag_value(ui, &mut o.translation);
+                ui.add_space(crate::ui::properties::MEDIUM_SPACE);
 
                 ui.label("Rotation");
+                ui.add_space(crate::ui::properties::SMALL_SPACE);
                 ui.horizontal(|ui| {
                     let (mut x, mut y, mut z) = o.rotation.euler_angles();
 
@@ -410,8 +454,12 @@ impl App {
                         })
                 });
 
+                ui.add_space(crate::ui::properties::MEDIUM_SPACE);
+
                 ui.label("Scale");
+                ui.add_space(crate::ui::properties::SMALL_SPACE);
                 xyz_drag_value(ui, &mut o.scale);
+                ui.add_space(crate::ui::properties::MEDIUM_SPACE);
             }
 
             for o in objects_to_remove {
@@ -419,6 +467,7 @@ impl App {
             }
 
             ui.separator();
+            ui.add_space(crate::ui::properties::SMALL_SPACE);
             ui.vertical_centered(|ui| {
                 if ui
                     .add(Button::new(RichText::new("+ Add Object")).frame(false))
