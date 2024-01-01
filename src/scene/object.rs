@@ -87,7 +87,7 @@ impl Object {
                     }),
             })
             .collect::<Vec<_>>();
-
+        let mut warnings = (0, 0, 0);
         let mut triangles = obj
             .data
             .objects
@@ -116,11 +116,18 @@ impl Object {
                 group
                     .polys
                     .iter()
-                    .flat_map(|p| triangulate(&obj, p, material_index))
+                    .flat_map(|p| {
+                        let (v, w) = triangulate(&obj, p, material_index);
+                        warnings.0 += w.0;
+                        warnings.1 += w.1;
+                        warnings.2 += w.2;
+                        v
+                    })
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
 
+        Self::print_warnings(warnings);
         let bvh = Bvh::build(triangles.as_mut_slice());
 
         Ok(Object {
@@ -139,6 +146,18 @@ impl Object {
             scale,
             bvh,
         })
+    }
+
+    fn print_warnings(warnings: (i32, i32, i32)) {
+        if warnings.0 > 0 {
+            warn!("Computed normals for {} triangles is zero", warnings.0);
+        }
+        if warnings.1 > 0 {
+            warn!("No normals for {} triangles", warnings.1);
+        }
+        if warnings.2 > 0 {
+            warn!("No UV for {} triangles", warnings.2);
+        }
     }
 
     pub fn transform(&self) -> Affine3<f32> {
@@ -191,8 +210,11 @@ fn triangulate(
     obj: &obj::Obj,
     poly: &SimplePolygon,
     material_index: Option<usize>,
-) -> Vec<Triangle> {
+) -> (Vec<Triangle>, (i32, i32, i32)) {
     let mut triangles = Vec::new();
+    let mut computed_normals_zero = 0;
+    let mut no_normals = 0;
+    let mut no_uv = 0;
 
     for i in 1..poly.0.len() - 1 {
         let a = Point3::from(obj.data.position[poly.0[0].0]);
@@ -203,12 +225,7 @@ fn triangulate(
             .cross(&(a - c))
             .try_normalize(f32::EPSILON)
             .unwrap_or_else(|| {
-                warn!(
-                    "Computed normal for triangle with vertices {}, {}, {} is zero",
-                    poly.0[0].0,
-                    poly.0[i].0,
-                    poly.0[i + 1].0
-                );
+                computed_normals_zero += 1;
                 Vector3::new(0.0, 0.0, 0.0)
             });
 
@@ -218,62 +235,42 @@ fn triangulate(
             c,
             poly.0[0].2.map_or_else(
                 || {
-                    warn!(
-                        "No normal for vertex {} in {}",
-                        poly.0[0].0, obj.data.objects[0].name
-                    );
+                    no_normals += 1;
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[i].2.map_or_else(
                 || {
-                    warn!(
-                        "No normal for vertex {} in {}",
-                        poly.0[i].0, obj.data.objects[0].name
-                    );
+                    no_normals += 1;
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[i + 1].2.map_or_else(
                 || {
-                    warn!(
-                        "No normal for vertex {} in {}",
-                        poly.0[i + 1].0,
-                        obj.data.objects[0].name
-                    );
+                    no_normals += 1;
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[0].1.map_or_else(
                 || {
-                    warn!(
-                        "No UV for vertex {} in {}",
-                        poly.0[0].0, obj.data.objects[0].name
-                    );
+                    no_uv += 1;
                     Vector2::new(0.0, 0.0)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
             ),
             poly.0[i].1.map_or_else(
                 || {
-                    warn!(
-                        "No UV for vertex {} in {}",
-                        poly.0[i].0, obj.data.objects[0].name
-                    );
+                    no_uv += 1;
                     Vector2::new(0.0, 0.0)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
             ),
             poly.0[i + 1].1.map_or_else(
                 || {
-                    warn!(
-                        "No UV for vertex {} in {}",
-                        poly.0[i + 1].0,
-                        obj.data.objects[0].name
-                    );
+                    no_uv += 1;
                     Vector2::new(0.0, 0.0)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
@@ -281,9 +278,21 @@ fn triangulate(
             material_index,
         ));
     }
-
-    triangles
+    //if computed_normals_zero > 0 {
+    //    warn!(
+    //        "Computed normals for {} triangles is zero",
+    //        computed_normals_zero
+    //    );
+    //}
+    //if no_normals > 0 {
+    //    warn!("No normals for {} triangles", no_normals);
+    //}
+    //if no_uv > 0 {
+    //    warn!("No UV for {} triangles", no_uv);
+    //}
+    (triangles, (computed_normals_zero, no_normals, no_uv))
 }
+
 mod yaml {
     use std::path::PathBuf;
 
