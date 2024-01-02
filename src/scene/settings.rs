@@ -19,8 +19,8 @@ mod yaml {
 
     #[derive(Serialize, Deserialize)]
     pub struct SettingsDef {
-        pub max_bounces: u32,
-        pub samples: u32,
+        pub max_bounces: Option<u32>,
+        pub samples: Option<u32>,
         #[serde(with = "super::super::yaml::color")]
         pub ambient_color: Color,
         pub skybox: Option<Skybox>,
@@ -32,8 +32,8 @@ mod yaml {
             D: serde::Deserializer<'de>,
         {
             SettingsDef::deserialize(deserializer).map(|yaml_extras| Settings {
-                max_bounces: yaml_extras.max_bounces,
-                samples: yaml_extras.samples,
+                max_bounces: yaml_extras.max_bounces.unwrap_or_default(),
+                samples: yaml_extras.samples.unwrap_or_default(),
                 ambient_color: yaml_extras
                     .ambient_color
                     .try_normalize(0.0)
@@ -50,8 +50,8 @@ mod yaml {
             S: serde::Serializer,
         {
             SettingsDef {
-                max_bounces: self.max_bounces,
-                samples: self.samples,
+                max_bounces: Some(self.max_bounces),
+                samples: Some(self.samples),
                 ambient_color: self.ambient_color * self.ambient_intensity,
                 skybox: Some(self.skybox.clone()),
             }
