@@ -73,7 +73,7 @@
     <span class="attr">#[serde(rename = <span class="string">&quot;point_lights&quot;</span>)]
     </span><span class="kw">pub </span>lights: Vec&lt;Light&gt;,
     <span class="kw">pub </span>camera: Camera,
-    <span class="attr">#[serde(rename = <span class="string">&quot;extra_args&quot;</span>)]
+    <span class="attr">#[serde(rename = <span class="string">&quot;extra_args&quot;</span>, default)]
     </span><span class="kw">pub </span>settings: Settings,
 }
 

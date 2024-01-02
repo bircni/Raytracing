@@ -59,6 +59,18 @@
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
 <a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::Color;
 
 <span class="kw">use </span><span class="kw">super</span>::Skybox;
@@ -70,6 +82,18 @@
     <span class="kw">pub </span>ambient_color: Color,
     <span class="kw">pub </span>ambient_intensity: f32,
     <span class="kw">pub </span>skybox: Skybox,
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>Settings {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            max_bounces: <span class="number">4</span>,
+            samples: <span class="number">1</span>,
+            ambient_color: Color::default(),
+            ambient_intensity: <span class="number">0.5</span>,
+            skybox: Skybox::default(),
+        }
+    }
 }
 
 <span class="kw">mod </span>yaml {
@@ -84,7 +108,7 @@
         <span class="kw">pub </span>samples: u32,
         <span class="attr">#[serde(with = <span class="string">&quot;super::super::yaml::color&quot;</span>)]
         </span><span class="kw">pub </span>ambient_color: Color,
-        <span class="kw">pub </span>skybox: <span class="prelude-ty">Option</span>&lt;Skybox&gt;,
+        <span class="kw">pub </span>skybox: Skybox,
     }
 
     <span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>Settings {
@@ -100,7 +124,7 @@
                     .try_normalize(<span class="number">0.0</span>)
                     .unwrap_or_default(),
                 ambient_intensity: yaml_extras.ambient_color.norm(),
-                skybox: yaml_extras.skybox.unwrap_or_default(),
+                skybox: yaml_extras.skybox,
             })
         }
     }
@@ -114,7 +138,7 @@
                 max_bounces: <span class="self">self</span>.max_bounces,
                 samples: <span class="self">self</span>.samples,
                 ambient_color: <span class="self">self</span>.ambient_color * <span class="self">self</span>.ambient_intensity,
-                skybox: <span class="prelude-val">Some</span>(<span class="self">self</span>.skybox.clone()),
+                skybox: <span class="self">self</span>.skybox.clone(),
             }
             .serialize(serializer)
         }
