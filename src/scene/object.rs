@@ -116,18 +116,23 @@ impl Object {
                 group
                     .polys
                     .iter()
-                    .flat_map(|p| {
-                        let (v, w) = triangulate(&obj, p, material_index);
-                        warnings.0 += w.0;
-                        warnings.1 += w.1;
-                        warnings.2 += w.2;
-                        v
-                    })
+                    .flat_map(|p| triangulate(&obj, p, material_index, &mut warnings))
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
 
-        Self::print_warnings(warnings);
+        if warnings.0 > 0 {
+            warn!("Computed normals for {} triangles is zero", warnings.0);
+        }
+
+        if warnings.1 > 0 {
+            warn!("No normals for {} triangles", warnings.1);
+        }
+
+        if warnings.2 > 0 {
+            warn!("No UV for {} triangles", warnings.2);
+        }
+
         let bvh = Bvh::build(triangles.as_mut_slice());
 
         Ok(Object {
@@ -146,18 +151,6 @@ impl Object {
             scale,
             bvh,
         })
-    }
-
-    fn print_warnings(warnings: (i32, i32, i32)) {
-        if warnings.0 > 0 {
-            warn!("Computed normals for {} triangles is zero", warnings.0);
-        }
-        if warnings.1 > 0 {
-            warn!("No normals for {} triangles", warnings.1);
-        }
-        if warnings.2 > 0 {
-            warn!("No UV for {} triangles", warnings.2);
-        }
     }
 
     pub fn transform(&self) -> Affine3<f32> {
@@ -210,11 +203,9 @@ fn triangulate(
     obj: &obj::Obj,
     poly: &SimplePolygon,
     material_index: Option<usize>,
-) -> (Vec<Triangle>, (i32, i32, i32)) {
+    (mut computed_normals_zero, mut no_normals, mut no_uv): &mut (u32, u32, u32),
+) -> Vec<Triangle> {
     let mut triangles = Vec::new();
-    let mut computed_normals_zero = 0;
-    let mut no_normals = 0;
-    let mut no_uv = 0;
 
     for i in 1..poly.0.len() - 1 {
         let a = Point3::from(obj.data.position[poly.0[0].0]);
@@ -278,19 +269,8 @@ fn triangulate(
             material_index,
         ));
     }
-    //if computed_normals_zero > 0 {
-    //    warn!(
-    //        "Computed normals for {} triangles is zero",
-    //        computed_normals_zero
-    //    );
-    //}
-    //if no_normals > 0 {
-    //    warn!("No normals for {} triangles", no_normals);
-    //}
-    //if no_uv > 0 {
-    //    warn!("No UV for {} triangles", no_uv);
-    //}
-    (triangles, (computed_normals_zero, no_normals, no_uv))
+
+    triangles
 }
 
 mod yaml {
