@@ -26,7 +26,7 @@ pub struct Scene {
     #[serde(rename = "point_lights")]
     pub lights: Vec<Light>,
     pub camera: Camera,
-    #[serde(rename = "extra_args")]
+    #[serde(rename = "extra_args", default)]
     pub settings: Settings,
 }
 

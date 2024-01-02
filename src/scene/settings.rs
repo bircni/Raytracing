@@ -11,6 +11,18 @@ pub struct Settings {
     pub skybox: Skybox,
 }
 
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            max_bounces: 4,
+            samples: 1,
+            ambient_color: Color::default(),
+            ambient_intensity: 0.5,
+            skybox: Skybox::default(),
+        }
+    }
+}
+
 mod yaml {
     use crate::{scene::Skybox, Color};
 
@@ -19,11 +31,11 @@ mod yaml {
 
     #[derive(Serialize, Deserialize)]
     pub struct SettingsDef {
-        pub max_bounces: Option<u32>,
-        pub samples: Option<u32>,
+        pub max_bounces: u32,
+        pub samples: u32,
         #[serde(with = "super::super::yaml::color")]
         pub ambient_color: Color,
-        pub skybox: Option<Skybox>,
+        pub skybox: Skybox,
     }
 
     impl<'de> Deserialize<'de> for Settings {
@@ -32,14 +44,14 @@ mod yaml {
             D: serde::Deserializer<'de>,
         {
             SettingsDef::deserialize(deserializer).map(|yaml_extras| Settings {
-                max_bounces: yaml_extras.max_bounces.unwrap_or_default(),
-                samples: yaml_extras.samples.unwrap_or_default(),
+                max_bounces: yaml_extras.max_bounces,
+                samples: yaml_extras.samples,
                 ambient_color: yaml_extras
                     .ambient_color
                     .try_normalize(0.0)
                     .unwrap_or_default(),
                 ambient_intensity: yaml_extras.ambient_color.norm(),
-                skybox: yaml_extras.skybox.unwrap_or_default(),
+                skybox: yaml_extras.skybox,
             })
         }
     }
@@ -50,10 +62,10 @@ mod yaml {
             S: serde::Serializer,
         {
             SettingsDef {
-                max_bounces: Some(self.max_bounces),
-                samples: Some(self.samples),
+                max_bounces: self.max_bounces,
+                samples: self.samples,
                 ambient_color: self.ambient_color * self.ambient_intensity,
-                skybox: Some(self.skybox.clone()),
+                skybox: self.skybox.clone(),
             }
             .serialize(serializer)
         }

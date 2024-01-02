@@ -1,58 +1,58 @@
 models:
-- file_path: res/test/1.obj
-  position:
-    x: 0.7
-    y: -0.1
-    z: -0.5
-  rotation:
-    x: 1.6295541e-15
-    y: -0.0
-    z: 0.0
-  scale:
-    x: 1.0
-    y: 1.0
-    z: 1.0
-- file_path: res/test/2.obj
-  position:
-    x: 0.7
-    y: -0.1
-    z: -0.5
-  rotation:
-    x: 0.000008648687
-    y: -0.0
-    z: 0.0
-  scale:
-    x: 1.0
-    y: 1.0
-    z: 1.0
+  - file_path: res/test/1.obj
+    position:
+      x: 0.7
+      y: -0.1
+      z: -0.5
+    rotation:
+      x: 1.6295541e-15
+      y: -0.0
+      z: 0.0
+    scale:
+      x: 1.0
+      y: 1.0
+      z: 1.0
+  - file_path: res/test/2.obj
+    position:
+      x: 0.7
+      y: -0.1
+      z: -0.5
+    rotation:
+      x: 0.000008648687
+      y: -0.0
+      z: 0.0
+    scale:
+      x: 1.0
+      y: 1.0
+      z: 1.0
 point_lights:
-- position:
-    x: -2.0
-    y: 3.5
-    z: -0.8
-  Ke:
-    r: 0.57735026
-    g: 0.57735026
-    b: 0.57735026
-  intensity: 40.0
-- position:
-    x: 5.5
-    y: 0.3
-    z: -4.5
-  Ke:
-    r: 0.672333
-    g: 0.24602187
-    b: 0.6981702
-  intensity: 22.0
-- position:
-    x: 2.0
-    y: 4.0
-    z: 1.6
-  Ke:
-    r: 0.57888657
-    g: 0.5770311
-    b: 0.57612985
-  intensity: 23.0
+  - position:
+      x: -2.0
+      y: 3.5
+      z: -0.8
+    Ke:
+      r: 0.57735026
+      g: 0.57735026
+      b: 0.57735026
+    intensity: 40.0
+  - position:
+      x: 5.5
+      y: 0.3
+      z: -4.5
+    Ke:
+      r: 0.672333
+      g: 0.24602187
+      b: 0.6981702
+    intensity: 22.0
+  - position:
+      x: 2.0
+      y: 4.0
+      z: 1.6
+    Ke:
+      r: 0.57888657
+      g: 0.5770311
+      b: 0.57612985
+    intensity: 23.0
 camera:
   position:
     x: 7.250971
@@ -75,6 +75,6 @@ extra_args:
     g: 0.14273214
     b: 0.045266237
   skybox: !Color
-  - 0.3507291
-  - 0.47097903
-  - 0.53371817
+    - 0.3507291
+    - 0.47097903
+    - 0.53371817
