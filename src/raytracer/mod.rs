@@ -206,6 +206,25 @@ impl Raytracer {
                     direction: light_direction,
                 };
 
+                //check if transparent object is in the way
+                if depth < self.max_depth
+                    && hit
+                        .material
+                        .is_some_and(|m| m.illumination_model.transparency())
+                {
+                    let transparency = hit.material.and_then(|m| m.transparency).unwrap_or(0.0);
+
+                    let transparency_ray = Ray {
+                        origin: hit.point + ray.direction * self.delta,
+                        direction: ray.direction,
+                    };
+
+                    let transparency_color =
+                        self.shade(transparency_ray, self.raycast(transparency_ray), depth + 1);
+
+                    color = color.lerp(&transparency_color, transparency);
+                }
+
                 let shadow = self.raycast(light_ray).is_some();
 
                 if !shadow {
@@ -265,29 +284,33 @@ impl Raytracer {
                     color = color.lerp(&reflection, 1.0 - fresnel.powf(specular_exponent));
                 }
 
-                // Transparency
+                /* Transparency
                 if depth < self.max_depth
                     && hit
                         .material
                         .is_some_and(|m| m.illumination_model.transparency())
                 {
-                    let refraction_direction = Self::refract(
-                        ray.direction,
-                        hit.normal,
-                        hit.material.unwrap().transparency.unwrap(),
-                    );
-                    let refraction_ray = Ray {
-                        origin: hit.point + refraction_direction * self.delta,
-                        direction: refraction_direction,
+                    let mut origin = hit.point + ray.direction * self.delta;
+
+                    while self
+                        .raycast(Ray {
+                            origin,
+                            direction: ray.direction,
+                        })
+                        .is_some_and(|h| h.name != hit.name)
+                    {
+                        origin += ray.direction * self.delta;
+                    }
+
+                    let ray = Ray {
+                        origin,
+                        direction: ray.direction,
                     };
+                    let trans = hit.material.and_then(|m| m.transparency).unwrap_or(1.0);
+                    let hit = self.raycast(ray);
 
-                    let refraction =
-                        self.shade(refraction_ray, self.raycast(refraction_ray), depth + 1);
-
-                    // mix refraction and current color based on transparency
-                    let transparency = hit.material.unwrap().transparency.unwrap();
-                    color = color.lerp(&refraction, transparency);
-                }
+                    color = color.lerp(&self.shade(ray, hit, depth + 1), trans);
+                }*/
             }
 
             color

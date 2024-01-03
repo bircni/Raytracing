@@ -85,7 +85,7 @@ impl Object {
                         warn!("Invalid illumination model: {}", m.illum.unwrap_or(-1));
                         IlluminationModel::default()
                     }),
-                transparency: m.d,
+                transparency: m.d.map(|d| 1.0 - d),
                 refraction_index: m.ni,
             })
             .collect::<Vec<_>>();
