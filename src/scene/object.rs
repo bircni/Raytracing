@@ -203,7 +203,7 @@ fn triangulate(
     obj: &obj::Obj,
     poly: &SimplePolygon,
     material_index: Option<usize>,
-    (mut computed_normals_zero, mut no_normals, mut no_uv): &mut (u32, u32, u32),
+    (computed_normals_zero, no_normals, no_uv): &mut (u32, u32, u32),
 ) -> Vec<Triangle> {
     let mut triangles = Vec::new();
 
@@ -216,7 +216,7 @@ fn triangulate(
             .cross(&(a - c))
             .try_normalize(f32::EPSILON)
             .unwrap_or_else(|| {
-                computed_normals_zero += 1;
+                *computed_normals_zero += 1;
                 Vector3::new(0.0, 0.0, 0.0)
             });
 
@@ -226,42 +226,42 @@ fn triangulate(
             c,
             poly.0[0].2.map_or_else(
                 || {
-                    no_normals += 1;
+                    *no_normals += 1;
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[i].2.map_or_else(
                 || {
-                    no_normals += 1;
+                    *no_normals += 1;
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[i + 1].2.map_or_else(
                 || {
-                    no_normals += 1;
+                    *no_normals += 1;
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[0].1.map_or_else(
                 || {
-                    no_uv += 1;
+                    *no_uv += 1;
                     Vector2::new(0.0, 0.0)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
             ),
             poly.0[i].1.map_or_else(
                 || {
-                    no_uv += 1;
+                    *no_uv += 1;
                     Vector2::new(0.0, 0.0)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
             ),
             poly.0[i + 1].1.map_or_else(
                 || {
-                    no_uv += 1;
+                    *no_uv += 1;
                     Vector2::new(0.0, 0.0)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
