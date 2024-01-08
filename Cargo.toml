@@ -45,17 +45,17 @@ serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9.29"
 
 # GUI
-eframe = { version = "0.24.1", features = [
+eframe = { version = "0.25", features = [
     "wgpu",
     "accesskit",
     "default_fonts",
     "wayland",
     "x11",
 ], default-features = false }
-egui = { version = "0.24.1", features = ["log", "color-hex"] }
-egui-wgpu = { version = "0.24.1" }
-egui_file = { version = "0.13.0" }
-egui_extras = { version = "0.24.2", features = ["svg"] }
+egui = { version = "0.25", features = ["log", "color-hex"] }
+egui-wgpu = { version = "0.25" }
+egui_file = { git = "https://github.com/bircni/egui_file.git" }
+egui_extras = { version = "0.25", features = ["svg"] }
 color-hex = "0.2.0"
 
 # BVH
