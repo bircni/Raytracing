@@ -52,7 +52,7 @@ eframe = { version = "0.24.1", features = [
     "wayland",
     "x11",
 ], default-features = false }
-egui = { version = "0.24.1", features = ["log", "color-hex"] }
+egui = { version = "0.25.0", features = ["log", "color-hex"] }
 egui-wgpu = { version = "0.24.1" }
 egui_file = { version = "0.13.0" }
 egui_extras = { version = "0.24.2", features = ["svg"] }
