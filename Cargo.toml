@@ -45,7 +45,7 @@ serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9.29"
 
 # GUI
-eframe = { version = "0.24.1", features = [
+eframe = { version = "0.25.0", features = [
     "wgpu",
     "accesskit",
     "default_fonts",
