@@ -53,7 +53,7 @@ eframe = { version = "0.24.1", features = [
     "x11",
 ], default-features = false }
 egui = { version = "0.24.1", features = ["log", "color-hex"] }
-egui-wgpu = { version = "0.24.1" }
+egui-wgpu = { version = "0.25.0" }
 egui_file = { version = "0.13.0" }
 egui_extras = { version = "0.24.2", features = ["svg"] }
 color-hex = "0.2.0"
