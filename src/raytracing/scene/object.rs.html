@@ -548,7 +548,7 @@
     obj: <span class="kw-2">&amp;</span>obj::Obj,
     poly: <span class="kw-2">&amp;</span>SimplePolygon,
     material_index: <span class="prelude-ty">Option</span>&lt;usize&gt;,
-    (<span class="kw-2">mut </span>computed_normals_zero, <span class="kw-2">mut </span>no_normals, <span class="kw-2">mut </span>no_uv): <span class="kw-2">&amp;mut </span>(u32, u32, u32),
+    (computed_normals_zero, no_normals, no_uv): <span class="kw-2">&amp;mut </span>(u32, u32, u32),
 ) -&gt; Vec&lt;Triangle&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>triangles = Vec::new();
 
@@ -561,7 +561,7 @@
             .cross(<span class="kw-2">&amp;</span>(a - c))
             .try_normalize(f32::EPSILON)
             .unwrap_or_else(|| {
-                computed_normals_zero += <span class="number">1</span>;
+                <span class="kw-2">*</span>computed_normals_zero += <span class="number">1</span>;
                 Vector3::new(<span class="number">0.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>)
             });
 
@@ -571,42 +571,42 @@
             c,
             poly.<span class="number">0</span>[<span class="number">0</span>].<span class="number">2</span>.map_or_else(
                 || {
-                    no_normals += <span class="number">1</span>;
+                    <span class="kw-2">*</span>no_normals += <span class="number">1</span>;
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.<span class="number">0</span>[i].<span class="number">2</span>.map_or_else(
                 || {
-                    no_normals += <span class="number">1</span>;
+                    <span class="kw-2">*</span>no_normals += <span class="number">1</span>;
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.<span class="number">0</span>[i + <span class="number">1</span>].<span class="number">2</span>.map_or_else(
                 || {
-                    no_normals += <span class="number">1</span>;
+                    <span class="kw-2">*</span>no_normals += <span class="number">1</span>;
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.<span class="number">0</span>[<span class="number">0</span>].<span class="number">1</span>.map_or_else(
                 || {
-                    no_uv += <span class="number">1</span>;
+                    <span class="kw-2">*</span>no_uv += <span class="number">1</span>;
                     Vector2::new(<span class="number">0.0</span>, <span class="number">0.0</span>)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
             ),
             poly.<span class="number">0</span>[i].<span class="number">1</span>.map_or_else(
                 || {
-                    no_uv += <span class="number">1</span>;
+                    <span class="kw-2">*</span>no_uv += <span class="number">1</span>;
                     Vector2::new(<span class="number">0.0</span>, <span class="number">0.0</span>)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
             ),
             poly.<span class="number">0</span>[i + <span class="number">1</span>].<span class="number">1</span>.map_or_else(
                 || {
-                    no_uv += <span class="number">1</span>;
+                    <span class="kw-2">*</span>no_uv += <span class="number">1</span>;
                     Vector2::new(<span class="number">0.0</span>, <span class="number">0.0</span>)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
