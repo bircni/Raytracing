@@ -1,5 +1,5 @@
 models:
-  - file_path: res/test/1.obj
+  - filePath: res/test/1.obj
     position:
       x: 0.7
       y: -0.1
@@ -12,7 +12,7 @@ models:
       x: 1.0
       y: 1.0
       z: 1.0
-  - file_path: res/test/2.obj
+  - filePath: res/test/2.obj
     position:
       x: 0.7
       y: -0.1
@@ -25,7 +25,7 @@ models:
       x: 1.0
       y: 1.0
       z: 1.0
-point_lights:
+pointLights:
   - position:
       x: -2.0
       y: 3.5
@@ -58,15 +58,17 @@ camera:
     x: 7.250971
     y: 3.5694153
     z: 6.2339253
-  look_at:
+  lookAt:
     x: 6.643236
     y: 3.1342115
     z: 5.5696545
-  up_vec:
+  upVec:
     x: 0.0
     y: 1.0
     z: 0.0
-  field_of_view: 63.02536
+  fieldOfView: 63.02536
+  width: 1920
+  height: 1080
 extra_args:
   max_bounces: 3
   samples: 64

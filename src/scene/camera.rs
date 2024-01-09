@@ -40,10 +40,13 @@ mod yaml {
     pub struct CameraDef {
         #[serde(with = "super::super::yaml::point")]
         pub position: Point3<f32>,
+        #[serde(rename = "lookAt")]
         #[serde(with = "super::super::yaml::point")]
         pub look_at: Point3<f32>,
+        #[serde(rename = "upVec")]
         #[serde(with = "super::super::yaml::vector")]
         pub up_vec: Vector3<f32>,
+        #[serde(rename = "fieldOfView")]
         pub field_of_view: f32,
     }
 
