@@ -444,7 +444,7 @@ impl App {
     fn change_render_size(&mut self) {
         let (x, y) = self.render_size.as_size();
         *self.render_image.lock() = RgbImage::new(x, y);
-
+        self.scene.camera.resolution = (x, y);
         self.render_texture.set(
             ImageData::Color(Arc::new(ColorImage {
                 size: [x as usize, y as usize],

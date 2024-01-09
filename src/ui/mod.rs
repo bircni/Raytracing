@@ -42,6 +42,16 @@ impl RenderSize {
             &RenderSize::Custom([x, y]) => (x, y),
         }
     }
+
+    fn from_res(res: (u32, u32)) -> Self {
+        match res {
+            (1920, 1080) => RenderSize::FullHD,
+            (2560, 1440) => RenderSize::Wqhd,
+            (3840, 2160) => RenderSize::Uhd1,
+            (7680, 4320) => RenderSize::Uhd2,
+            (x, y) => RenderSize::Custom([x, y]),
+        }
+    }
 }
 
 impl std::fmt::Display for RenderSize {
@@ -87,7 +97,7 @@ impl App {
                 .as_ref()
                 .context("Failed to get wgpu context")?,
         );
-        let render_size = RenderSize::FullHD;
+        let render_size = RenderSize::from_res(scene.camera.resolution);
 
         let (render_texture, image_buffer) = {
             let render_size = render_size.as_size();

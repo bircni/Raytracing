@@ -23,7 +23,7 @@ pub struct Scene {
     pub path: PathBuf,
     #[serde(rename = "models")]
     pub objects: Vec<Object>,
-    #[serde(rename = "point_lights")]
+    #[serde(rename = "pointLights")]
     pub lights: Vec<Light>,
     pub camera: Camera,
     #[serde(rename = "extra_args", default)]

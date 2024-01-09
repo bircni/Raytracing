@@ -284,6 +284,7 @@ mod yaml {
 
     #[derive(Serialize, Deserialize)]
     pub struct ObjectDef {
+        #[serde(rename = "filePath")]
         pub file_path: PathBuf,
         #[serde(with = "super::super::yaml::point")]
         pub position: Point3<f32>,
