@@ -900,7 +900,7 @@
     </span><span class="kw">fn </span>change_render_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="kw">let </span>(x, y) = <span class="self">self</span>.render_size.as_size();
         <span class="kw-2">*</span><span class="self">self</span>.render_image.lock() = RgbImage::new(x, y);
-
+        <span class="self">self</span>.scene.camera.resolution = (x, y);
         <span class="self">self</span>.render_texture.set(
             ImageData::Color(Arc::new(ColorImage {
                 size: [x <span class="kw">as </span>usize, y <span class="kw">as </span>usize],

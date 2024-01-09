@@ -343,6 +343,7 @@
 <a href="#343" id="343">343</a>
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>anyhow::Context;
@@ -629,7 +630,8 @@
 
     <span class="attr">#[derive(Serialize, Deserialize)]
     </span><span class="kw">pub struct </span>ObjectDef {
-        <span class="kw">pub </span>file_path: PathBuf,
+        <span class="attr">#[serde(rename = <span class="string">&quot;filePath&quot;</span>)]
+        </span><span class="kw">pub </span>file_path: PathBuf,
         <span class="attr">#[serde(with = <span class="string">&quot;super::super::yaml::point&quot;</span>)]
         </span><span class="kw">pub </span>position: Point3&lt;f32&gt;,
         <span class="attr">#[serde(with = <span class="string">&quot;super::super::yaml::vector&quot;</span>)]
