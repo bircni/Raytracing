@@ -1,58 +1,58 @@
 models:
-- filePath: ./1.obj
-  position:
-    x: 0.7
-    y: -0.1
-    z: -0.5
-  rotation:
-    x: 1.6295541e-15
-    y: -0.0
-    z: 0.0
-  scale:
-    x: 1.0
-    y: 1.0
-    z: 1.0
-- filePath: ./2.obj
-  position:
-    x: 0.7
-    y: -0.1
-    z: -0.5
-  rotation:
-    x: 0.000008648687
-    y: -0.0
-    z: 0.0
-  scale:
-    x: 1.0
-    y: 1.0
-    z: 1.0
+  - filePath: ./1.obj
+    position:
+      x: 0.7
+      y: -0.1
+      z: -0.5
+    rotation:
+      x: 1.6295541e-15
+      y: -0.0
+      z: 0.0
+    scale:
+      x: 1.0
+      y: 1.0
+      z: 1.0
+  - filePath: ./2.obj
+    position:
+      x: 0.7
+      y: -0.1
+      z: -0.5
+    rotation:
+      x: 0.000008648687
+      y: -0.0
+      z: 0.0
+    scale:
+      x: 1.0
+      y: 1.0
+      z: 1.0
 pointLights:
-- position:
-    x: -0.5
-    y: 2.6
-    z: 3.2
-  Ke:
-    r: 0.57735026
-    g: 0.57735026
-    b: 0.57735026
-  intensity: 15.0
-- position:
-    x: 5.5
-    y: 0.3
-    z: -4.5
-  Ke:
-    r: 0.672333
-    g: 0.24602187
-    b: 0.6981702
-  intensity: 15.0
-- position:
-    x: 2.0
-    y: 4.0
-    z: 1.6
-  Ke:
-    r: 0.57888657
-    g: 0.5770311
-    b: 0.57612985
-  intensity: 35.0
+  - position:
+      x: -0.5
+      y: 2.6
+      z: 3.2
+    Ke:
+      r: 0.57735026
+      g: 0.57735026
+      b: 0.57735026
+    intensity: 15.0
+  - position:
+      x: 5.5
+      y: 0.3
+      z: -4.5
+    Ke:
+      r: 0.672333
+      g: 0.24602187
+      b: 0.6981702
+    intensity: 15.0
+  - position:
+      x: 2.0
+      y: 4.0
+      z: 1.6
+    Ke:
+      r: 0.57888657
+      g: 0.5770311
+      b: 0.57612985
+    intensity: 35.0
 camera:
   position:
     x: 2.8361144

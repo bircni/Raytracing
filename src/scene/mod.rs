@@ -72,8 +72,9 @@ impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRel
 
         let settings = map
             .get("extra_args")
-            .ok_or_else(|| serde::de::Error::missing_field("extra_args"))?;
-        let settings = Settings::deserialize(settings).map_err(serde::de::Error::custom)?;
+            .map(|v| Settings::deserialize(v).map_err(serde::de::Error::custom))
+            .transpose()?
+            .unwrap_or_default();
 
         let scene = Scene {
             path: self.0.as_ref().to_path_buf(),
