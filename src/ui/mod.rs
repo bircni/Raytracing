@@ -4,8 +4,12 @@ mod render;
 
 use self::preview::Preview;
 
+<<<<<<< HEAD
 use crate::raytracer::Skybox;
 use crate::scene::Scene;
+=======
+use crate::scene::{Scene, Skybox};
+>>>>>>> main
 use anyhow::Context;
 use eframe::CreationContext;
 use egui::{
@@ -46,6 +50,16 @@ impl RenderSize {
             &RenderSize::Custom([x, y]) => (x, y),
         }
     }
+
+    fn from_res(res: (u32, u32)) -> Self {
+        match res {
+            (1920, 1080) => RenderSize::FullHD,
+            (2560, 1440) => RenderSize::Wqhd,
+            (3840, 2160) => RenderSize::Uhd1,
+            (7680, 4320) => RenderSize::Uhd2,
+            (x, y) => RenderSize::Custom([x, y]),
+        }
+    }
 }
 
 impl std::fmt::Display for RenderSize {
@@ -79,7 +93,11 @@ pub struct App {
     look_sensitivity: f32,
     pause_delta: bool,
     pause_count: i32,
+<<<<<<< HEAD
     download_thread: Option<std::thread::JoinHandle<()>>,
+=======
+    skybox_file_dialog: Option<FileDialog>,
+>>>>>>> main
 }
 
 impl App {
@@ -91,7 +109,7 @@ impl App {
                 .as_ref()
                 .context("Failed to get wgpu context")?,
         );
-        let render_size = RenderSize::FullHD;
+        let render_size = RenderSize::from_res(scene.camera.resolution);
 
         let (render_texture, image_buffer) = {
             let render_size = render_size.as_size();
@@ -115,8 +133,8 @@ impl App {
         });
 
         Ok(Self {
-            current_tab: 0,
             scene,
+            current_tab: 0,
             preview_zoom: 0.0,
             preview_position: Vec2::ZERO,
             render_texture,
@@ -133,7 +151,11 @@ impl App {
             look_sensitivity: 0.001,
             pause_delta: false,
             pause_count: 0,
+<<<<<<< HEAD
             download_thread: None,
+=======
+            skybox_file_dialog: None,
+>>>>>>> main
         })
     }
 
@@ -189,11 +211,14 @@ impl App {
     fn preview(&mut self, ui: &mut Ui) {
         Frame::canvas(ui.style())
             .outer_margin(10.0)
-            .fill(Color32::from_rgb(
-                (self.scene.settings.background_color[0] * 255.0) as u8,
-                (self.scene.settings.background_color[1] * 255.0) as u8,
-                (self.scene.settings.background_color[2] * 255.0) as u8,
-            ))
+            .fill(match self.scene.settings.skybox {
+                    Skybox::Image { ..} => Color32::GRAY,
+                    Skybox::Color(c) => Color32::from_rgb(
+                        (c.x * 255.0) as u8,
+                        (c.y * 255.0) as u8,
+                        (c.z * 255.0) as u8,
+                    )
+                })
             .show(ui, |ui| {
                 let (response, painter) =
                     ui.allocate_painter(ui.available_size(), Sense::click_and_drag());

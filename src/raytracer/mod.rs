@@ -32,64 +32,16 @@ pub struct Raytracer {
     scene: Scene,
     delta: f32,
     max_depth: u32,
-    skybox_image: Option<RgbImage>,
-}
-
-#[derive(PartialEq, Eq, Debug, Clone, Copy, EnumIter)]
-pub enum Skybox {
-    None,
-    ScythianTombs2,
-    RainforestTrail,
-    StudioSmall08,
-    Kloppenheim02,
-    CircusArena,
-}
-
-impl Skybox {
-    pub fn get_url(&self) -> Option<&str> {
-        match self {
-            Skybox::None => None,
-            Skybox::ScythianTombs2 => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/scythian_tombs_puresky_4k.exr")
-            }
-            Skybox::RainforestTrail => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/rainforest_trail_4k.exr")
-            }
-            Skybox::StudioSmall08 => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/studio_small_08_4k.exr")
-            }
-            Skybox::Kloppenheim02 => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/kloppenheim_02_4k.exr")
-            }
-            Skybox::CircusArena => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/circus_arena_4k.exr")
-            }
-        }
-    }
-}
-
-impl std::fmt::Display for Skybox {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Skybox::None => write!(f, "None"),
-            Skybox::ScythianTombs2 => write!(f, "Scythian Tombs"),
-            Skybox::RainforestTrail => write!(f, "Rainforest Trail"),
-            Skybox::StudioSmall08 => write!(f, "Studio Small"),
-            Skybox::Kloppenheim02 => write!(f, "Kloppenheim"),
-            Skybox::CircusArena => write!(f, "Circus Arena"),
-        }
-    }
 }
 
 impl Raytracer {
     const NO_MATERIAL_COLOR: Color = Color::new(0.9, 0.9, 0.9);
 
-    pub fn new(scene: Scene, delta: f32) -> Raytracer {
+    pub fn new(scene: Scene, delta: f32, max_depth: u32) -> Raytracer {
         Raytracer {
             scene,
             delta,
-            max_depth: 5,
-            skybox_image: None,
+            max_depth,
         }
     }
 

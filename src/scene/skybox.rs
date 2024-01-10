@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 use image::RgbImage;
 
 use crate::Color;
@@ -22,3 +23,92 @@ impl Skybox {
         self.texture.clone()
     }*/
 }
+=======
+use std::path::PathBuf;
+
+use crate::Color;
+use image::RgbImage;
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum Skybox {
+    Image { path: PathBuf, image: RgbImage },
+    Color(Color),
+}
+
+impl Default for Skybox {
+    fn default() -> Self {
+        Skybox::Color(Color::new(0.9, 0.9, 0.9))
+    }
+}
+
+mod yaml {
+    use serde::{Deserialize, Serialize};
+
+    use super::Skybox;
+    use crate::Color;
+
+    #[derive(Serialize, Deserialize)]
+    pub enum SkyboxDef {
+        Path(String),
+        Color(Color),
+    }
+
+    impl<'de> Deserialize<'de> for Skybox {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            SkyboxDef::deserialize(deserializer).and_then(|yaml_extras| match yaml_extras {
+                SkyboxDef::Path(path) => Skybox::load_from_path(path)
+                    .map_err(|e| serde::de::Error::custom(format!("Failed to load skybox: {e}"))),
+                SkyboxDef::Color(color) => Ok(Skybox::Color(color)),
+            })
+        }
+    }
+
+    impl Serialize for Skybox {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            match self {
+                Skybox::Image { path, .. } => SkyboxDef::Path(path.to_string_lossy().to_string()),
+                Skybox::Color(color) => SkyboxDef::Color(*color),
+            }
+            .serialize(serializer)
+        }
+    }
+}
+
+impl Skybox {
+    fn load_from_path<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self> {
+        let image = image::open(path.as_ref())?.into_rgb8();
+
+        Ok(Skybox::Image {
+            path: path.as_ref().to_path_buf(),
+            image,
+        })
+    }
+
+    /* pub fn get_url(&self) -> Option<&str> {
+        match self {
+            Skybox::None => None,
+            Skybox::ScythianTombs2 => {
+                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/scythian_tombs_puresky_4k.exr")
+            }
+            Skybox::RainforestTrail => {
+                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/rainforest_trail_4k.exr")
+            }
+            Skybox::StudioSmall08 => {
+                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/studio_small_08_4k.exr")
+            }
+            Skybox::Kloppenheim02 => {
+                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/kloppenheim_02_4k.exr")
+            }
+            Skybox::CircusArena => {
+                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/circus_arena_4k.exr")
+            }
+        }
+    } */
+}
+>>>>>>> main

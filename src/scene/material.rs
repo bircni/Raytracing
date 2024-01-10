@@ -10,8 +10,11 @@ pub struct Material {
     pub specular_exponent: Option<f32>,
     pub diffuse_texture: Option<RgbImage>,
     pub illumination_model: IlluminationModel,
+<<<<<<< HEAD
     pub dissolve: Option<f32>,
     pub refraction_index: Option<f32>,
+=======
+>>>>>>> main
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
@@ -33,8 +36,11 @@ impl IlluminationModel {
     pub fn reflection(self) -> bool {
         self.0 == 3 || self.0 == 4
     }
+<<<<<<< HEAD
 
     pub fn transparency(self) -> bool {
         self.0 == 5 || self.0 == 7
     }
+=======
+>>>>>>> main
 }

@@ -5,6 +5,10 @@ use serde::{Deserialize, Serialize};
 
 pub use self::{
     camera::Camera, light::Light, material::Material, object::Object, settings::Settings,
+<<<<<<< HEAD
+=======
+    skybox::Skybox,
+>>>>>>> main
 };
 
 mod camera;
@@ -12,6 +16,7 @@ mod light;
 mod material;
 mod object;
 mod settings;
+mod skybox;
 mod triangle;
 mod yaml;
 
@@ -21,10 +26,10 @@ pub struct Scene {
     pub path: PathBuf,
     #[serde(rename = "models")]
     pub objects: Vec<Object>,
-    #[serde(rename = "point_lights")]
+    #[serde(rename = "pointLights")]
     pub lights: Vec<Light>,
     pub camera: Camera,
-    #[serde(rename = "extra_args")]
+    #[serde(rename = "extra_args", default)]
     pub settings: Settings,
 }
 

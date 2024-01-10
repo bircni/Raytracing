@@ -1,5 +1,6 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
+use anyhow::Context;
 use egui::{
     color_picker, hex_color, include_image, Align, Button, Color32, ColorImage, DragValue,
     FontFamily, ImageButton, ImageData, Layout, RichText, ScrollArea, SidePanel, Slider,
@@ -11,8 +12,13 @@ use log::warn;
 use nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
 
 use crate::{
+<<<<<<< HEAD
     raytracer::Skybox,
     scene::{Light, Object},
+=======
+    scene::{Light, Object, Skybox},
+    Color,
+>>>>>>> main
 };
 
 use super::{App, RenderSize};
@@ -121,6 +127,7 @@ impl App {
 
             self.render_options(ui);
 
+<<<<<<< HEAD
             self.skybox_options(ui);
 
             ui.add_enabled_ui(self.scene.settings.skybox.is_none(), |ui| {
@@ -131,6 +138,14 @@ impl App {
                 );
             });
 
+=======
+            ui.separator();
+
+            self.skybox_options(ui);
+
+            ui.separator();
+
+>>>>>>> main
             ui.label("Ambient Color:");
             color_picker::color_edit_button_rgb(ui, self.scene.settings.ambient_color.as_mut());
 
@@ -227,6 +242,7 @@ impl App {
 
     fn skybox_options(&mut self, ui: &mut Ui) {
         ui.label("Skybox:");
+<<<<<<< HEAD
         let mut skybox = self.scene.settings.skybox;
         ui.vertical(|ui| {
             egui::ComboBox::from_id_source(1)
@@ -268,6 +284,72 @@ impl App {
                         self.scene.settings.skybox = skybox;
                     });
                 });
+=======
+
+        if let Some(dialog) = &mut self.skybox_file_dialog {
+            if dialog.show(ui.ctx()).selected() {
+                match (|| {
+                    let path = dialog.path().ok_or(anyhow::anyhow!("No path selected"))?;
+
+                    let image = image::open(path)
+                        .context("Failed to open image")?
+                        .into_rgb8();
+
+                    Ok::<_, anyhow::Error>(Skybox::Image {
+                        path: path.to_path_buf(),
+                        image,
+                    })
+                })() {
+                    Ok(skybox) => {
+                        self.scene.settings.skybox = skybox;
+                    }
+                    Err(e) => {
+                        warn!("Failed to load skybox: {}", e);
+                    }
+                }
+
+                self.skybox_file_dialog = None;
+            }
+        }
+
+        ui.vertical(|ui| {
+            ui.horizontal(|ui| {
+                ui.radio(
+                    matches!(self.scene.settings.skybox, Skybox::Color(_)),
+                    "Color",
+                )
+                .clicked()
+                .then(|| {
+                    self.scene.settings.skybox = Skybox::Color(Color::default());
+                });
+
+                ui.radio(
+                    matches!(self.scene.settings.skybox, Skybox::Image { .. }),
+                    "Image",
+                )
+                .clicked()
+                .then(|| {
+                    let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
+                        Path::new(p)
+                            .extension()
+                            .map_or(false, |ext| ext.eq_ignore_ascii_case("exr"))
+                    }));
+
+                    dialog.open();
+
+                    self.skybox_file_dialog = Some(dialog);
+                });
+            });
+
+            match &mut self.scene.settings.skybox {
+                Skybox::Image { path, .. } => {
+                    ui.label(path.display().to_string());
+                }
+                Skybox::Color(c) => {
+                    ui.color_edit_button_rgb(c.as_mut());
+                }
+            }
+>>>>>>> main
         });
     }
 
@@ -440,7 +522,7 @@ impl App {
     fn change_render_size(&mut self) {
         let (x, y) = self.render_size.as_size();
         *self.render_image.lock() = RgbImage::new(x, y);
-
+        self.scene.camera.resolution = (x, y);
         self.render_texture.set(
             ImageData::Color(Arc::new(ColorImage {
                 size: [x as usize, y as usize],
