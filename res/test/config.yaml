@@ -1,67 +1,67 @@
 models:
-  - filePath: ./1.obj
-    position:
-      x: 0.7
-      y: -0.1
-      z: -0.5
-    rotation:
-      x: 1.6295541e-15
-      y: -0.0
-      z: 0.0
-    scale:
-      x: 1.0
-      y: 1.0
-      z: 1.0
-  - filePath: ./2.obj
-    position:
-      x: 0.7
-      y: -0.1
-      z: -0.5
-    rotation:
-      x: 0.000008648687
-      y: -0.0
-      z: 0.0
-    scale:
-      x: 1.0
-      y: 1.0
-      z: 1.0
+- filePath: ./1.obj
+  position:
+    x: 0.7
+    y: -0.1
+    z: -0.5
+  rotation:
+    x: 1.6295541e-15
+    y: -0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+- filePath: ./2.obj
+  position:
+    x: 0.7
+    y: -0.1
+    z: -0.5
+  rotation:
+    x: 0.000008648687
+    y: -0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
 pointLights:
-  - position:
-      x: -2.0
-      y: 3.5
-      z: -0.8
-    Ke:
-      r: 0.57735026
-      g: 0.57735026
-      b: 0.57735026
-    intensity: 40.0
-  - position:
-      x: 5.5
-      y: 0.3
-      z: -4.5
-    Ke:
-      r: 0.672333
-      g: 0.24602187
-      b: 0.6981702
-    intensity: 22.0
-  - position:
-      x: 2.0
-      y: 4.0
-      z: 1.6
-    Ke:
-      r: 0.57888657
-      g: 0.5770311
-      b: 0.57612985
-    intensity: 23.0
+- position:
+    x: -0.5
+    y: 2.6
+    z: 3.2
+  Ke:
+    r: 0.57735026
+    g: 0.57735026
+    b: 0.57735026
+  intensity: 15.0
+- position:
+    x: 5.5
+    y: 0.3
+    z: -4.5
+  Ke:
+    r: 0.672333
+    g: 0.24602187
+    b: 0.6981702
+  intensity: 15.0
+- position:
+    x: 2.0
+    y: 4.0
+    z: 1.6
+  Ke:
+    r: 0.57888657
+    g: 0.5770311
+    b: 0.57612985
+  intensity: 35.0
 camera:
   position:
-    x: 7.250971
-    y: 3.5694153
-    z: 6.2339253
+    x: 2.8361144
+    y: 1.1993386
+    z: 5.1825776
   lookAt:
-    x: 6.643236
-    y: 3.1342115
-    z: 5.5696545
+    x: 2.4265213
+    y: 0.7645105
+    z: 4.380606
   upVec:
     x: 0.0
     y: 1.0
@@ -73,10 +73,7 @@ extra_args:
   max_bounces: 3
   samples: 64
   ambient_color:
-    r: 0.343427
-    g: 0.14273214
-    b: 0.045266237
-  skybox: !Color
-    - 0.3507291
-    - 0.47097892
-    - 0.53371817
+    r: 0.09166577
+    g: 0.038097333
+    b: 0.012082231
+  skybox: !Path /home/fabian/git/Raytracing/res/skyboxes/studio_small_08_4k.exr

@@ -323,7 +323,12 @@ mod yaml {
                 .map(|p| p.join(yaml_object.file_path.as_path()))
                 .ok_or_else(|| serde::de::Error::custom("Failed to get parent path"))?;
 
-            Object::from_obj(path, translation, rotation, scale).map_err(serde::de::Error::custom)
+            Object::from_obj(path, translation, rotation, scale)
+                .map_err(serde::de::Error::custom)
+                .map(|mut o| {
+                    o.path = yaml_object.file_path;
+                    o
+                })
         }
     }
 

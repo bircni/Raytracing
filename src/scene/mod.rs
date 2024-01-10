@@ -76,7 +76,7 @@ impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRel
         let settings = Settings::deserialize(settings).map_err(serde::de::Error::custom)?;
 
         let scene = Scene {
-            path: PathBuf::new(),
+            path: self.0.as_ref().to_path_buf(),
             objects,
             lights,
             camera,
