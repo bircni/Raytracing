@@ -105,6 +105,7 @@
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>anyhow::Context;
@@ -179,11 +180,12 @@
 
         <span class="kw">let </span>settings = map
             .get(<span class="string">&quot;extra_args&quot;</span>)
-            .ok_or_else(|| serde::de::Error::missing_field(<span class="string">&quot;extra_args&quot;</span>))<span class="question-mark">?</span>;
-        <span class="kw">let </span>settings = Settings::deserialize(settings).map_err(serde::de::Error::custom)<span class="question-mark">?</span>;
+            .map(|v| Settings::deserialize(v).map_err(serde::de::Error::custom))
+            .transpose()<span class="question-mark">?
+            </span>.unwrap_or_default();
 
         <span class="kw">let </span>scene = Scene {
-            path: PathBuf::new(),
+            path: <span class="self">self</span>.<span class="number">0</span>.as_ref().to_path_buf(),
             objects,
             lights,
             camera,

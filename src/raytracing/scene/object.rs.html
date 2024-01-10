@@ -346,6 +346,13 @@
 <a href="#346" id="346">346</a>
 <a href="#347" id="347">347</a>
 <a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>anyhow::Context;
@@ -435,6 +442,8 @@
                         <span class="macro">warn!</span>(<span class="string">&quot;Invalid illumination model: {}&quot;</span>, m.illum.unwrap_or(-<span class="number">1</span>));
                         IlluminationModel::default()
                     }),
+                dissolve: m.d.map(|d| <span class="number">1.0 </span>- d),
+                refraction_index: m.ni,
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span><span class="kw-2">mut </span>warnings = (<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>);
@@ -669,7 +678,12 @@
                 .map(|p| p.join(yaml_object.file_path.as_path()))
                 .ok_or_else(|| serde::de::Error::custom(<span class="string">&quot;Failed to get parent path&quot;</span>))<span class="question-mark">?</span>;
 
-            Object::from_obj(path, translation, rotation, scale).map_err(serde::de::Error::custom)
+            Object::from_obj(path, translation, rotation, scale)
+                .map_err(serde::de::Error::custom)
+                .map(|<span class="kw-2">mut </span>o| {
+                    o.path = yaml_object.file_path;
+                    o
+                })
         }
     }
 

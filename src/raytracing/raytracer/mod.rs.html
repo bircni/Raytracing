@@ -180,7 +180,51 @@
 <a href="#180" id="180">180</a>
 <a href="#181" id="181">181</a>
 <a href="#182" id="182">182</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>nalgebra::{Point3, Vector2, Vector3};
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>image::RgbImage;
+<span class="kw">use </span>nalgebra::{Point3, Vector2, Vector3};
 <span class="kw">use </span>ordered_float::OrderedFloat;
 
 <span class="kw">use crate</span>::{
@@ -194,7 +238,7 @@
     <span class="kw">pub </span>direction: Vector3&lt;f32&gt;,
 }
 
-<span class="attr">#[derive(Debug)]
+<span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>Hit&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="kw">pub </span>name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
     <span class="kw">pub </span>point: Point3&lt;f32&gt;,
@@ -232,122 +276,165 @@
         incoming - <span class="number">2.0 </span>* incoming.dot(<span class="kw-2">&amp;</span>normal) * normal
     }
 
-    <span class="kw">fn </span>shade(<span class="kw-2">&amp;</span><span class="self">self</span>, ray: Ray, hit: <span class="prelude-ty">Option</span>&lt;Hit&gt;, depth: u32) -&gt; Color {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(hit) = hit {
-            <span class="kw">let </span>diffuse = (hit
-                .material
-                .and_then(|m| m.diffuse_texture.as_ref())
-                .map(|map| {
-                    <span class="kw">let </span>uv = hit.uv;
-                    <span class="kw">let </span>x = (uv.x * map.width() <span class="kw">as </span>f32) <span class="kw">as </span>u32 % map.width();
-                    <span class="kw">let </span>y = ((<span class="number">1.0 </span>- uv.y) * map.height() <span class="kw">as </span>f32) <span class="kw">as </span>u32 % map.height();
-                    <span class="kw">let </span>pixel = map.get_pixel(x, y);
-                    Color::new(
-                        f32::from(pixel[<span class="number">0</span>]) / <span class="number">255.0</span>,
-                        f32::from(pixel[<span class="number">1</span>]) / <span class="number">255.0</span>,
-                        f32::from(pixel[<span class="number">2</span>]) / <span class="number">255.0</span>,
-                    )
-                }))
+    <span class="kw">fn </span>refract(incident_ray: Vector3&lt;f32&gt;, surface_normal: Vector3&lt;f32&gt;, eta: f32) -&gt; Vector3&lt;f32&gt; {
+        <span class="kw">let </span>cos_theta_i = -surface_normal.dot(<span class="kw-2">&amp;</span>incident_ray);
+        <span class="kw">let </span>sin_theta_t_squared = eta.powi(<span class="number">2</span>) * (<span class="number">1.0 </span>- cos_theta_i.powi(<span class="number">2</span>));
+        <span class="kw">if </span>sin_theta_t_squared &gt; <span class="number">1.0 </span>{
+            <span class="kw">return </span>Vector3::zeros();
+        }
+        <span class="kw">let </span>cos_theta_t = (<span class="number">1.0 </span>- sin_theta_t_squared).sqrt();
+        eta * incident_ray + (eta * cos_theta_i - cos_theta_t) * surface_normal
+    }
+
+    <span class="kw">fn </span>skybox(<span class="kw-2">&amp;</span><span class="self">self</span>, direction: Vector3&lt;f32&gt;) -&gt; Color {
+        <span class="kw">let </span>direction = direction
+            .try_normalize(f32::EPSILON)
+            .unwrap_or(Vector3::y());
+
+        <span class="kw">let </span>x = <span class="number">0.5 </span>+ direction.z.atan2(direction.x) / (<span class="number">2.0 </span>* std::f32::consts::PI);
+        <span class="kw">let </span>y = <span class="number">0.5 </span>- direction.y.asin() / std::f32::consts::PI;
+
+        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.scene.settings.skybox {
+            Skybox::Image { image, .. } =&gt; {
+                <span class="kw">let </span>x = (x * image.width() <span class="kw">as </span>f32) <span class="kw">as </span>u32 % image.width();
+                <span class="kw">let </span>y = (y * image.height() <span class="kw">as </span>f32) <span class="kw">as </span>u32 % image.height();
+
+                <span class="kw">let </span>pixel = image.get_pixel(x, y);
+
+                Color::new(
+                    f32::from(pixel[<span class="number">0</span>]) / <span class="number">255.0</span>,
+                    f32::from(pixel[<span class="number">1</span>]) / <span class="number">255.0</span>,
+                    f32::from(pixel[<span class="number">2</span>]) / <span class="number">255.0</span>,
+                )
+            }
+            Skybox::Color(color) =&gt; <span class="kw-2">*</span>color,
+        }
+    }
+
+    <span class="kw">fn </span>texture(texture: <span class="kw-2">&amp;</span>RgbImage, uv: Vector2&lt;f32&gt;) -&gt; Color {
+        <span class="kw">let </span>x = (uv.x * texture.width() <span class="kw">as </span>f32) <span class="kw">as </span>u32 % texture.width();
+        <span class="kw">let </span>y = ((<span class="number">1.0 </span>- uv.y) * texture.height() <span class="kw">as </span>f32) <span class="kw">as </span>u32 % texture.height();
+        <span class="kw">let </span>pixel = texture.get_pixel(x, y);
+        Color::new(
+            f32::from(pixel[<span class="number">0</span>]) / <span class="number">255.0</span>,
+            f32::from(pixel[<span class="number">1</span>]) / <span class="number">255.0</span>,
+            f32::from(pixel[<span class="number">2</span>]) / <span class="number">255.0</span>,
+        )
+    }
+
+    <span class="kw">fn </span>raycast_transparent(<span class="kw-2">&amp;</span><span class="self">self</span>, ray: Ray) -&gt; Box&lt;[Hit]&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>hits = Vec::&lt;Hit&gt;::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>ray = ray;
+
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(hit) = <span class="self">self</span>.raycast(ray) {
+            hits.push(hit.clone());
+
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(material) = hit.material {
+                <span class="kw">if </span>material.illumination_model.transparency() {
+                    <span class="comment">// hochwissenschaftliche Formel
+                    </span>ray.origin += ray.direction * <span class="number">0.05</span>;
+                    <span class="kw">continue</span>;
+                }
+            }
+            <span class="kw">break</span>;
+        }
+
+        hits.into_boxed_slice()
+    }
+
+    <span class="kw">fn </span>shade(<span class="kw-2">&amp;</span><span class="self">self</span>, ray: Ray, depth: u32) -&gt; Color {
+        <span class="comment">// hochwissnschaftliche Formel +- x
+        </span><span class="self">self</span>.raycast_transparent(ray).last().map_or_else(
+            || <span class="self">self</span>.skybox(ray.direction),
+            |hit| <span class="self">self</span>.shade_impl(ray, hit, depth),
+        )
+    }
+
+    <span class="kw">fn </span>shade_impl(<span class="kw-2">&amp;</span><span class="self">self</span>, ray: Ray, hit: <span class="kw-2">&amp;</span>Hit, depth: u32) -&gt; Color {
+        <span class="kw">if </span>depth &gt;= <span class="self">self</span>.max_depth {
+            <span class="kw">return </span><span class="self">self</span>.skybox(ray.direction);
+        }
+
+        <span class="kw">let </span>diffuse_color = hit
+            .material
+            .and_then(|m| m.diffuse_texture.as_ref())
+            .map(|map| <span class="self">Self</span>::texture(map, hit.uv))
             .or(hit.material.and_then(|m| m.diffuse_color).map(Color::from))
             .unwrap_or(<span class="self">Self</span>::NO_MATERIAL_COLOR);
-            <span class="kw">let </span>specular = hit
-                .material
-                .and_then(|m| m.specular_color)
-                .map_or(<span class="self">Self</span>::NO_MATERIAL_COLOR, Color::from);
 
-            <span class="kw">let </span><span class="kw-2">mut </span>color = <span class="self">self</span>.scene.settings.ambient_color.component_mul(<span class="kw-2">&amp;</span>diffuse)
-                * <span class="self">self</span>.scene.settings.ambient_intensity;
+        <span class="kw">let </span>specular_color = hit
+            .material
+            .and_then(|m| m.specular_color)
+            .map_or(<span class="self">Self</span>::NO_MATERIAL_COLOR, Color::from);
 
-            <span class="kw">for </span>light <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.scene.lights {
-                <span class="kw">let </span>light_direction = (light.position - hit.point).normalize();
-                <span class="kw">let </span>light_ray = Ray {
-                    origin: hit.point + light_direction * <span class="self">self</span>.delta,
-                    direction: light_direction,
-                };
+        <span class="kw">let </span><span class="kw-2">mut </span>color = <span class="self">self
+            </span>.scene
+            .settings
+            .ambient_color
+            .component_mul(<span class="kw-2">&amp;</span>diffuse_color)
+            * <span class="self">self</span>.scene.settings.ambient_intensity;
 
-                <span class="kw">let </span>shadow = <span class="self">self</span>.raycast(light_ray).is_some();
+        <span class="kw">for </span>light <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.scene.lights {
+            <span class="kw">let </span>light_direction = (light.position - hit.point).normalize();
+            <span class="kw">let </span>light_ray = Ray {
+                origin: hit.point + light_direction * <span class="self">self</span>.delta,
+                direction: light_direction,
+            };
 
-                <span class="kw">if </span>!shadow {
-                    <span class="comment">// Diffuse
-                    </span><span class="kw">let </span>light_intensity =
-                        light.intensity / (light.position - hit.point).norm_squared();
-                    <span class="kw">let </span>light_reflection = light_direction.dot(<span class="kw-2">&amp;</span>hit.normal).max(<span class="number">0.0</span>);
+            <span class="kw">let </span>light_transmission_color = <span class="self">self
+                </span>.raycast_transparent(light_ray)
+                .iter()
+                .last()
+                .map_or(Color::from_element(<span class="number">1.0</span>), |hit| {
+                    color.component_mul(
+                        <span class="kw-2">&amp;</span>hit.material
+                            .and_then(|m| m.diffuse_color)
+                            .unwrap_or(Color::from_element(<span class="number">1.0</span>)),
+                    ) * hit.material.and_then(|m| m.dissolve).unwrap_or(<span class="number">1.0</span>)
+                })
+                .component_mul(<span class="kw-2">&amp;</span>light.color);
 
-                    color +=
-                        diffuse.component_mul(<span class="kw-2">&amp;</span>light.color) * light_intensity * light_reflection;
-
-                    <span class="comment">// Specular
-                    </span><span class="kw">if </span>hit
-                        .material
-                        .is_some_and(|m| m.illumination_model.specular())
-                    {
-                        <span class="kw">let </span>reflection_direction = <span class="self">Self</span>::reflect(-light_direction, hit.normal);
-                        <span class="kw">let </span>specular_component = reflection_direction
-                            .dot(<span class="kw-2">&amp;</span>-light_ray.direction)
-                            .max(<span class="number">0.0</span>)
-                            .powf(
-                                hit.material
-                                    .and_then(|m| m.specular_exponent)
-                                    .unwrap_or(<span class="number">1.0</span>),
-                            );
-
-                        color += specular.component_mul(<span class="kw-2">&amp;</span>light.color)
-                            * light_intensity
-                            * specular_component;
-                    }
-                }
-
-                <span class="comment">// Reflection
-                </span><span class="kw">if </span>depth &lt; <span class="self">self</span>.max_depth
-                    &amp;&amp; hit
-                        .material
-                        .is_some_and(|m| m.illumination_model.reflection())
-                {
-                    <span class="kw">let </span>reflection_direction = <span class="self">Self</span>::reflect(ray.direction, hit.normal);
-                    <span class="kw">let </span>reflection_ray = Ray {
-                        origin: hit.point + reflection_direction * <span class="self">self</span>.delta,
-                        direction: reflection_direction,
-                    };
-
-                    <span class="comment">// compute fresnel based on Schlick&#39;s approximation
-                    </span><span class="kw">let </span>fresnel = <span class="number">0.04 </span>+ <span class="number">0.96 </span>* (<span class="number">1.0 </span>- reflection_ray.direction.dot(<span class="kw-2">&amp;</span>hit.normal));
-                    <span class="kw">let </span>reflection =
-                        <span class="self">self</span>.shade(reflection_ray, <span class="self">self</span>.raycast(reflection_ray), depth + <span class="number">1</span>);
-
-                    <span class="comment">// mix reflection and diffuse color based on fresnel and specular exponent
-                    </span><span class="kw">let </span>specular_exponent = hit
-                        .material
-                        .and_then(|m| m.specular_exponent)
-                        .unwrap_or(<span class="number">1.0</span>)
-                        / <span class="number">1000.0</span>;
-
-                    color = color.lerp(<span class="kw-2">&amp;</span>reflection, <span class="number">1.0 </span>- fresnel.powf(specular_exponent));
-                }
+            <span class="kw">if </span>light_transmission_color.norm() &lt; <span class="number">0.01 </span>{
+                <span class="kw">continue</span>;
             }
 
-            color
-        } <span class="kw">else </span>{
-            <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.scene.settings.skybox {
-                Skybox::Image { image, .. } =&gt; {
-                    <span class="comment">// environment map projection
-                    </span><span class="kw">let </span>ray_dir = ray.direction.normalize();
-                    <span class="kw">let </span>x = <span class="number">0.5 </span>+ ray_dir.z.atan2(ray_dir.x) / (<span class="number">2.0 </span>* std::f32::consts::PI);
-                    <span class="kw">let </span>y = <span class="number">0.5 </span>- ray_dir.y.asin() / std::f32::consts::PI;
+            <span class="comment">// diffuse component
+            </span><span class="kw">let </span>light_intensity = light.intensity / (light.position - hit.point).norm_squared();
+            <span class="kw">let </span>diffuse_intensity = light_direction.dot(<span class="kw-2">&amp;</span>hit.normal).max(<span class="number">0.0</span>) * light_intensity;
+            color += diffuse_color.component_mul(<span class="kw-2">&amp;</span>light_transmission_color) * diffuse_intensity;
 
-                    <span class="kw">let </span>pixel = image.get_pixel(
-                        (x * image.width() <span class="kw">as </span>f32) <span class="kw">as </span>u32 % image.width(),
-                        (y * image.height() <span class="kw">as </span>f32) <span class="kw">as </span>u32 % image.height(),
-                    );
-
-                    Color::new(
-                        f32::from(pixel[<span class="number">0</span>]) / <span class="number">255.0</span>,
-                        f32::from(pixel[<span class="number">1</span>]) / <span class="number">255.0</span>,
-                        f32::from(pixel[<span class="number">2</span>]) / <span class="number">255.0</span>,
+            <span class="comment">// specular component
+            </span><span class="kw">if </span>hit
+                .material
+                .is_some_and(|m| m.illumination_model.specular())
+            {
+                <span class="kw">let </span>specular_intensity = light_direction
+                    .dot(<span class="kw-2">&amp;</span><span class="self">Self</span>::reflect(-ray.direction, hit.normal))
+                    .max(<span class="number">0.0</span>)
+                    .powf(
+                        hit.material
+                            .and_then(|m| m.specular_exponent)
+                            .unwrap_or(<span class="number">1.0</span>),
                     )
-                }
-                Skybox::Color(color) =&gt; <span class="kw-2">*</span>color,
+                    * light_intensity;
+                color +=
+                    specular_color.component_mul(<span class="kw-2">&amp;</span>light_transmission_color) * specular_intensity;
+            }
+
+            <span class="comment">// reflection
+            </span><span class="kw">if </span>hit
+                .material
+                .is_some_and(|m| m.illumination_model.reflection())
+            {
+                <span class="kw">let </span>reflection_ray = Ray {
+                    origin: hit.point + hit.normal * <span class="self">self</span>.delta,
+                    direction: <span class="self">Self</span>::reflect(ray.direction, hit.normal),
+                };
+                color = color.component_mul(<span class="kw-2">&amp;</span><span class="self">self</span>.shade(reflection_ray, depth + <span class="number">1</span>));
             }
         }
+
+        color
     }
 
     <span class="doccomment">/// Render a pixel at the given coordinates.
@@ -358,8 +445,7 @@
         <span class="kw">let </span>y = (y <span class="kw">as </span>f32 / height <span class="kw">as </span>f32) * <span class="number">2.0 </span>- <span class="number">1.0</span>;
 
         <span class="kw">let </span>ray = <span class="self">self</span>.scene.camera.ray(x, y);
-        <span class="kw">let </span>hit = <span class="self">self</span>.raycast(ray);
-        <span class="self">self</span>.shade(ray, hit, <span class="number">0</span>)
+        <span class="self">self</span>.shade(ray, <span class="number">0</span>)
     }
 }
 </code></pre></div></section></main></body></html>

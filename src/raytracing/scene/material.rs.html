@@ -32,6 +32,12 @@
 <a href="#32" id="32">32</a>
 <a href="#33" id="33">33</a>
 <a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>image::RgbImage;
 
 <span class="kw">use </span><span class="kw">crate</span>::Color;
@@ -44,6 +50,8 @@
     <span class="kw">pub </span>specular_exponent: <span class="prelude-ty">Option</span>&lt;f32&gt;,
     <span class="kw">pub </span>diffuse_texture: <span class="prelude-ty">Option</span>&lt;RgbImage&gt;,
     <span class="kw">pub </span>illumination_model: IlluminationModel,
+    <span class="kw">pub </span>dissolve: <span class="prelude-ty">Option</span>&lt;f32&gt;,
+    <span class="kw">pub </span>refraction_index: <span class="prelude-ty">Option</span>&lt;f32&gt;,
 }
 
 <span class="attr">#[derive(Default, Debug, Clone, Copy, PartialEq)]
@@ -64,6 +72,10 @@
 
     <span class="kw">pub fn </span>reflection(<span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.<span class="number">0 </span>== <span class="number">3 </span>|| <span class="self">self</span>.<span class="number">0 </span>== <span class="number">4
+    </span>}
+
+    <span class="kw">pub fn </span>transparency(<span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.<span class="number">0 </span>== <span class="number">5 </span>|| <span class="self">self</span>.<span class="number">0 </span>== <span class="number">7
     </span>}
 }
 </code></pre></div></section></main></body></html>

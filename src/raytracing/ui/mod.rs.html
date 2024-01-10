@@ -942,7 +942,7 @@
             .context(<span class="string">&quot;Failed to serialize scene&quot;</span>)
             .and_then(|str| std::fs::write(<span class="kw-2">&amp;</span><span class="self">self</span>.scene.path, str).context(<span class="string">&quot;Failed to save config&quot;</span>))
             .unwrap_or_else(|e| {
-                <span class="macro">warn!</span>(<span class="string">&quot;Failed to save config: {}&quot;</span>, e);
+                <span class="macro">warn!</span>(<span class="string">&quot;{}&quot;</span>, e);
             });
     }
 
