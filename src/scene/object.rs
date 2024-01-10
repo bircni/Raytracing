@@ -48,11 +48,13 @@ impl Object {
         rotation: UnitQuaternion<f32>,
         scale: Scale3<f32>,
     ) -> anyhow::Result<Object> {
-        let mut obj = obj::Obj::load(path.as_ref())
-            .context(format!("Failed to load obj from path: {:?}", path.as_ref()))?;
+        let mut obj = obj::Obj::load(path.as_ref()).context(format!(
+            "Failed to load obj from path: {}",
+            path.as_ref().display()
+        ))?;
         obj.load_mtls().context(format!(
-            "Failed to load materials from obj path: {:?}",
-            path.as_ref()
+            "Failed to load materials from obj path: {}",
+            path.as_ref().display()
         ))?;
 
         let materials = obj
@@ -275,14 +277,15 @@ fn triangulate(
     triangles
 }
 
+pub struct WithRelativePath<P: AsRef<std::path::Path>>(pub P);
+
 mod yaml {
     use std::path::PathBuf;
 
-    use anyhow::Context;
     use nalgebra::{Point3, Scale3, Translation3, UnitQuaternion, Vector3};
     use serde::{Deserialize, Serialize};
 
-    use super::Object;
+    use super::{Object, WithRelativePath};
 
     #[derive(Serialize, Deserialize)]
     pub struct ObjectDef {
@@ -296,8 +299,10 @@ mod yaml {
         pub scale: Vector3<f32>,
     }
 
-    impl<'de> serde::Deserialize<'de> for Object {
-        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRelativePath<P> {
+        type Value = Object;
+
+        fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
         where
             D: serde::Deserializer<'de>,
         {
@@ -311,17 +316,14 @@ mod yaml {
             );
             let scale = Scale3::from(yaml_object.scale);
 
-            Object::from_obj(
-                yaml_object.file_path.as_path(),
-                translation,
-                rotation,
-                scale,
-            )
-            .context(format!(
-                "Failed to load object from path: {:?}",
-                yaml_object.file_path
-            ))
-            .map_err(serde::de::Error::custom)
+            let path = self
+                .0
+                .as_ref()
+                .parent()
+                .map(|p| p.join(yaml_object.file_path.as_path()))
+                .ok_or_else(|| serde::de::Error::custom("Failed to get parent path"))?;
+
+            Object::from_obj(path, translation, rotation, scale).map_err(serde::de::Error::custom)
         }
     }
 
