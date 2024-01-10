@@ -454,28 +454,57 @@ impl App {
                 for skybox in Skybox::iter() {
                     if let Some(url) = skybox.get_url() {
                         info!("Downloading skybox from: {}", url);
-                        let file_path = format!("{}/{skybox}.exr", path.display());
-                        if let Ok(metadata) = metadata(&file_path) {
-                            if metadata.is_file() {
-                                log::info!("Skybox file already exists at: {}", file_path);
-                            } else if let Ok(response) = reqwest::blocking::get(url) {
-                                if let Ok(img_bytes) = response.bytes() {
-                                    if let Ok(mut file) = File::create(&file_path) {
-                                        if file.write_all(&img_bytes).is_ok() {
-                                            log::info!(
-                                                "Downloaded and saved skybox to: {}",
-                                                file_path
-                                            );
+                        let file_path = format!("{}/{}.exr", path.display(), skybox);
+                        match metadata(&file_path) {
+                            Ok(metadata) => {
+                                if metadata.is_file() {
+                                    log::info!("Skybox file already exists at: {}", file_path);
+                                } else {
+                                    // File doesn't exist, proceed with downloading
+                                    if let Ok(response) = reqwest::blocking::get(url) {
+                                        if let Ok(img_bytes) = response.bytes() {
+                                            if let Ok(mut file) = File::create(&file_path) {
+                                                if file.write_all(&img_bytes).is_ok() {
+                                                    log::info!(
+                                                        "Downloaded and saved skybox to: {}",
+                                                        file_path
+                                                    );
+                                                }
+                                            } else {
+                                                log::error!("Failed to create file: {}", file_path);
+                                            }
+                                        } else {
+                                            log::error!("Failed to get bytes from response");
                                         }
+                                    } else {
+                                        log::error!("Failed to get response");
+                                    }
+                                }
+                            }
+                            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                                // File doesn't exist, proceed with downloading
+                                if let Ok(response) = reqwest::blocking::get(url) {
+                                    if let Ok(img_bytes) = response.bytes() {
+                                        if let Ok(mut file) = File::create(&file_path) {
+                                            if file.write_all(&img_bytes).is_ok() {
+                                                log::info!(
+                                                    "Downloaded and saved skybox to: {}",
+                                                    file_path
+                                                );
+                                            }
+                                        } else {
+                                            log::error!("Failed to create file: {}", file_path);
+                                        }
+                                    } else {
+                                        log::error!("Failed to get bytes from response");
                                     }
                                 } else {
-                                    log::error!("Failed to get bytes from response");
+                                    log::error!("Failed to get response");
                                 }
-                            } else {
-                                log::error!("Failed to get response");
                             }
-                        } else {
-                            log::error!("Failed to check if the file exists");
+                            Err(e) => {
+                                log::error!("Failed to check if the file exists: {}", e);
+                            }
                         }
                     }
                 }

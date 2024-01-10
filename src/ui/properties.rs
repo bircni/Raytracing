@@ -42,6 +42,7 @@ impl App {
         });
     }
 
+    #[allow(clippy::out_of_bounds_indexing)]
     pub fn properties(&mut self, ui: &mut Ui) {
         SidePanel::right("panel")
             .show_separator_line(true)
@@ -315,6 +316,7 @@ impl App {
         });
     }
 
+    #[allow(clippy::out_of_bounds_indexing)]
     fn lights(&mut self, ui: &mut Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
@@ -402,6 +404,7 @@ impl App {
 
             let mut objects_to_remove = Vec::new();
 
+            #[allow(clippy::out_of_bounds_indexing)]
             for (n, o) in self.scene.objects.iter_mut().enumerate() {
                 ui.separator();
 
