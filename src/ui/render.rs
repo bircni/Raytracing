@@ -24,7 +24,7 @@ impl super::App {
 
         let texture = self.render_texture.clone();
         let mut raytracer = Raytracer::new(self.scene.clone(), 1e-5);
-        let block_size = [render_size.0 / 10, render_size.1 / 10];
+        let block_size = [render_size.0 / 20, render_size.1 / 20];
         let rendering_progress = self.rendering_progress.clone();
         let rendering_cancel = self.rendering_cancel.clone();
         let image_buffer = self.render_image.clone();

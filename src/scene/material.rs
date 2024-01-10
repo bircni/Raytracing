@@ -10,7 +10,7 @@ pub struct Material {
     pub specular_exponent: Option<f32>,
     pub diffuse_texture: Option<RgbImage>,
     pub illumination_model: IlluminationModel,
-    pub transparency: Option<f32>,
+    pub dissolve: Option<f32>,
     pub refraction_index: Option<f32>,
 }
 
