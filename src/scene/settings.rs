@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-use crate::{raytracer::Skybox, Color};
-=======
 use crate::Color;
 
 use super::Skybox;
->>>>>>> main
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Settings {
@@ -12,9 +8,6 @@ pub struct Settings {
     pub samples: u32,
     pub ambient_color: Color,
     pub ambient_intensity: f32,
-<<<<<<< HEAD
-    pub skybox: Option<Skybox>,
-=======
     pub skybox: Skybox,
 }
 
@@ -28,7 +21,6 @@ impl Default for Settings {
             skybox: Skybox::default(),
         }
     }
->>>>>>> main
 }
 
 mod yaml {
@@ -59,11 +51,7 @@ mod yaml {
                     .try_normalize(0.0)
                     .unwrap_or_default(),
                 ambient_intensity: yaml_extras.ambient_color.norm(),
-<<<<<<< HEAD
-                skybox: None,
-=======
                 skybox: yaml_extras.skybox,
->>>>>>> main
             })
         }
     }

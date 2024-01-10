@@ -12,13 +12,8 @@ use log::warn;
 use nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
 
 use crate::{
-<<<<<<< HEAD
-    raytracer::Skybox,
-    scene::{Light, Object},
-=======
     scene::{Light, Object, Skybox},
     Color,
->>>>>>> main
 };
 
 use super::{App, RenderSize};
@@ -52,22 +47,6 @@ impl App {
                             .clicked()
                             .then(|| {
                                 self.save_scene();
-                            });
-                            ui.add_sized(
-                                [20.0, 20.0],
-                                ImageButton::new(include_image!(
-                                    "../../res/icons/download-solid.svg"
-                                ))
-                                .tint(hex_color!("#ffffff")),
-                            )
-                            .on_hover_text("Download all Skyboxes")
-                            .clicked()
-                            .then(|| {
-                                if let Some(skybox_path) = self.scene.path.parent() {
-                                    self.download_skyboxes(skybox_path.join("skybox"));
-                                } else {
-                                    warn!("Failed to download skyboxes: scene path is not set");
-                                }
                             });
                         });
                     });
@@ -127,25 +106,12 @@ impl App {
 
             self.render_options(ui);
 
-<<<<<<< HEAD
-            self.skybox_options(ui);
-
-            ui.add_enabled_ui(self.scene.settings.skybox.is_none(), |ui| {
-                ui.label("Background Color:");
-                color_picker::color_edit_button_rgb(
-                    ui,
-                    self.scene.settings.background_color.as_mut(),
-                );
-            });
-
-=======
             ui.separator();
 
             self.skybox_options(ui);
 
             ui.separator();
 
->>>>>>> main
             ui.label("Ambient Color:");
             color_picker::color_edit_button_rgb(ui, self.scene.settings.ambient_color.as_mut());
 
@@ -242,49 +208,6 @@ impl App {
 
     fn skybox_options(&mut self, ui: &mut Ui) {
         ui.label("Skybox:");
-<<<<<<< HEAD
-        let mut skybox = self.scene.settings.skybox;
-        ui.vertical(|ui| {
-            egui::ComboBox::from_id_source(1)
-                .selected_text(format!("{}", skybox.unwrap_or(Skybox::None)))
-                .show_ui(ui, |ui| {
-                    (ui.selectable_value(&mut skybox, None, format!("{}", Skybox::None))
-                        .changed()
-                        | ui.selectable_value(
-                            &mut skybox,
-                            Some(Skybox::ScythianTombs2),
-                            format!("{}", Skybox::ScythianTombs2),
-                        )
-                        .changed()
-                        | ui.selectable_value(
-                            &mut skybox,
-                            Some(Skybox::RainforestTrail),
-                            format!("{}", Skybox::RainforestTrail),
-                        )
-                        .changed()
-                        | ui.selectable_value(
-                            &mut skybox,
-                            Some(Skybox::StudioSmall08),
-                            format!("{}", Skybox::StudioSmall08),
-                        )
-                        .changed()
-                        | ui.selectable_value(
-                            &mut skybox,
-                            Some(Skybox::Kloppenheim02),
-                            format!("{}", Skybox::Kloppenheim02),
-                        )
-                        .changed()
-                        | ui.selectable_value(
-                            &mut skybox,
-                            Some(Skybox::CircusArena),
-                            format!("{}", Skybox::CircusArena),
-                        )
-                        .changed())
-                    .then(|| {
-                        self.scene.settings.skybox = skybox;
-                    });
-                });
-=======
 
         if let Some(dialog) = &mut self.skybox_file_dialog {
             if dialog.show(ui.ctx()).selected() {
@@ -349,7 +272,6 @@ impl App {
                     ui.color_edit_button_rgb(c.as_mut());
                 }
             }
->>>>>>> main
         });
     }
 

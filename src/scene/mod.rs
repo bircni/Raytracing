@@ -5,10 +5,7 @@ use serde::{Deserialize, Serialize};
 
 pub use self::{
     camera::Camera, light::Light, material::Material, object::Object, settings::Settings,
-<<<<<<< HEAD
-=======
     skybox::Skybox,
->>>>>>> main
 };
 
 mod camera;

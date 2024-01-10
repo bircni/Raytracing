@@ -85,11 +85,8 @@ impl Object {
                         warn!("Invalid illumination model: {}", m.illum.unwrap_or(-1));
                         IlluminationModel::default()
                     }),
-<<<<<<< HEAD
                 dissolve: m.d.map(|d| 1.0 - d),
                 refraction_index: m.ni,
-=======
->>>>>>> main
             })
             .collect::<Vec<_>>();
         let mut warnings = (0, 0, 0);
@@ -221,16 +218,7 @@ fn triangulate(
             .cross(&(a - c))
             .try_normalize(f32::EPSILON)
             .unwrap_or_else(|| {
-<<<<<<< HEAD
-                warn!(
-                    "Computed normal for triangle with vertices {}, {}, {} is zero",
-                    poly.0[0].0,
-                    poly.0[i].0,
-                    poly.0[i + 1].0
-                );
-=======
                 *computed_normals_zero += 1;
->>>>>>> main
                 Vector3::new(0.0, 0.0, 0.0)
             });
 
@@ -240,86 +228,42 @@ fn triangulate(
             c,
             poly.0[0].2.map_or_else(
                 || {
-<<<<<<< HEAD
-                    warn!(
-                        "No normal for vertex {} in {}",
-                        poly.0[0].0, obj.data.objects[0].name
-                    );
-=======
                     *no_normals += 1;
->>>>>>> main
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[i].2.map_or_else(
                 || {
-<<<<<<< HEAD
-                    warn!(
-                        "No normal for vertex {} in {}",
-                        poly.0[i].0, obj.data.objects[0].name
-                    );
-=======
                     *no_normals += 1;
->>>>>>> main
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[i + 1].2.map_or_else(
                 || {
-<<<<<<< HEAD
-                    warn!(
-                        "No normal for vertex {} in {}",
-                        poly.0[i + 1].0,
-                        obj.data.objects[0].name
-                    );
-=======
                     *no_normals += 1;
->>>>>>> main
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[0].1.map_or_else(
                 || {
-<<<<<<< HEAD
-                    warn!(
-                        "No UV for vertex {} in {}",
-                        poly.0[0].0, obj.data.objects[0].name
-                    );
-=======
                     *no_uv += 1;
->>>>>>> main
                     Vector2::new(0.0, 0.0)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
             ),
             poly.0[i].1.map_or_else(
                 || {
-<<<<<<< HEAD
-                    warn!(
-                        "No UV for vertex {} in {}",
-                        poly.0[i].0, obj.data.objects[0].name
-                    );
-=======
                     *no_uv += 1;
->>>>>>> main
                     Vector2::new(0.0, 0.0)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
             ),
             poly.0[i + 1].1.map_or_else(
                 || {
-<<<<<<< HEAD
-                    warn!(
-                        "No UV for vertex {} in {}",
-                        poly.0[i + 1].0,
-                        obj.data.objects[0].name
-                    );
-=======
                     *no_uv += 1;
->>>>>>> main
                     Vector2::new(0.0, 0.0)
                 },
                 |i| Vector2::from(obj.data.texture[i]),

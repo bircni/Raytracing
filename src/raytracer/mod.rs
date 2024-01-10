@@ -1,15 +1,9 @@
-use std::{
-    fs::{create_dir_all, File},
-    io::{Read, Write},
-};
-
 use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
-use strum_macros::EnumIter;
 
 use crate::{
-    scene::{Material, Scene},
+    scene::{Material, Scene, Skybox},
     Color,
 };
 
@@ -45,64 +39,6 @@ impl Raytracer {
         }
     }
 
-    pub fn load_skybox<P: AsRef<std::path::Path>>(
-        &mut self,
-        skybox: Skybox,
-        save_path: P,
-    ) -> anyhow::Result<()> {
-        if skybox == Skybox::None {
-            return Ok(());
-        }
-        if let Err(e) = create_dir_all(&save_path) {
-            log::error!("Failed to create directory: {}", e);
-            return Err(anyhow::anyhow!("Failed to create directory: {}", e));
-        }
-        let file_path = format!("{}/{}.exr", save_path.as_ref().display(), skybox.clone());
-        if let Ok(mut file) = File::open(&file_path) {
-            log::info!("Loading skybox from file: {}", file_path);
-            let mut img_bytes = Vec::new();
-            if file.read_to_end(&mut img_bytes).is_ok() {
-                log::info!("Loaded skybox from file: {}", file_path);
-                if let Ok(image) = image::load_from_memory(&img_bytes) {
-                    self.skybox_image = Some(image.to_rgb8());
-                    return Ok(());
-                }
-            }
-            log::error!("Failed to read skybox file: {}", file_path);
-            return Err(anyhow::anyhow!("Failed to read skybox file: {}", file_path));
-        } else if let Some(url) = skybox.get_url() {
-            log::info!("Downloading skybox from: {}", url);
-            match reqwest::blocking::get(url) {
-                Ok(response) => match response.bytes() {
-                    Ok(img_bytes) => {
-                        if let Ok(mut file) = File::create(&file_path) {
-                            if file.write_all(&img_bytes).is_ok() {
-                                log::info!("Downloaded and saved skybox to: {}", file_path);
-                                if let Ok(image) = image::load_from_memory(&img_bytes) {
-                                    self.skybox_image = Some(image.to_rgb8());
-                                    return Ok(());
-                                }
-                            }
-                        }
-                        return Err(anyhow::anyhow!(
-                            "Failed to save skybox to file: {}",
-                            file_path
-                        ));
-                    }
-                    Err(e) => {
-                        log::error!("Failed to get skybox bytes: {}", e);
-                        return Err(anyhow::anyhow!("Failed to get skybox bytes: {}", e));
-                    }
-                },
-                Err(e) => {
-                    log::error!("Failed to download skybox: {}", e);
-                    return Err(anyhow::anyhow!("Failed to download skybox: {}", e));
-                }
-            }
-        }
-        Err(anyhow::anyhow!("Failed to get skybox url"))
-    }
-
     fn raycast(&self, ray: Ray) -> Option<Hit> {
         self.scene
             .objects
@@ -129,19 +65,20 @@ impl Raytracer {
         let x = (direction.x.atan2(direction.z) / (2.0 * std::f32::consts::PI) + 0.5) % 1.0;
         let y = (direction.y + 0.08).acos() / std::f32::consts::PI;
 
-        if let Some(skybox) = &self.skybox_image {
-            let x = (x * skybox.width() as f32) as u32 % skybox.width();
-            let y = (y * skybox.height() as f32) as u32 % skybox.height();
+        match &self.scene.settings.skybox {
+            Skybox::Image { image, .. } => {
+                let x = (x * image.width() as f32) as u32 % image.width();
+                let y = (y * image.height() as f32) as u32 % image.height();
 
-            let pixel = skybox.get_pixel(x, y);
+                let pixel = image.get_pixel(x, y);
 
-            Color::new(
-                f32::from(pixel[0]) / 255.0,
-                f32::from(pixel[1]) / 255.0,
-                f32::from(pixel[2]) / 255.0,
-            )
-        } else {
-            self.scene.settings.background_color
+                Color::new(
+                    f32::from(pixel[0]) / 255.0,
+                    f32::from(pixel[1]) / 255.0,
+                    f32::from(pixel[2]) / 255.0,
+                )
+            }
+            Skybox::Color(color) => *color,
         }
     }
 
