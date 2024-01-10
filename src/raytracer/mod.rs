@@ -1,3 +1,4 @@
+use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
 
@@ -12,7 +13,7 @@ pub struct Ray {
     pub direction: Vector3<f32>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Hit<'a> {
     pub name: &'a str,
     pub point: Point3<f32>,
@@ -50,122 +51,165 @@ impl Raytracer {
         incoming - 2.0 * incoming.dot(&normal) * normal
     }
 
-    fn shade(&self, ray: Ray, hit: Option<Hit>, depth: u32) -> Color {
-        if let Some(hit) = hit {
-            let diffuse = (hit
-                .material
-                .and_then(|m| m.diffuse_texture.as_ref())
-                .map(|map| {
-                    let uv = hit.uv;
-                    let x = (uv.x * map.width() as f32) as u32 % map.width();
-                    let y = ((1.0 - uv.y) * map.height() as f32) as u32 % map.height();
-                    let pixel = map.get_pixel(x, y);
-                    Color::new(
-                        f32::from(pixel[0]) / 255.0,
-                        f32::from(pixel[1]) / 255.0,
-                        f32::from(pixel[2]) / 255.0,
-                    )
-                }))
+    fn refract(incident_ray: Vector3<f32>, surface_normal: Vector3<f32>, eta: f32) -> Vector3<f32> {
+        let cos_theta_i = -surface_normal.dot(&incident_ray);
+        let sin_theta_t_squared = eta.powi(2) * (1.0 - cos_theta_i.powi(2));
+        if sin_theta_t_squared > 1.0 {
+            return Vector3::zeros();
+        }
+        let cos_theta_t = (1.0 - sin_theta_t_squared).sqrt();
+        eta * incident_ray + (eta * cos_theta_i - cos_theta_t) * surface_normal
+    }
+
+    fn skybox(&self, direction: Vector3<f32>) -> Color {
+        let direction = direction
+            .try_normalize(f32::EPSILON)
+            .unwrap_or(Vector3::y());
+
+        let x = 0.5 + direction.z.atan2(direction.x) / (2.0 * std::f32::consts::PI);
+        let y = 0.5 - direction.y.asin() / std::f32::consts::PI;
+
+        match &self.scene.settings.skybox {
+            Skybox::Image { image, .. } => {
+                let x = (x * image.width() as f32) as u32 % image.width();
+                let y = (y * image.height() as f32) as u32 % image.height();
+
+                let pixel = image.get_pixel(x, y);
+
+                Color::new(
+                    f32::from(pixel[0]) / 255.0,
+                    f32::from(pixel[1]) / 255.0,
+                    f32::from(pixel[2]) / 255.0,
+                )
+            }
+            Skybox::Color(color) => *color,
+        }
+    }
+
+    fn texture(texture: &RgbImage, uv: Vector2<f32>) -> Color {
+        let x = (uv.x * texture.width() as f32) as u32 % texture.width();
+        let y = ((1.0 - uv.y) * texture.height() as f32) as u32 % texture.height();
+        let pixel = texture.get_pixel(x, y);
+        Color::new(
+            f32::from(pixel[0]) / 255.0,
+            f32::from(pixel[1]) / 255.0,
+            f32::from(pixel[2]) / 255.0,
+        )
+    }
+
+    fn raycast_transparent(&self, ray: Ray) -> Box<[Hit]> {
+        let mut hits = Vec::<Hit>::new();
+        let mut ray = ray;
+
+        while let Some(hit) = self.raycast(ray) {
+            hits.push(hit.clone());
+
+            if let Some(material) = hit.material {
+                if material.illumination_model.transparency() {
+                    // hochwissenschaftliche Formel
+                    ray.origin += ray.direction * 0.05;
+                    continue;
+                }
+            }
+            break;
+        }
+
+        hits.into_boxed_slice()
+    }
+
+    fn shade(&self, ray: Ray, depth: u32) -> Color {
+        // hochwissnschaftliche Formel +- x
+        self.raycast_transparent(ray).last().map_or_else(
+            || self.skybox(ray.direction),
+            |hit| self.shade_impl(ray, hit, depth),
+        )
+    }
+
+    fn shade_impl(&self, ray: Ray, hit: &Hit, depth: u32) -> Color {
+        if depth >= self.max_depth {
+            return self.skybox(ray.direction);
+        }
+
+        let diffuse_color = hit
+            .material
+            .and_then(|m| m.diffuse_texture.as_ref())
+            .map(|map| Self::texture(map, hit.uv))
             .or(hit.material.and_then(|m| m.diffuse_color).map(Color::from))
             .unwrap_or(Self::NO_MATERIAL_COLOR);
-            let specular = hit
-                .material
-                .and_then(|m| m.specular_color)
-                .map_or(Self::NO_MATERIAL_COLOR, Color::from);
 
-            let mut color = self.scene.settings.ambient_color.component_mul(&diffuse)
-                * self.scene.settings.ambient_intensity;
+        let specular_color = hit
+            .material
+            .and_then(|m| m.specular_color)
+            .map_or(Self::NO_MATERIAL_COLOR, Color::from);
 
-            for light in &self.scene.lights {
-                let light_direction = (light.position - hit.point).normalize();
-                let light_ray = Ray {
-                    origin: hit.point + light_direction * self.delta,
-                    direction: light_direction,
-                };
+        let mut color = self
+            .scene
+            .settings
+            .ambient_color
+            .component_mul(&diffuse_color)
+            * self.scene.settings.ambient_intensity;
 
-                let shadow = self.raycast(light_ray).is_some();
+        for light in &self.scene.lights {
+            let light_direction = (light.position - hit.point).normalize();
+            let light_ray = Ray {
+                origin: hit.point + light_direction * self.delta,
+                direction: light_direction,
+            };
 
-                if !shadow {
-                    // Diffuse
-                    let light_intensity =
-                        light.intensity / (light.position - hit.point).norm_squared();
-                    let light_reflection = light_direction.dot(&hit.normal).max(0.0);
+            let light_transmission_color = self
+                .raycast_transparent(light_ray)
+                .iter()
+                .last()
+                .map_or(Color::from_element(1.0), |hit| {
+                    color.component_mul(
+                        &hit.material
+                            .and_then(|m| m.diffuse_color)
+                            .unwrap_or(Color::from_element(1.0)),
+                    ) * hit.material.and_then(|m| m.dissolve).unwrap_or(1.0)
+                })
+                .component_mul(&light.color);
 
-                    color +=
-                        diffuse.component_mul(&light.color) * light_intensity * light_reflection;
-
-                    // Specular
-                    if hit
-                        .material
-                        .is_some_and(|m| m.illumination_model.specular())
-                    {
-                        let reflection_direction = Self::reflect(-light_direction, hit.normal);
-                        let specular_component = reflection_direction
-                            .dot(&-light_ray.direction)
-                            .max(0.0)
-                            .powf(
-                                hit.material
-                                    .and_then(|m| m.specular_exponent)
-                                    .unwrap_or(1.0),
-                            );
-
-                        color += specular.component_mul(&light.color)
-                            * light_intensity
-                            * specular_component;
-                    }
-                }
-
-                // Reflection
-                if depth < self.max_depth
-                    && hit
-                        .material
-                        .is_some_and(|m| m.illumination_model.reflection())
-                {
-                    let reflection_direction = Self::reflect(ray.direction, hit.normal);
-                    let reflection_ray = Ray {
-                        origin: hit.point + reflection_direction * self.delta,
-                        direction: reflection_direction,
-                    };
-
-                    // compute fresnel based on Schlick's approximation
-                    let fresnel = 0.04 + 0.96 * (1.0 - reflection_ray.direction.dot(&hit.normal));
-                    let reflection =
-                        self.shade(reflection_ray, self.raycast(reflection_ray), depth + 1);
-
-                    // mix reflection and diffuse color based on fresnel and specular exponent
-                    let specular_exponent = hit
-                        .material
-                        .and_then(|m| m.specular_exponent)
-                        .unwrap_or(1.0)
-                        / 1000.0;
-
-                    color = color.lerp(&reflection, 1.0 - fresnel.powf(specular_exponent));
-                }
+            if light_transmission_color.norm() < 0.01 {
+                continue;
             }
 
-            color
-        } else {
-            match &self.scene.settings.skybox {
-                Skybox::Image { image, .. } => {
-                    // environment map projection
-                    let ray_dir = ray.direction.normalize();
-                    let x = 0.5 + ray_dir.z.atan2(ray_dir.x) / (2.0 * std::f32::consts::PI);
-                    let y = 0.5 - ray_dir.y.asin() / std::f32::consts::PI;
+            // diffuse component
+            let light_intensity = light.intensity / (light.position - hit.point).norm_squared();
+            let diffuse_intensity = light_direction.dot(&hit.normal).max(0.0) * light_intensity;
+            color += diffuse_color.component_mul(&light_transmission_color) * diffuse_intensity;
 
-                    let pixel = image.get_pixel(
-                        (x * image.width() as f32) as u32 % image.width(),
-                        (y * image.height() as f32) as u32 % image.height(),
-                    );
-
-                    Color::new(
-                        f32::from(pixel[0]) / 255.0,
-                        f32::from(pixel[1]) / 255.0,
-                        f32::from(pixel[2]) / 255.0,
+            // specular component
+            if hit
+                .material
+                .is_some_and(|m| m.illumination_model.specular())
+            {
+                let specular_intensity = light_direction
+                    .dot(&Self::reflect(-ray.direction, hit.normal))
+                    .max(0.0)
+                    .powf(
+                        hit.material
+                            .and_then(|m| m.specular_exponent)
+                            .unwrap_or(1.0),
                     )
-                }
-                Skybox::Color(color) => *color,
+                    * light_intensity;
+                color +=
+                    specular_color.component_mul(&light_transmission_color) * specular_intensity;
+            }
+
+            // reflection
+            if hit
+                .material
+                .is_some_and(|m| m.illumination_model.reflection())
+            {
+                let reflection_ray = Ray {
+                    origin: hit.point + hit.normal * self.delta,
+                    direction: Self::reflect(ray.direction, hit.normal),
+                };
+                color = color.component_mul(&self.shade(reflection_ray, depth + 1));
             }
         }
+
+        color
     }
 
     /// Render a pixel at the given coordinates.
@@ -176,7 +220,6 @@ impl Raytracer {
         let y = (y as f32 / height as f32) * 2.0 - 1.0;
 
         let ray = self.scene.camera.ray(x, y);
-        let hit = self.raycast(ray);
-        self.shade(ray, hit, 0)
+        self.shade(ray, 0)
     }
 }

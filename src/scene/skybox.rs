@@ -63,25 +63,4 @@ impl Skybox {
             image,
         })
     }
-
-    /* pub fn get_url(&self) -> Option<&str> {
-        match self {
-            Skybox::None => None,
-            Skybox::ScythianTombs2 => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/scythian_tombs_puresky_4k.exr")
-            }
-            Skybox::RainforestTrail => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/rainforest_trail_4k.exr")
-            }
-            Skybox::StudioSmall08 => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/studio_small_08_4k.exr")
-            }
-            Skybox::Kloppenheim02 => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/kloppenheim_02_4k.exr")
-            }
-            Skybox::CircusArena => {
-                Some("https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/4k/circus_arena_4k.exr")
-            }
-        }
-    } */
 }
