@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Context;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeSeed, Deserialize, Serialize};
 
 pub use self::{
     camera::Camera, light::Light, material::Material, object::Object, settings::Settings,
@@ -17,7 +17,7 @@ mod skybox;
 mod triangle;
 mod yaml;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Scene {
     #[serde(skip)]
     pub path: PathBuf,
@@ -30,6 +30,63 @@ pub struct Scene {
     pub settings: Settings,
 }
 
+struct WithRelativePath<P: AsRef<std::path::Path>>(P);
+
+impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRelativePath<P> {
+    type Value = Scene;
+
+    fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let map = <serde_yaml::Value as serde::Deserialize>::deserialize(deserializer)?;
+
+        let objects = map
+            .get("models")
+            .ok_or_else(|| serde::de::Error::missing_field("models"))?
+            .as_sequence()
+            .ok_or_else(|| {
+                serde::de::Error::invalid_type(serde::de::Unexpected::Map, &"a sequence")
+            })?
+            .iter()
+            .map(|v| object::WithRelativePath(self.0.as_ref()).deserialize(v))
+            .collect::<Result<Vec<Object>, serde_yaml::Error>>()
+            .map_err(serde::de::Error::custom)?;
+
+        let lights = map
+            .get("pointLights")
+            .ok_or_else(|| serde::de::Error::missing_field("pointLights"))?
+            .as_sequence()
+            .ok_or_else(|| {
+                serde::de::Error::invalid_type(serde::de::Unexpected::Map, &"a sequence")
+            })?
+            .iter()
+            .map(Light::deserialize)
+            .collect::<Result<Vec<Light>, serde_yaml::Error>>()
+            .map_err(serde::de::Error::custom)?;
+
+        let camera = map
+            .get("camera")
+            .ok_or_else(|| serde::de::Error::missing_field("camera"))?;
+        let camera = Camera::deserialize(camera).map_err(serde::de::Error::custom)?;
+
+        let settings = map
+            .get("extra_args")
+            .ok_or_else(|| serde::de::Error::missing_field("extra_args"))?;
+        let settings = Settings::deserialize(settings).map_err(serde::de::Error::custom)?;
+
+        let scene = Scene {
+            path: PathBuf::new(),
+            objects,
+            lights,
+            camera,
+            settings,
+        };
+
+        Ok(scene)
+    }
+}
+
 impl Scene {
     pub fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Scene> {
         let s = std::fs::read_to_string(path.as_ref()).context(format!(
@@ -37,11 +94,14 @@ impl Scene {
             path.as_ref().display()
         ))?;
 
-        serde_yaml::from_str::<Scene>(s.as_str())
-            .context("Failed to parse yaml config file")
-            .map(|mut scene| {
-                scene.path = path.as_ref().to_path_buf();
-                scene
+        WithRelativePath(path.as_ref())
+            .deserialize(serde_yaml::Deserializer::from_str(&s))
+            .map_err(|e| {
+                anyhow::anyhow!(
+                    "Failed to deserialize scene from path: {}\n{}",
+                    path.as_ref().display(),
+                    e
+                )
             })
     }
 }
