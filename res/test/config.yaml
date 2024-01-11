@@ -79,13 +79,13 @@ camera:
   width: 3840
   height: 2160
 extraArgs:
-  max_bounces: 3
-  samples: 64
-  ambient_color:
-    r: 0.343427
-    g: 0.14273214
-    b: 0.045266237
-  skybox: !Color
-    - 0.3507291
-    - 0.47097892
-    - 0.53371817
+# max_bounces: 3
+# samples: 64
+# ambient_color:
+#   r: 0.343427
+#   g: 0.14273214
+#   b: 0.045266237
+# skybox: !Color
+#   - 0.3507291
+#   - 0.47097892
+#   - 0.53371817
