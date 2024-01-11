@@ -106,9 +106,16 @@
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>anyhow::Context;
+<span class="kw">use </span>log::warn;
 <span class="kw">use </span>serde::{de::DeserializeSeed, Deserialize, Serialize};
 
 <span class="kw">pub use </span><span class="self">self</span>::{
@@ -134,7 +141,7 @@
     <span class="attr">#[serde(rename = <span class="string">&quot;pointLights&quot;</span>)]
     </span><span class="kw">pub </span>lights: Vec&lt;Light&gt;,
     <span class="kw">pub </span>camera: Camera,
-    <span class="attr">#[serde(rename = <span class="string">&quot;extra_args&quot;</span>, default)]
+    <span class="attr">#[serde(rename = <span class="string">&quot;extraArgs&quot;</span>, default)]
     </span><span class="kw">pub </span>settings: Settings,
 }
 
@@ -180,9 +187,14 @@
 
         <span class="kw">let </span>settings = map
             .get(<span class="string">&quot;extra_args&quot;</span>)
-            .map(|v| Settings::deserialize(v).map_err(serde::de::Error::custom))
-            .transpose()<span class="question-mark">?
-            </span>.unwrap_or_default();
+            .map(Settings::deserialize)
+            .transpose()
+            .map_err(|e| {
+                <span class="macro">warn!</span>(<span class="string">&quot;Failed to deserialize extra_args: {}&quot;</span>, e);
+                e
+            })
+            .unwrap_or_default()
+            .unwrap_or_default();
 
         <span class="kw">let </span>scene = Scene {
             path: <span class="self">self</span>.<span class="number">0</span>.as_ref().to_path_buf(),
