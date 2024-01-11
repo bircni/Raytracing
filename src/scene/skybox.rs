@@ -11,7 +11,7 @@ pub enum Skybox {
 
 impl Default for Skybox {
     fn default() -> Self {
-        Skybox::Color(Color::new(0.162_647_22, 0.162_647_2, 0.162_647_2))
+        Skybox::Color(Color::new(0.16, 0.16, 0.16))
     }
 }
 
