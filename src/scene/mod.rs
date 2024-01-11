@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Context;
+use log::warn;
 use serde::{de::DeserializeSeed, Deserialize, Serialize};
 
 pub use self::{
@@ -71,9 +72,14 @@ impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRel
         let camera = Camera::deserialize(camera).map_err(serde::de::Error::custom)?;
 
         let settings = map
-            .get("extraArgs")
-            .map(|v| Settings::deserialize(v).map_err(serde::de::Error::custom))
-            .transpose()?
+            .get("extra_args")
+            .map(Settings::deserialize)
+            .transpose()
+            .map_err(|e| {
+                warn!("Failed to deserialize extra_args: {}", e);
+                e
+            })
+            .unwrap_or_default()
             .unwrap_or_default();
 
         let scene = Scene {
