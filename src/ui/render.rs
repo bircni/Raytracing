@@ -28,11 +28,13 @@ impl super::App {
         let block_size = [render_size.0 / 20, render_size.1 / 20];
 
         let rendering_progress = self.rendering_progress.clone();
+        let rendering_time = self.rendering_time.clone();
         let rendering_cancel = self.rendering_cancel.clone();
 
         let image_buffer = self.render_image.clone();
 
         rendering_progress.store(0, Ordering::Relaxed);
+        rendering_time.store(0, Ordering::Relaxed);
 
         self.rendering_thread = Some(std::thread::spawn(move || {
             let start = std::time::Instant::now();
@@ -115,6 +117,7 @@ impl super::App {
                 });
 
             rendering_progress.store(u16::MAX, Ordering::Relaxed);
+            rendering_time.store(start.elapsed().as_millis() as u32, Ordering::Relaxed);
 
             info!("rendering finished: {:?}", start.elapsed());
         }));

@@ -11,7 +11,7 @@ use egui::{
     mutex::Mutex, pos2, Align, CursorIcon, Frame, Layout, ProgressBar, Rect, Rounding, Stroke, Vec2,
 };
 use egui::{
-    Align2, Button, CentralPanel, Color32, ColorImage, ImageData, Key, Sense, TextStyle,
+    Align2, Button, CentralPanel, Color32, ColorImage, ImageData, Key, RichText, Sense, TextStyle,
     TextureHandle, TextureOptions, Ui,
 };
 use egui_file::FileDialog;
@@ -19,7 +19,7 @@ use image::{ImageBuffer, RgbImage};
 use log::{info, warn};
 use nalgebra::OPoint;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU16, AtomicU32, Ordering};
 use std::sync::Arc;
 use std::thread::JoinHandle;
 
@@ -65,7 +65,6 @@ impl std::fmt::Display for RenderSize {
         }
     }
 }
-
 pub struct App {
     current_tab: usize,
     scene: Scene,
@@ -78,6 +77,7 @@ pub struct App {
     save_image_dialog: Option<FileDialog>,
     render_size: RenderSize,
     rendering_progress: Arc<AtomicU16>,
+    rendering_time: Arc<AtomicU32>,
     preview_zoom: f32,
     preview_position: Vec2,
     preview_activate_movement: bool,
@@ -132,6 +132,7 @@ impl App {
             save_image_dialog: None,
             render_size,
             rendering_progress: Arc::new(AtomicU16::new(0)),
+            rendering_time: Arc::new(AtomicU32::new(0)),
             rendering_cancel: Arc::new(AtomicBool::new(false)),
             render_image: image_buffer,
             preview_activate_movement: false,
@@ -193,8 +194,15 @@ impl App {
     }
 
     fn preview(&mut self, ui: &mut Ui) {
+        ui.vertical(|ui| {
+        let available_size = ui.available_size();
+        let width = available_size.x;
+        let size = self.render_size.as_size();
+        let height = (width / size.0 as f32) * size.1 as f32;
+        ui.allocate_space(Vec2::new(0.0, (available_size.y - height - 20.0) / 2.0));
         Frame::canvas(ui.style())
             .outer_margin(10.0)
+            .inner_margin(0.0)
             .fill(match self.scene.settings.skybox {
                     Skybox::Image { ..} => Color32::GRAY,
                     Skybox::Color(c) => Color32::from_rgb(
@@ -205,7 +213,7 @@ impl App {
                 })
             .show(ui, |ui| {
                 let (response, painter) =
-                    ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
+                    ui.allocate_painter(Vec2 { x: width - 20.0, y: height }, Sense::click_and_drag());
                 painter.add(Preview::paint(response.rect, &self.scene));
                 if response.hover_pos().is_some() && !self.preview_activate_movement {
                     egui::show_tooltip(ui.ctx(), egui::Id::new("preview_tooltip"), |ui| {
@@ -213,7 +221,7 @@ impl App {
                     });
                 }
                 if response.clicked() {
-                   self.change_preview_movement(ui, &response, true);
+                    self.change_preview_movement(ui, &response, true);
                 }
                 if self.preview_activate_movement {
                     painter.debug_text(
@@ -230,7 +238,7 @@ impl App {
                 // exit movement mode when tabbed out
                 self.change_preview_movement(ui, &response, false);
             }
-            });
+            })});
     }
 
     fn move_camera(&mut self, ui: &mut Ui, response: &egui::Response) {
@@ -477,15 +485,26 @@ impl eframe::App for App {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     self.export_button(ui);
                     self.render_button(ui);
-
+                    let progress = f32::from(self.rendering_progress.load(Ordering::Relaxed))
+                        / f32::from(u16::MAX);
+                    #[allow(clippy::float_cmp)]
                     ui.add(
-                        ProgressBar::new(
-                            f32::from(self.rendering_progress.load(Ordering::Relaxed))
-                                / f32::from(u16::MAX),
-                        )
-                        .desired_width(ui.available_width() / 3.0)
-                        .show_percentage()
-                        .fill(Color32::DARK_BLUE),
+                        ProgressBar::new(progress)
+                            .desired_width(ui.available_width() / 3.0)
+                            .text(
+                                RichText::new(if progress == 1.0 {
+                                    format!(
+                                        "Done in: {:.2} s",
+                                        self.rendering_time.load(Ordering::Relaxed) as f32 / 1000.0
+                                    )
+                                } else if progress > 0.0 {
+                                    format!("{:.1}%", progress * 100.0)
+                                } else {
+                                    String::new()
+                                })
+                                .color(Color32::WHITE),
+                            )
+                            .fill(Color32::DARK_BLUE),
                     );
 
                     ui.label("Rendering progress");
@@ -499,7 +518,6 @@ impl eframe::App for App {
             match self.current_tab {
                 0 => {
                     self.properties(ui);
-
                     self.preview(ui);
                 }
 
