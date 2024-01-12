@@ -84,6 +84,7 @@ impl Triangle {
     }
 }
 
+// implement Bounded trait + bounding box calculation for triangle
 impl Bounded<f32, 3> for Triangle {
     fn aabb(&self) -> bvh::aabb::Aabb<f32, 3> {
         bvh::aabb::Aabb::empty()
@@ -93,6 +94,7 @@ impl Bounded<f32, 3> for Triangle {
     }
 }
 
+// implement BHShape trait + setter/getter for triangle
 impl BHShape<f32, 3> for Triangle {
     fn set_bh_node_index(&mut self, index: usize) {
         self.bvh_index = index;

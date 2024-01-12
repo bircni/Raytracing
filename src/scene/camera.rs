@@ -31,6 +31,7 @@ impl Camera {
     }
 }
 
+// read and wrtie camera config from and to yaml
 mod yaml {
     use nalgebra::{Point3, Vector3};
     use serde::{Deserialize, Serialize};
@@ -53,6 +54,7 @@ mod yaml {
         pub height: u32,
     }
 
+    // read camera config from yaml
     impl<'de> Deserialize<'de> for Camera {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
@@ -68,6 +70,7 @@ mod yaml {
         }
     }
 
+    // write camera config to yaml
     impl Serialize for Camera {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where

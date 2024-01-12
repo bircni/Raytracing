@@ -23,6 +23,7 @@ impl Default for Settings {
     }
 }
 
+// read and write settings config from and to yaml
 mod yaml {
     use crate::{scene::Skybox, Color};
 

@@ -11,6 +11,7 @@ use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 use crate::raytracer::Raytracer;
 
 impl super::App {
+    // render the scene in blocks of 10x10 pixels and update the progress bar and ui accordingly
     #[allow(clippy::too_many_lines)]
     pub fn render(&mut self, ctx: egui::Context) {
         let render_size = self.render_size.as_size();

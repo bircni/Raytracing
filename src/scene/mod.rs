@@ -18,6 +18,7 @@ mod skybox;
 mod triangle;
 mod yaml;
 
+// read scene config from yaml
 #[derive(Debug, Clone, Serialize)]
 pub struct Scene {
     #[serde(skip)]

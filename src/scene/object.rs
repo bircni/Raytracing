@@ -41,6 +41,7 @@ fn load_texture<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<RgbImage> 
         .into_rgb8())
 }
 
+// implement object, define methods and variables
 impl Object {
     pub fn from_obj<P: AsRef<std::path::Path>>(
         path: P,
@@ -203,6 +204,7 @@ impl Object {
     }
 }
 
+// convert polygon into triangles and assign normals from obj
 fn triangulate(
     obj: &obj::Obj,
     poly: &SimplePolygon,
@@ -279,6 +281,7 @@ fn triangulate(
 
 pub struct WithRelativePath<P: AsRef<std::path::Path>>(pub P);
 
+// handle yaml serialization and deserialization for objects
 mod yaml {
     use std::path::PathBuf;
 
