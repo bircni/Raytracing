@@ -207,10 +207,10 @@ impl App {
             .show(ui, |ui| {
                 let available_size = ui.available_size();
                 let width = available_size.x;
-                let u =self.render_size.as_size();
+                let u = self.render_size.as_size();
                 let t0 = u.0 as f32;
                 let t1 = u.1 as f32;
-                let height = (available_size.x / t0) * t1;
+                let height = (width / t0) * t1;
                 let (response, painter) =
                     ui.allocate_painter(Vec2 { x: width, y: height }, Sense::click_and_drag());
                 painter.add(Preview::paint(response.rect, &self.scene));
@@ -220,7 +220,7 @@ impl App {
                     });
                 }
                 if response.clicked() {
-                   self.change_preview_movement(ui, &response, true);
+                    self.change_preview_movement(ui, &response, true);
                 }
                 if self.preview_activate_movement {
                     painter.debug_text(

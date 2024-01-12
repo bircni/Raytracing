@@ -43,7 +43,6 @@ impl App {
         });
     }
 
-    #[allow(clippy::out_of_bounds_indexing)]
     pub fn properties(&mut self, ui: &mut Ui) {
         SidePanel::right("panel")
             .show_separator_line(true)
