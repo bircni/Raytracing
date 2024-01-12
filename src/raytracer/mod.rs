@@ -7,7 +7,6 @@ use crate::{
     Color,
 };
 
-/// defines a ray with an origin and a direction
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ray {
     pub origin: Point3<f32>,
@@ -29,7 +28,6 @@ pub struct Raytracer {
     max_depth: u32,
 }
 
-// implement raytracer, define methods and variables
 impl Raytracer {
     const NO_MATERIAL_COLOR: Color = Color::new(0.9, 0.9, 0.9);
 
@@ -41,7 +39,7 @@ impl Raytracer {
         }
     }
 
-    // find the closest intersection of the ray with the scene
+    // Find the closest intersection of the ray with the scene
     fn raycast(&self, ray: Ray) -> Option<Hit> {
         self.scene
             .objects
@@ -120,7 +118,6 @@ impl Raytracer {
         hits.into_boxed_slice()
     }
 
-    // calculate shading for a given hit point based on ambient and diffuse lighting
     fn shade(&self, ray: Ray, depth: u32) -> Color {
         // hochwissnschaftliche Formel +- x
         self.raycast_transparent(ray).last().map_or_else(

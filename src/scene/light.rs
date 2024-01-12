@@ -9,7 +9,6 @@ pub struct Light {
     pub intensity: f32,
 }
 
-// read and write light config from and to yaml
 mod yaml {
     use nalgebra::Point3;
     use serde::{Deserialize, Serialize};
@@ -27,7 +26,6 @@ mod yaml {
         pub intensity: f32,
     }
 
-    // read light config from yaml
     impl<'de> Deserialize<'de> for Light {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
@@ -41,7 +39,6 @@ mod yaml {
         }
     }
 
-    // write light config to yaml
     impl Serialize for Light {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where

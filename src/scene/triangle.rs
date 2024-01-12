@@ -48,7 +48,7 @@ impl Triangle {
         }
     }
 
-    /// return barycentric coordinates if ray intersects triangle
+    /// Return barycentric coordinates if ray intersects triangle
     pub fn intersect(&self, ray: Ray, delta: f32) -> Option<(f32, f32, f32)> {
         let ab = self.b - self.a;
         let ac = self.c - self.a;
@@ -84,7 +84,6 @@ impl Triangle {
     }
 }
 
-// implement Bounded trait + bounding box calculation for triangle
 impl Bounded<f32, 3> for Triangle {
     fn aabb(&self) -> bvh::aabb::Aabb<f32, 3> {
         bvh::aabb::Aabb::empty()
@@ -94,7 +93,6 @@ impl Bounded<f32, 3> for Triangle {
     }
 }
 
-// implement BHShape trait + setter/getter for triangle
 impl BHShape<f32, 3> for Triangle {
     fn set_bh_node_index(&mut self, index: usize) {
         self.bvh_index = index;

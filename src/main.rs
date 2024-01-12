@@ -21,7 +21,6 @@ mod ui;
 
 type Color = Vector3<f32>;
 
-// main function to run the program and initialize the logger
 fn main() -> anyhow::Result<()> {
     simplelog::TermLogger::init(
         #[cfg(debug_assertions)]

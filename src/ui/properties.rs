@@ -27,7 +27,7 @@ fn xyz_drag_value(ui: &mut Ui, value: &mut XYZ<f32>) {
 }
 
 impl App {
-    /// Show the properties panel on the right side of the ui window
+    /// Creates the properties panel on the right side
     pub fn properties(&mut self, ui: &mut Ui) {
         SidePanel::right("panel")
             .show_separator_line(true)
@@ -71,7 +71,6 @@ impl App {
             });
     }
 
-    /// Camera settings panel
     fn camera_settings(&mut self, ui: &mut egui::Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
@@ -98,7 +97,6 @@ impl App {
         });
     }
 
-    // Scene settings panel
     fn scene_settings(&mut self, ui: &mut Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
@@ -128,7 +126,6 @@ impl App {
         });
     }
 
-    // Render options panel
     fn render_options(&mut self, ui: &mut Ui) {
         ui.label("Render Size:");
         ui.vertical(|ui| {
@@ -210,7 +207,6 @@ impl App {
         });
     }
 
-    // Skybox options panel
     fn skybox_options(&mut self, ui: &mut Ui) {
         ui.label("Skybox:");
 
@@ -280,7 +276,6 @@ impl App {
         });
     }
 
-    // Lights panel
     fn lights(&mut self, ui: &mut Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
@@ -347,7 +342,6 @@ impl App {
         });
     }
 
-    // Objects panel
     fn objects(&mut self, ui: &mut Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
@@ -447,7 +441,6 @@ impl App {
         });
     }
 
-    /// Change the render size
     fn change_render_size(&mut self) {
         let (x, y) = self.render_size.as_size();
         *self.render_image.lock() = RgbImage::new(x, y);

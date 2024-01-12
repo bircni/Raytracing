@@ -17,6 +17,7 @@ pub struct Material {
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct IlluminationModel(i32);
 
+/// <http://www.paulbourke.net/dataformats/mtl> and <https://en.wikipedia.org/wiki/Wavefront_.obj_file> for more information
 impl IlluminationModel {
     pub fn from_i32(i: i32) -> Option<IlluminationModel> {
         if (0..=10).contains(&i) {

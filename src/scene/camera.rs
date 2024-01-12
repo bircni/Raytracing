@@ -19,7 +19,6 @@ impl Camera {
     pub fn ray(&self, x: f32, y: f32) -> Ray {
         // direction in coordinate system of camera
         let direction = Vector3::new(x, -y, -1.0 / (self.fov / 2.0).tan());
-
         // rotate direction to world coordinate system
         let rotation = Rotation3::look_at_rh(&(self.look_at - self.position), &self.up);
         let direction = rotation.inverse_transform_vector(&direction);
@@ -31,7 +30,6 @@ impl Camera {
     }
 }
 
-// read and wrtie camera config from and to yaml
 mod yaml {
     use nalgebra::{Point3, Vector3};
     use serde::{Deserialize, Serialize};
@@ -54,7 +52,6 @@ mod yaml {
         pub height: u32,
     }
 
-    // read camera config from yaml
     impl<'de> Deserialize<'de> for Camera {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
@@ -70,7 +67,6 @@ mod yaml {
         }
     }
 
-    // write camera config to yaml
     impl Serialize for Camera {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where

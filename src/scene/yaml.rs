@@ -1,4 +1,3 @@
-// define color deserialization and serialization
 pub mod color {
     use serde::{Deserialize, Serialize};
 
@@ -32,7 +31,6 @@ pub mod color {
     }
 }
 
-// define point deserialization and serialization
 pub mod point {
     use nalgebra::Point3;
     use serde::{Deserialize, Serialize};
@@ -65,7 +63,6 @@ pub mod point {
     }
 }
 
-// define vector serialization and deserialization
 pub mod vector {
     use nalgebra::Vector3;
     use serde::{Deserialize, Serialize};

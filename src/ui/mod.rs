@@ -88,7 +88,6 @@ pub struct App {
     skybox_file_dialog: Option<FileDialog>,
 }
 
-/// implementation of App logic
 impl App {
     pub fn new(cc: &CreationContext, scene: Scene) -> anyhow::Result<Self> {
         egui_extras::install_image_loaders(&cc.egui_ctx);
@@ -144,7 +143,6 @@ impl App {
         })
     }
 
-    // button to export rendered image
     fn export_button(&mut self, ui: &mut Ui) {
         if ui
             .add_enabled(
@@ -179,7 +177,6 @@ impl App {
         }
     }
 
-    // button to render scene
     fn render_button(&mut self, ui: &mut Ui) {
         if self.rendering_thread.is_some() {
             ui.button("Cancel").clicked().then(|| {
@@ -195,7 +192,6 @@ impl App {
         }
     }
 
-    // preview tab
     fn preview(&mut self, ui: &mut Ui) {
         Frame::canvas(ui.style())
             .outer_margin(10.0)
@@ -217,7 +213,7 @@ impl App {
                     });
                 }
                 if response.clicked() {
-                   self.change_preview_movement(ui, &response, true);
+                    self.change_preview_movement(ui, &response, true);
                 }
                 if self.preview_activate_movement {
                     painter.debug_text(
@@ -230,17 +226,16 @@ impl App {
                     .send_viewport_cmd(egui::ViewportCommand::CursorVisible(false));
                 self.move_camera(ui, &response);
             }
+            // exit movement mode when tabbed out
             if !response.has_focus() && self.preview_activate_movement {
-                // exit movement mode when tabbed out
                 self.change_preview_movement(ui, &response, false);
             }
             });
     }
 
-    // move camera in preview tab
     fn move_camera(&mut self, ui: &mut Ui, response: &egui::Response) {
+        // exit movement mode using ESC
         if ui.input(|i| i.key_pressed(egui::Key::Escape)) && self.preview_activate_movement {
-            // exit movement mode using ESC
             self.change_preview_movement(ui, response, false);
         }
         if response.hover_pos().is_none() {
@@ -353,7 +348,6 @@ impl App {
         });
     }
 
-    // show rendered result
     fn render_result(&mut self, ui: &mut Ui) {
         Frame::canvas(ui.style()).outer_margin(10.0).show(ui, |ui| {
             let (response, painter) = ui.allocate_painter(ui.available_size(), Sense::drag());
@@ -430,7 +424,6 @@ impl App {
         });
     }
 
-    // save scene to file
     fn save_scene(&mut self) {
         serde_yaml::to_string(&self.scene)
             .context("Failed to serialize scene")
@@ -440,7 +433,6 @@ impl App {
             });
     }
 
-    // change preview movement
     fn change_preview_movement(&mut self, ui: &mut Ui, response: &egui::Response, activate: bool) {
         self.preview_activate_movement = activate;
         if activate {

@@ -25,7 +25,6 @@ const MAX_OBJECTS: usize = 255;
 
 pub struct Preview {}
 
-// implement preview, define methods and variables
 impl Preview {
     #![allow(clippy::too_many_lines)]
     pub fn init(render_state: &egui_wgpu::RenderState) {
@@ -79,7 +78,7 @@ impl Preview {
             push_constant_ranges: &[],
         });
 
-        // define the render pipeline for the preview
+        // set the render pipeline for the preview
         let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             label: Some("preview pipeline"),
             layout: Some(&pipeline_layout),
@@ -147,7 +146,6 @@ impl Preview {
             multiview: None,
         });
 
-        // create various buffers for the preview
         let uniform_buffer = device.create_buffer(&BufferDescriptor {
             label: Some("preview uniform buffer"),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
@@ -263,7 +261,6 @@ struct ShaderLight {
     intensity: f32,
 }
 
-// implement callback trait for preview renderer to prepare and paint the preview in close to real time
 #[allow(clippy::expect_used)]
 impl CallbackTrait for PreviewRenderer {
     #[allow(clippy::too_many_lines)]

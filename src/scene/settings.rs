@@ -2,6 +2,8 @@ use crate::Color;
 
 use super::Skybox;
 
+/// Extra settings for the scene (not required in the YAML)
+/// If not available in the YAML, the default values are used.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Settings {
     pub max_bounces: u32,
@@ -23,7 +25,6 @@ impl Default for Settings {
     }
 }
 
-// read and write settings config from and to yaml
 mod yaml {
     use crate::{scene::Skybox, Color};
 
