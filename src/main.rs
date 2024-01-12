@@ -26,7 +26,7 @@ fn main() -> anyhow::Result<()> {
         #[cfg(debug_assertions)]
         LevelFilter::Trace,
         #[cfg(not(debug_assertions))]
-        LevelFilter::Info,
+        LevelFilter::Warn,
         ConfigBuilder::new()
             .add_filter_allow_str("raytracing")
             .build(),

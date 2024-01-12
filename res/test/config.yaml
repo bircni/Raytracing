@@ -1,81 +1,81 @@
 models:
-  - file_path: res/test/1.obj
-    position:
-      x: 0.7
-      y: -0.1
-      z: -0.5
-    rotation:
-      x: 1.6295541e-15
-      y: -0.0
-      z: 0.0
-    scale:
-      x: 1.0
-      y: 1.0
-      z: 1.0
-  - file_path: res/test/2.obj
-    position:
-      x: 0.7
-      y: -0.1
-      z: -0.5
-    rotation:
-      x: 0.000008648687
-      y: -0.0
-      z: 0.0
-    scale:
-      x: 1.0
-      y: 1.0
-      z: 1.0
-point_lights:
-  - position:
-      x: -2.0
-      y: 3.5
-      z: -0.8
-    Ke:
-      r: 0.57735026
-      g: 0.57735026
-      b: 0.57735026
-    intensity: 40.0
-  - position:
-      x: 5.5
-      y: 0.3
-      z: -4.5
-    Ke:
-      r: 0.672333
-      g: 0.24602187
-      b: 0.6981702
-    intensity: 22.0
-  - position:
-      x: 2.0
-      y: 4.0
-      z: 1.6
-    Ke:
-      r: 0.57888657
-      g: 0.5770311
-      b: 0.57612985
-    intensity: 23.0
+- filePath: ./floor.obj
+  position:
+    x: 0.7
+    y: -0.1
+    z: -0.5
+  rotation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+- filePath: ./car.obj
+  position:
+    x: 0.7
+    y: -0.1
+    z: -0.5
+  rotation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+pointLights:
+- position:
+    x: -2.0
+    y: 3.5
+    z: -0.8
+  Ke:
+    r: 0.5773503
+    g: 0.5773503
+    b: 0.5773503
+  intensity: 40.0
+- position:
+    x: 5.5
+    y: 0.3
+    z: -4.5
+  Ke:
+    r: 0.672333
+    g: 0.24602187
+    b: 0.6981702
+  intensity: 22.0
+- position:
+    x: 2.0
+    y: 4.0
+    z: 1.6
+  Ke:
+    r: 0.57888657
+    g: 0.5770311
+    b: 0.57612985
+  intensity: 23.0
+- position:
+    x: -0.7
+    y: 1.0
+    z: 5.2
+  Ke:
+    r: 1.0
+    g: 1.0
+    b: 1.0
+  intensity: 6.0
 camera:
   position:
-    x: 9.715837
-    y: 3.5684555
-    z: 3.4572468
-  look_at:
-    x: 6.650202
-    y: 3.1350665
-    z: 5.5627937
-  up_vec:
+    x: 3.7080245
+    y: 2.1147687
+    z: 7.0919194
+  lookAt:
+    x: 3.3485944
+    y: 1.793123
+    z: 6.215932
+  upVec:
     x: 0.0
     y: 1.0
     z: 0.0
-  field_of_view: 63.02536
-extra_args:
-  max_bounces: 3
-  samples: 64
-  background_color:
-    r: 0.11759186
-    g: 0.16975576
-    b: 0.18631159
-  ambient_color:
-    r: 0.36257717
-    g: 0.2823332
-    b: 0.24336334
-  skybox: Rainforest Trail
+  fieldOfView: 63.02536
+  width: 3840
+  height: 2160
+extraArgs:

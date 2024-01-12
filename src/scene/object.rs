@@ -48,11 +48,13 @@ impl Object {
         rotation: UnitQuaternion<f32>,
         scale: Scale3<f32>,
     ) -> anyhow::Result<Object> {
-        let mut obj = obj::Obj::load(path.as_ref())
-            .context(format!("Failed to load obj from path: {:?}", path.as_ref()))?;
+        let mut obj = obj::Obj::load(path.as_ref()).context(format!(
+            "Failed to load obj from path: {}",
+            path.as_ref().display()
+        ))?;
         obj.load_mtls().context(format!(
-            "Failed to load materials from obj path: {:?}",
-            path.as_ref()
+            "Failed to load materials from obj path: {}",
+            path.as_ref().display()
         ))?;
 
         let materials = obj
@@ -85,9 +87,11 @@ impl Object {
                         warn!("Invalid illumination model: {}", m.illum.unwrap_or(-1));
                         IlluminationModel::default()
                     }),
+                dissolve: m.d.map(|d| 1.0 - d),
+                refraction_index: m.ni,
             })
             .collect::<Vec<_>>();
-
+        let mut warnings = (0, 0, 0);
         let mut triangles = obj
             .data
             .objects
@@ -116,10 +120,22 @@ impl Object {
                 group
                     .polys
                     .iter()
-                    .flat_map(|p| triangulate(&obj, p, material_index))
+                    .flat_map(|p| triangulate(&obj, p, material_index, &mut warnings))
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
+
+        if warnings.0 > 0 {
+            warn!("Computed normals for {} triangles is zero", warnings.0);
+        }
+
+        if warnings.1 > 0 {
+            warn!("No normals for {} triangles", warnings.1);
+        }
+
+        if warnings.2 > 0 {
+            warn!("No UV for {} triangles", warnings.2);
+        }
 
         let bvh = Bvh::build(triangles.as_mut_slice());
 
@@ -191,6 +207,7 @@ fn triangulate(
     obj: &obj::Obj,
     poly: &SimplePolygon,
     material_index: Option<usize>,
+    (computed_normals_zero, no_normals, no_uv): &mut (u32, u32, u32),
 ) -> Vec<Triangle> {
     let mut triangles = Vec::new();
 
@@ -203,12 +220,7 @@ fn triangulate(
             .cross(&(a - c))
             .try_normalize(f32::EPSILON)
             .unwrap_or_else(|| {
-                warn!(
-                    "Computed normal for triangle with vertices {}, {}, {} is zero",
-                    poly.0[0].0,
-                    poly.0[i].0,
-                    poly.0[i + 1].0
-                );
+                *computed_normals_zero += 1;
                 Vector3::new(0.0, 0.0, 0.0)
             });
 
@@ -218,62 +230,42 @@ fn triangulate(
             c,
             poly.0[0].2.map_or_else(
                 || {
-                    warn!(
-                        "No normal for vertex {} in {}",
-                        poly.0[0].0, obj.data.objects[0].name
-                    );
+                    *no_normals += 1;
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[i].2.map_or_else(
                 || {
-                    warn!(
-                        "No normal for vertex {} in {}",
-                        poly.0[i].0, obj.data.objects[0].name
-                    );
+                    *no_normals += 1;
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[i + 1].2.map_or_else(
                 || {
-                    warn!(
-                        "No normal for vertex {} in {}",
-                        poly.0[i + 1].0,
-                        obj.data.objects[0].name
-                    );
+                    *no_normals += 1;
                     computed_normal
                 },
                 |i| Vector3::from(obj.data.normal[i]),
             ),
             poly.0[0].1.map_or_else(
                 || {
-                    warn!(
-                        "No UV for vertex {} in {}",
-                        poly.0[0].0, obj.data.objects[0].name
-                    );
+                    *no_uv += 1;
                     Vector2::new(0.0, 0.0)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
             ),
             poly.0[i].1.map_or_else(
                 || {
-                    warn!(
-                        "No UV for vertex {} in {}",
-                        poly.0[i].0, obj.data.objects[0].name
-                    );
+                    *no_uv += 1;
                     Vector2::new(0.0, 0.0)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
             ),
             poly.0[i + 1].1.map_or_else(
                 || {
-                    warn!(
-                        "No UV for vertex {} in {}",
-                        poly.0[i + 1].0,
-                        obj.data.objects[0].name
-                    );
+                    *no_uv += 1;
                     Vector2::new(0.0, 0.0)
                 },
                 |i| Vector2::from(obj.data.texture[i]),
@@ -284,17 +276,20 @@ fn triangulate(
 
     triangles
 }
+
+pub struct WithRelativePath<P: AsRef<std::path::Path>>(pub P);
+
 mod yaml {
     use std::path::PathBuf;
 
-    use anyhow::Context;
     use nalgebra::{Point3, Scale3, Translation3, UnitQuaternion, Vector3};
     use serde::{Deserialize, Serialize};
 
-    use super::Object;
+    use super::{Object, WithRelativePath};
 
     #[derive(Serialize, Deserialize)]
     pub struct ObjectDef {
+        #[serde(rename = "filePath")]
         pub file_path: PathBuf,
         #[serde(with = "super::super::yaml::point")]
         pub position: Point3<f32>,
@@ -304,8 +299,10 @@ mod yaml {
         pub scale: Vector3<f32>,
     }
 
-    impl<'de> serde::Deserialize<'de> for Object {
-        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRelativePath<P> {
+        type Value = Object;
+
+        fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
         where
             D: serde::Deserializer<'de>,
         {
@@ -319,17 +316,19 @@ mod yaml {
             );
             let scale = Scale3::from(yaml_object.scale);
 
-            Object::from_obj(
-                yaml_object.file_path.as_path(),
-                translation,
-                rotation,
-                scale,
-            )
-            .context(format!(
-                "Failed to load object from path: {:?}",
-                yaml_object.file_path
-            ))
-            .map_err(serde::de::Error::custom)
+            let path = self
+                .0
+                .as_ref()
+                .parent()
+                .map(|p| p.join(yaml_object.file_path.as_path()))
+                .ok_or_else(|| serde::de::Error::custom("Failed to get parent path"))?;
+
+            Object::from_obj(path, translation, rotation, scale)
+                .map_err(serde::de::Error::custom)
+                .map(|mut o| {
+                    o.path = yaml_object.file_path;
+                    o
+                })
         }
     }
 

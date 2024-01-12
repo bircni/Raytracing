@@ -1,5 +1,6 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
+use anyhow::Context;
 use egui::{
     color_picker, hex_color, include_image, Align, Button, Color32, ColorImage, DragValue,
     FontFamily, ImageButton, ImageData, Layout, RichText, ScrollArea, SidePanel, Slider,
@@ -11,8 +12,8 @@ use log::warn;
 use nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
 
 use crate::{
-    raytracer::Skybox,
-    scene::{Light, Object},
+    scene::{Light, Object, Skybox},
+    Color,
 };
 
 use super::{App, RenderSize};
@@ -68,22 +69,6 @@ impl App {
                             .clicked()
                             .then(|| {
                                 self.save_scene();
-                            });
-                            ui.add_sized(
-                                [20.0, 20.0],
-                                ImageButton::new(include_image!(
-                                    "../../res/icons/download-solid.svg"
-                                ))
-                                .tint(tint_color),
-                            )
-                            .on_hover_text("Download all Skyboxes")
-                            .clicked()
-                            .then(|| {
-                                if let Some(skybox_path) = self.scene.path.parent() {
-                                    self.download_skyboxes(skybox_path.join("skybox"));
-                                } else {
-                                    warn!("Failed to download skyboxes: scene path is not set");
-                                }
                             });
                         });
                     });
@@ -159,36 +144,21 @@ impl App {
 
             ui.add_space(MEDIUM_SPACE);
 
-            ui.add_enabled_ui(self.scene.settings.skybox.is_none(), |ui| {
-                ui.label("Background Color:");
-                ui.add_space(SMALL_SPACE);
-                color_picker::color_edit_button_rgb(
-                    ui,
-                    self.scene.settings.background_color.as_mut(),
-                );
-            });
-
-            ui.add_space(MEDIUM_SPACE);
-
             ui.label("Ambient Color:");
-            ui.add_space(SMALL_SPACE);
             color_picker::color_edit_button_rgb(ui, self.scene.settings.ambient_color.as_mut());
 
-            ui.add_space(MEDIUM_SPACE);
-
             ui.label("Ambient Intensitiy:");
-            ui.add_space(SMALL_SPACE);
             ui.add(
                 Slider::new(&mut self.scene.settings.ambient_intensity, 0.0..=1.0)
                     .clamp_to_range(true),
             );
-            ui.add_space(SMALL_SPACE);
+
+            ui.add_space(MEDIUM_SPACE);
         });
     }
 
     fn render_options(&mut self, ui: &mut Ui) {
         ui.label("Render Size:");
-        ui.add_space(SMALL_SPACE);
         ui.vertical(|ui| {
             let mut render_size = self.render_size.as_size();
             ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
@@ -233,7 +203,6 @@ impl App {
                                 self.change_render_size();
                             });
                         });
-                    ui.add_space(MEDIUM_SPACE);
                     ui.horizontal(|ui| {
                         ui.add_enabled_ui(
                             self.rendering_thread.is_none()
@@ -271,52 +240,73 @@ impl App {
 
     fn skybox_options(&mut self, ui: &mut Ui) {
         ui.label("Skybox:");
-        ui.add_space(SMALL_SPACE);
-        let mut skybox = self.scene.settings.skybox;
-        ui.vertical(|ui| {
-            egui::ComboBox::from_id_source(1)
-                .selected_text(format!("{}", skybox.unwrap_or(Skybox::None)))
-                .show_ui(ui, |ui| {
-                    (ui.selectable_value(&mut skybox, None, format!("{}", Skybox::None))
-                        .changed()
-                        | ui.selectable_value(
-                            &mut skybox,
-                            Some(Skybox::ScythianTombs2),
-                            format!("{}", Skybox::ScythianTombs2),
-                        )
-                        .changed()
-                        | ui.selectable_value(
-                            &mut skybox,
-                            Some(Skybox::RainforestTrail),
-                            format!("{}", Skybox::RainforestTrail),
-                        )
-                        .changed()
-                        | ui.selectable_value(
-                            &mut skybox,
-                            Some(Skybox::StudioSmall08),
-                            format!("{}", Skybox::StudioSmall08),
-                        )
-                        .changed()
-                        | ui.selectable_value(
-                            &mut skybox,
-                            Some(Skybox::Kloppenheim02),
-                            format!("{}", Skybox::Kloppenheim02),
-                        )
-                        .changed()
-                        | ui.selectable_value(
-                            &mut skybox,
-                            Some(Skybox::CircusArena),
-                            format!("{}", Skybox::CircusArena),
-                        )
-                        .changed())
-                    .then(|| {
+
+        if let Some(dialog) = &mut self.skybox_file_dialog {
+            if dialog.show(ui.ctx()).selected() {
+                match (|| {
+                    let path = dialog.path().ok_or(anyhow::anyhow!("No path selected"))?;
+
+                    let image = image::open(path)
+                        .context("Failed to open image")?
+                        .into_rgb8();
+
+                    Ok::<_, anyhow::Error>(Skybox::Image {
+                        path: path.to_path_buf(),
+                        image,
+                    })
+                })() {
+                    Ok(skybox) => {
                         self.scene.settings.skybox = skybox;
-                    });
+                    }
+                    Err(e) => {
+                        warn!("Failed to load skybox: {}", e);
+                    }
+                }
+
+                self.skybox_file_dialog = None;
+            }
+        }
+
+        ui.vertical(|ui| {
+            ui.horizontal(|ui| {
+                ui.radio(
+                    matches!(self.scene.settings.skybox, Skybox::Color(_)),
+                    "Color",
+                )
+                .clicked()
+                .then(|| {
+                    self.scene.settings.skybox = Skybox::Color(Color::default());
                 });
+
+                ui.radio(
+                    matches!(self.scene.settings.skybox, Skybox::Image { .. }),
+                    "Image",
+                )
+                .clicked()
+                .then(|| {
+                    let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
+                        Path::new(p)
+                            .extension()
+                            .map_or(false, |ext| ext.eq_ignore_ascii_case("exr"))
+                    }));
+
+                    dialog.open();
+
+                    self.skybox_file_dialog = Some(dialog);
+                });
+            });
+
+            match &mut self.scene.settings.skybox {
+                Skybox::Image { path, .. } => {
+                    ui.label(path.display().to_string());
+                }
+                Skybox::Color(c) => {
+                    ui.color_edit_button_rgb(c.as_mut());
+                }
+            }
         });
     }
 
-    #[allow(clippy::out_of_bounds_indexing)]
     fn lights(&mut self, ui: &mut Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
@@ -509,7 +499,7 @@ impl App {
     fn change_render_size(&mut self) {
         let (x, y) = self.render_size.as_size();
         *self.render_image.lock() = RgbImage::new(x, y);
-
+        self.scene.camera.resolution = (x, y);
         self.render_texture.set(
             ImageData::Color(Arc::new(ColorImage {
                 size: [x as usize, y as usize],
