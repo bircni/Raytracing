@@ -31,18 +31,6 @@ fn xyz_drag_value(ui: &mut Ui, value: &mut XYZ<f32>) {
 }
 
 impl App {
-    pub fn info_bar(&mut self, ui: &mut Ui) {
-        ui.vertical_centered(|ui| {
-            ui.with_layout(Layout::left_to_right(Align::BOTTOM), |ui| {
-                if let Some(text) = &self.info_text {
-                    ui.label(text);
-                } else {
-                    ui.label(String::new());
-                }
-            });
-        });
-    }
-
     pub fn properties(&mut self, ui: &mut Ui) {
         SidePanel::right("panel")
             .show_separator_line(true)
