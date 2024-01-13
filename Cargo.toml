@@ -69,3 +69,7 @@ cargo-husky = { version = "1.5.0", default-features = false, features = [
 
 [lints.rust]
 unsafe_code = "forbid"
+
+[profile.perftest]
+inherits = "release"
+debug = true

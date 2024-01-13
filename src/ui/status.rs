@@ -6,7 +6,7 @@ use log::{info, warn};
 
 use crate::scene::Scene;
 
-use super::render::Render;
+use super::{render::Render, Tab};
 
 pub struct Status {
     save_image_dialog: Option<FileDialog>,
@@ -22,21 +22,21 @@ impl Status {
     pub fn show(
         &mut self,
         ui: &mut Ui,
-        scene: &mut Scene,
+        scene: Option<&mut Scene>,
         render: &mut Render,
-        current_tab: &mut usize,
+        current_tab: &mut Tab,
     ) {
         ui.horizontal(|ui| {
-            ui.selectable_label(*current_tab == 0, "Preview")
+            ui.selectable_label(*current_tab == Tab::Preview, "Preview")
                 .clicked()
                 .then(|| {
-                    *current_tab = 0;
+                    *current_tab = Tab::Preview;
                 });
 
-            ui.selectable_label(*current_tab == 1, "Render")
+            ui.selectable_label(*current_tab == Tab::RenderResult, "Render")
                 .clicked()
                 .then(|| {
-                    *current_tab = 1;
+                    *current_tab = Tab::RenderResult;
                 });
 
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -84,8 +84,8 @@ impl Status {
     pub fn render_button(
         ui: &mut Ui,
         render: &mut Render,
-        scene: &mut Scene,
-        current_tab: &mut usize,
+        scene: Option<&mut Scene>,
+        current_tab: &mut Tab,
     ) {
         if render.thread.is_some() {
             ui.button("Cancel").clicked().then(|| {
@@ -94,8 +94,10 @@ impl Status {
         } else {
             ui.add_enabled_ui(render.thread.is_none(), |ui| {
                 ui.button("Render").clicked().then(|| {
-                    render.render(ui.ctx().clone(), scene);
-                    *current_tab = 1;
+                    if let Some(scene) = scene {
+                        render.render(ui.ctx().clone(), scene);
+                        *current_tab = Tab::RenderResult;
+                    }
                 })
             });
         }
