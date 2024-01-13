@@ -1,20 +1,44 @@
 use std::sync::{
-    atomic::{AtomicUsize, Ordering},
+    atomic::{AtomicBool, AtomicU16, AtomicU32, AtomicUsize, Ordering},
     Arc,
 };
 
-use egui::{Color32, ColorImage, ImageData, TextureOptions};
+use egui::{mutex::Mutex, Color32, ColorImage, ImageData, TextureHandle, TextureOptions};
 
+use image::RgbImage;
 use log::{debug, info};
 use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 
-use crate::raytracer::Raytracer;
+use crate::{raytracer::Raytracer, scene::Scene};
 
-impl super::App {
+use super::RenderSize;
+
+pub struct Render {
+    pub texture: TextureHandle,
+    pub progress: Arc<AtomicU16>,
+    pub thread: Option<std::thread::JoinHandle<()>>,
+    pub cancel: Arc<AtomicBool>,
+    pub rimage: Arc<Mutex<RgbImage>>,
+    pub rsize: RenderSize,
+    pub time: Arc<AtomicU32>,
+}
+
+impl Render {
+    pub fn new(texture: TextureHandle, rimage: Arc<Mutex<RgbImage>>, rsize: RenderSize) -> Self {
+        Self {
+            texture,
+            progress: Arc::new(AtomicU16::new(0)),
+            thread: None,
+            cancel: Arc::new(AtomicBool::new(false)),
+            rimage,
+            rsize,
+            time: Arc::new(AtomicU32::new(0)),
+        }
+    }
     #[allow(clippy::too_many_lines)]
-    pub fn render(&mut self, ctx: egui::Context) {
-        let render_size = self.render_size.as_size();
-        self.render_texture.set(
+    pub fn render(&mut self, ctx: egui::Context, scene: &Scene) {
+        let render_size = self.rsize.as_size();
+        self.texture.set(
             ImageData::Color(Arc::new(ColorImage {
                 size: [render_size.0 as usize, render_size.1 as usize],
                 pixels: vec![Color32::BLACK; (render_size.0 * render_size.1) as usize],
@@ -22,21 +46,21 @@ impl super::App {
             TextureOptions::default(),
         );
 
-        let texture = self.render_texture.clone();
-        let raytracer = Raytracer::new(self.scene.clone(), 1e-5, 5);
+        let texture = self.texture.clone();
+        let raytracer = Raytracer::new(scene.clone(), 1e-5, 5);
 
         let block_size = [render_size.0 / 20, render_size.1 / 20];
 
-        let rendering_progress = self.rendering_progress.clone();
-        let rendering_time = self.rendering_time.clone();
-        let rendering_cancel = self.rendering_cancel.clone();
+        let rendering_progress = self.progress.clone();
+        let rendering_time = self.time.clone();
+        let rendering_cancel = self.cancel.clone();
 
-        let image_buffer = self.render_image.clone();
+        let image_buffer = self.rimage.clone();
 
         rendering_progress.store(0, Ordering::Relaxed);
         rendering_time.store(0, Ordering::Relaxed);
 
-        self.rendering_thread = Some(std::thread::spawn(move || {
+        self.thread = Some(std::thread::spawn(move || {
             let start = std::time::Instant::now();
 
             let blocks = AtomicUsize::new(0);
