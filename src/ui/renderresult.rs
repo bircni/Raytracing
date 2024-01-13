@@ -1,26 +1,38 @@
 use egui::{pos2, Color32, CursorIcon, Frame, Rect, Rounding, Sense, Stroke, Ui, Vec2};
 
-use super::{preview::Preview, render::Render};
+use crate::scene::Scene;
 
-pub struct RenderResult {}
+use super::render::Render;
+
+pub struct RenderResult {
+    zoom: f32,
+    position: Vec2,
+}
 
 impl RenderResult {
-    pub fn render_result(ui: &mut Ui, render: &Render, preview: &mut Preview) {
+    pub fn new() -> Self {
+        Self {
+            zoom: 0.0,
+            position: Vec2::ZERO,
+        }
+    }
+
+    pub fn show(&mut self, ui: &mut Ui, scene: &Scene, render: &Render) {
         Frame::canvas(ui.style()).outer_margin(10.0).show(ui, |ui| {
             let (response, painter) = ui.allocate_painter(ui.available_size(), Sense::drag());
 
             let response = response.on_hover_and_drag_cursor(CursorIcon::Grab);
 
-            preview.zoom += ui.input(|i| i.scroll_delta.y);
-            preview.zoom = preview.zoom.clamp(
+            self.zoom += ui.input(|i| i.scroll_delta.y);
+            self.zoom = self.zoom.clamp(
                 -response.rect.width().min(response.rect.height()) / 4.0,
                 std::f32::INFINITY,
             );
-            preview.position += response.drag_delta();
+            self.position += response.drag_delta();
 
             response.double_clicked().then(|| {
-                preview.zoom = 0.0;
-                preview.position = Vec2::ZERO;
+                self.zoom = 0.0;
+                self.position = Vec2::ZERO;
             });
 
             // paint gray grid
@@ -46,7 +58,7 @@ impl RenderResult {
                 }
             }
 
-            let render_aspect = render.rsize.as_size().0 as f32 / render.rsize.as_size().1 as f32;
+            let render_aspect = scene.camera.resolution.0 as f32 / scene.camera.resolution.1 as f32;
             let rect = Rect::from_min_size(
                 response.rect.min,
                 // keep aspect ratio
@@ -70,8 +82,8 @@ impl RenderResult {
 
             painter.image(
                 render.texture.id(),
-                rect.translate(preview.position)
-                    .expand2(Vec2::new(preview.zoom * render_aspect, preview.zoom)),
+                rect.translate(self.position)
+                    .expand2(Vec2::new(self.zoom * render_aspect, self.zoom)),
                 Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)),
                 Color32::WHITE,
             );

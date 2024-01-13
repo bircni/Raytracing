@@ -1,74 +1,34 @@
-mod line;
 mod preview;
 mod properties;
 mod render;
 mod renderresult;
+mod status;
 
-use self::line::Line;
 use self::preview::Preview;
 use self::render::Render;
+use self::renderresult::RenderResult;
+use self::status::Status;
 
 use crate::scene::Scene;
 use crate::ui::properties::Properties;
 use anyhow::Context;
 use eframe::CreationContext;
 use egui::mutex::Mutex;
-use egui::{CentralPanel, Color32, ColorImage, ImageData, Key, TextStyle, TextureOptions};
+use egui::{vec2, CentralPanel, Color32, ColorImage, ImageData, Key, TextStyle, TextureOptions};
 use image::ImageBuffer;
 
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread::JoinHandle;
 
-#[derive(PartialEq, Eq)]
-enum RenderSize {
-    FullHD,
-    Wqhd,
-    Uhd1,
-    Uhd2,
-    Custom([u32; 2]),
-}
-
-impl RenderSize {
-    fn as_size(&self) -> (u32, u32) {
-        match self {
-            RenderSize::FullHD => (1920, 1080),
-            RenderSize::Wqhd => (2560, 1440),
-            RenderSize::Uhd1 => (3840, 2160),
-            RenderSize::Uhd2 => (7680, 4320),
-            &RenderSize::Custom([x, y]) => (x, y),
-        }
-    }
-
-    fn from_res(res: (u32, u32)) -> Self {
-        match res {
-            (1920, 1080) => RenderSize::FullHD,
-            (2560, 1440) => RenderSize::Wqhd,
-            (3840, 2160) => RenderSize::Uhd1,
-            (7680, 4320) => RenderSize::Uhd2,
-            (x, y) => RenderSize::Custom([x, y]),
-        }
-    }
-}
-
-impl std::fmt::Display for RenderSize {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            RenderSize::FullHD => write!(f, "Full HD"),
-            RenderSize::Wqhd => write!(f, "2k"),
-            RenderSize::Uhd1 => write!(f, "4k"),
-            RenderSize::Uhd2 => write!(f, "8k"),
-            RenderSize::Custom(_) => write!(f, "Custom"),
-        }
-    }
-}
 pub struct App {
     current_tab: usize,
     scene: Scene,
     render: Render,
     properties: Properties,
-    line: Line,
+    line: Status,
     preview: Preview,
+    render_result: RenderResult,
 }
 
 impl App {
@@ -80,10 +40,9 @@ impl App {
                 .as_ref()
                 .context("Failed to get wgpu context")?,
         );
-        let render_size = RenderSize::from_res(scene.camera.resolution);
 
         let (render_texture, image_buffer) = {
-            let render_size = render_size.as_size();
+            let render_size = scene.camera.resolution;
             let texture = cc.egui_ctx.load_texture(
                 "render",
                 ImageData::Color(Arc::new(ColorImage {
@@ -101,15 +60,17 @@ impl App {
                 TextStyle::Name("subheading".into()),
                 TextStyle::Monospace.resolve(s),
             );
+            s.spacing.item_spacing = vec2(10.0, std::f32::consts::PI * 1.76643);
         });
 
         Ok(Self {
             scene,
             current_tab: 0,
-            render: Render::new(render_texture.clone(), image_buffer, render_size),
+            render: Render::new(render_texture, image_buffer),
             properties: Properties::new(),
-            line: Line::new(),
+            line: Status::new(),
             preview: Preview::new(),
+            render_result: RenderResult::new(),
         })
     }
 }
@@ -126,7 +87,7 @@ impl eframe::App for App {
             });
 
         ctx.input(|input| input.key_pressed(Key::S) && input.modifiers.ctrl)
-            .then(|| self.properties.save_scene(self.scene.clone()));
+            .then(|| Properties::save_scene(self.scene.clone()));
 
         CentralPanel::default().show(ctx, |ui| {
             self.line
@@ -138,11 +99,10 @@ impl eframe::App for App {
 
             match self.current_tab {
                 0 => {
-                    self.properties
-                        .properties(&mut self.scene, ui, &mut self.render);
-                    self.preview.preview(ui, &mut self.scene, &self.render);
+                    self.properties.show(&mut self.scene, ui, &mut self.render);
+                    self.preview.show(ui, &mut self.scene);
                 }
-                1 => renderresult::RenderResult::render_result(ui, &self.render, &mut self.preview),
+                1 => self.render_result.show(ui, &self.scene, &self.render),
                 n => unreachable!("Invalid tab index {}", n),
             }
         });

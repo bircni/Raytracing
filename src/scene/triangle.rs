@@ -19,7 +19,6 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    //quick fix for linter
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         a: Point3<f32>,

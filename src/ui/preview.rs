@@ -20,14 +20,10 @@ use nalgebra::{Isometry3, OPoint, Perspective3};
 
 use crate::scene::{Scene, Skybox};
 
-use super::render::Render;
-
 const MAX_LIGHTS: usize = 255;
 const MAX_OBJECTS: usize = 255;
 
 pub struct Preview {
-    pub zoom: f32,
-    pub position: Vec2,
     active_movement: bool,
     movement_speed: f32,
     look_sensitivity: f32,
@@ -38,8 +34,6 @@ pub struct Preview {
 impl Preview {
     pub fn new() -> Self {
         Self {
-            zoom: 0.0,
-            position: Vec2::ZERO,
             active_movement: false,
             movement_speed: 0.1,
             look_sensitivity: 0.001,
@@ -256,13 +250,16 @@ impl Preview {
             .send_viewport_cmd(egui::ViewportCommand::CursorGrab(egui::CursorGrab::None));
     }
 
-    pub fn preview(&mut self, ui: &mut Ui, scene: &mut Scene, render: &Render) {
+    pub fn show(&mut self, ui: &mut Ui, scene: &mut Scene) {
         ui.vertical(|ui| {
         let available_size = ui.available_size();
-        let width = available_size.x;
-        let size = render.rsize.as_size();
-        let height = (width / size.0 as f32) * size.1 as f32;
-        ui.allocate_space(Vec2::new(0.0, (available_size.y - height - 20.0) / 2.0));
+        let aspect_ratio = scene.camera.resolution.0 as f32 / scene.camera.resolution.1 as f32;
+        // compute largest rectangle with aspect_ratio that fits in available_size
+        let (width, height) = if available_size.x / available_size.y > aspect_ratio {
+            (available_size.y * aspect_ratio, available_size.y)
+        } else {
+            (available_size.x, available_size.x / aspect_ratio)
+        };
         Frame::canvas(ui.style())
             .outer_margin(10.0)
             .inner_margin(0.0)
@@ -276,7 +273,7 @@ impl Preview {
                 })
             .show(ui, |ui| {
                 let (response, painter) =
-                    ui.allocate_painter(Vec2 { x: width - 20.0, y: height }, Sense::click_and_drag());
+                    ui.allocate_painter(Vec2 { x: width -20.0, y: height -20.0 }, Sense::click_and_drag());
                 painter.add(Preview::paint(response.rect, scene));
                 if response.hover_pos().is_some() && !self.active_movement {
                     egui::show_tooltip(ui.ctx(), egui::Id::new("preview_tooltip"), |ui| {

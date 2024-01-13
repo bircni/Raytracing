@@ -11,7 +11,7 @@ use egui::{
 };
 use egui_file::FileDialog;
 use image::RgbImage;
-use log::warn;
+use log::{info, warn};
 use nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
 
 use crate::{
@@ -19,11 +19,7 @@ use crate::{
     Color, Scene,
 };
 
-use super::{render::Render, RenderSize};
-
-pub const SMALL_SPACE: f32 = 2.5;
-pub const MEDIUM_SPACE: f32 = 5.0;
-pub const LARGE_SPACE: f32 = 10.0;
+use super::render::Render;
 
 fn xyz_drag_value(ui: &mut Ui, value: &mut XYZ<f32>) {
     ui.horizontal(|ui| {
@@ -47,7 +43,7 @@ impl Properties {
             open_file_dialog: None,
         }
     }
-    pub fn properties(&mut self, scene: &mut Scene, ui: &mut Ui, render: &mut Render) {
+    pub fn show(&mut self, scene: &mut Scene, ui: &mut Ui, render: &mut Render) {
         SidePanel::right("panel")
             .show_separator_line(true)
             .show_inside(ui, |ui| {
@@ -71,35 +67,35 @@ impl Properties {
                             .on_hover_text("Save Scene")
                             .clicked()
                             .then(|| {
-                                self.save_scene(scene.clone());
+                                Self::save_scene(scene.clone());
+                            });
+                            ui.add_sized(
+                                [20.0, 20.0],
+                                ImageButton::new(include_image!(
+                                    "../../res/icons/arrow-rotate-left-solid.svg"
+                                ))
+                                .tint(tint_color),
+                            )
+                            .on_hover_text("Reset Scene")
+                            .clicked()
+                            .then(|| {
+                                info!("Resetting scene");
                             });
                         });
                     });
 
-                    ui.add_space(MEDIUM_SPACE);
-
-                    self.camera_settings(scene, ui);
-
-                    ui.add_space(LARGE_SPACE);
+                    Self::camera_settings(scene, ui);
 
                     self.scene_settings(scene, ui, render);
 
-                    ui.add_space(LARGE_SPACE);
-
-                    self.lights(ui, scene);
-
-                    ui.add_space(LARGE_SPACE);
+                    Self::lights(ui, scene);
 
                     self.objects(ui, scene);
-
-                    ui.add_space(SMALL_SPACE);
                 });
             });
     }
 
-    //Lippold
-    #[allow(clippy::unused_self)]
-    pub fn camera_settings(&self, scene: &mut Scene, ui: &mut egui::Ui) {
+    pub fn camera_settings(scene: &mut Scene, ui: &mut egui::Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
                 ui.label(RichText::new("Camera").size(16.0));
@@ -109,26 +105,21 @@ impl Properties {
 
             ui.vertical(|ui| {
                 ui.label("Position:");
-                ui.add_space(SMALL_SPACE);
+
                 xyz_drag_value(ui, &mut scene.camera.position);
 
-                ui.add_space(MEDIUM_SPACE);
-
                 ui.label("Look at:");
-                ui.add_space(SMALL_SPACE);
+
                 xyz_drag_value(ui, &mut scene.camera.look_at);
 
-                ui.add_space(MEDIUM_SPACE);
-
                 ui.label("Field of View:");
-                ui.add_space(SMALL_SPACE);
+
                 ui.add(
                     Slider::new(&mut scene.camera.fov, 0.0..=std::f32::consts::PI)
                         .step_by(0.01)
                         .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
                         .clamp_to_range(true),
                 );
-                ui.add_space(SMALL_SPACE);
             });
         });
     }
@@ -141,13 +132,9 @@ impl Properties {
 
             ui.separator();
 
-            self.render_options(ui, render, scene);
-
-            ui.add_space(MEDIUM_SPACE);
+            Self::render_options(ui, render, scene);
 
             self.skybox_options(ui, scene);
-
-            ui.add_space(MEDIUM_SPACE);
 
             ui.label("Ambient Color:");
             color_picker::color_edit_button_rgb(ui, scene.settings.ambient_color.as_mut());
@@ -156,86 +143,69 @@ impl Properties {
             ui.add(
                 Slider::new(&mut scene.settings.ambient_intensity, 0.0..=1.0).clamp_to_range(true),
             );
-
-            ui.add_space(MEDIUM_SPACE);
         });
     }
 
-    fn render_options(&mut self, ui: &mut Ui, render: &mut Render, scene: &mut Scene) {
+    fn render_options(ui: &mut Ui, render: &mut Render, scene: &mut Scene) {
         ui.label("Render Size:");
         ui.vertical(|ui| {
-            let mut render_size = render.rsize.as_size();
             ui.add_enabled_ui(render.thread.is_none(), |ui| {
                 ui.vertical(|ui| {
+                    let text = Self::format_render_size(scene.camera.resolution);
                     egui::ComboBox::from_id_source(0)
-                        .selected_text(format!("{}", render.rsize))
+                        .selected_text(text)
                         .show_ui(ui, |ui| {
                             (ui.selectable_value(
-                                &mut render.rsize,
-                                RenderSize::FullHD,
-                                format!("{}", RenderSize::FullHD),
+                                &mut scene.camera.resolution,
+                                (1920, 1080),
+                                "Full HD",
                             )
                             .changed()
-                                | ui.selectable_value(
-                                    &mut render.rsize,
-                                    RenderSize::Wqhd,
-                                    format!("{}", RenderSize::Wqhd),
-                                )
-                                .changed()
                                 || ui
                                     .selectable_value(
-                                        &mut render.rsize,
-                                        RenderSize::Uhd1,
-                                        format!("{}", RenderSize::Uhd1),
+                                        &mut scene.camera.resolution,
+                                        (2560, 1440),
+                                        "2k",
                                     )
                                     .changed()
                                 || ui
                                     .selectable_value(
-                                        &mut render.rsize,
-                                        RenderSize::Uhd2,
-                                        format!("{}", RenderSize::Uhd2),
+                                        &mut scene.camera.resolution,
+                                        (3840, 2160),
+                                        "4k",
                                     )
                                     .changed()
                                 || ui
                                     .selectable_value(
-                                        &mut render.rsize,
-                                        RenderSize::Custom([render_size.0, render_size.1]),
-                                        format!("{}", RenderSize::Custom([0, 0])),
+                                        &mut scene.camera.resolution,
+                                        (7680, 4320),
+                                        "8k",
                                     )
                                     .changed())
                             .then(|| {
-                                self.change_render_size(scene, render);
+                                Self::change_render_size(scene, render);
                             });
                         });
                     ui.horizontal(|ui| {
-                        ui.add_enabled_ui(
-                            render.thread.is_none()
-                                && matches!(render.rsize, RenderSize::Custom(_)),
-                            |ui| {
-                                let (x, y) = match &mut render.rsize {
-                                    RenderSize::Custom([x, y]) => (x, y),
-                                    _ => (&mut render_size.0, &mut render_size.1),
-                                };
-                                (ui.add(
-                                    DragValue::new(x)
+                        let (x, y) = &mut scene.camera.resolution;
+                        (ui.add(
+                            DragValue::new(x)
+                                .speed(1.0)
+                                .clamp_range(10..=8192)
+                                .prefix("w: "),
+                        )
+                        .changed()
+                            || ui
+                                .add(
+                                    DragValue::new(y)
                                         .speed(1.0)
                                         .clamp_range(10..=8192)
-                                        .prefix("w: "),
+                                        .prefix("h: "),
                                 )
-                                .changed()
-                                    || ui
-                                        .add(
-                                            DragValue::new(y)
-                                                .speed(1.0)
-                                                .clamp_range(10..=8192)
-                                                .prefix("h: "),
-                                        )
-                                        .changed())
-                                .then(|| {
-                                    self.change_render_size(scene, render);
-                                });
-                            },
-                        );
+                                .changed())
+                        .then(|| {
+                            Self::change_render_size(scene, render);
+                        });
                     });
                 });
             });
@@ -308,9 +278,7 @@ impl Properties {
         });
     }
 
-    //Lippold
-    #[allow(clippy::unused_self)]
-    fn lights(&mut self, ui: &mut Ui, scene: &mut Scene) {
+    fn lights(ui: &mut Ui, scene: &mut Scene) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
                 ui.label(RichText::new(format!("Lights ({})", scene.lights.len())).size(16.0))
@@ -331,7 +299,6 @@ impl Properties {
                                 .size(14.0)
                                 .family(FontFamily::Monospace),
                         );
-                        ui.add_space(SMALL_SPACE);
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             remove = ui
                                 .add_sized(
@@ -346,22 +313,16 @@ impl Properties {
                     });
 
                     ui.label("Position:");
-                    ui.add_space(SMALL_SPACE);
+
                     xyz_drag_value(ui, &mut light.position);
 
-                    ui.add_space(MEDIUM_SPACE);
-
                     ui.label("Intensity:");
-                    ui.add_space(SMALL_SPACE);
+
                     ui.add(Slider::new(&mut light.intensity, 0.0..=100.0).clamp_to_range(true));
 
-                    ui.add_space(MEDIUM_SPACE);
-
                     ui.label("Color:");
-                    ui.add_space(SMALL_SPACE);
-                    color_picker::color_edit_button_rgb(ui, light.color.as_mut());
 
-                    ui.add_space(MEDIUM_SPACE);
+                    color_picker::color_edit_button_rgb(ui, light.color.as_mut());
 
                     remove.then_some(n)
                 })
@@ -372,7 +333,6 @@ impl Properties {
                 });
 
             ui.separator();
-            ui.add_space(SMALL_SPACE);
             ui.vertical_centered(|ui| {
                 ui.add(Button::new(RichText::new("+ Add Light")).frame(false))
                     .clicked()
@@ -395,11 +355,8 @@ impl Properties {
 
             let mut objects_to_remove = Vec::new();
 
-            #[allow(clippy::out_of_bounds_indexing)]
             for (n, o) in scene.objects.iter_mut().enumerate() {
                 ui.separator();
-
-                ui.add_space(SMALL_SPACE);
 
                 ui.horizontal(|ui| {
                     ui.label(
@@ -407,7 +364,6 @@ impl Properties {
                             .size(14.0)
                             .family(FontFamily::Monospace),
                     );
-                    ui.add_space(SMALL_SPACE);
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
                             .add_sized(
@@ -423,12 +379,11 @@ impl Properties {
                 });
 
                 ui.label("Position");
-                ui.add_space(SMALL_SPACE);
+
                 xyz_drag_value(ui, &mut o.translation);
-                ui.add_space(MEDIUM_SPACE);
 
                 ui.label("Rotation");
-                ui.add_space(SMALL_SPACE);
+
                 ui.horizontal(|ui| {
                     let (mut x, mut y, mut z) = o.rotation.euler_angles();
 
@@ -448,12 +403,9 @@ impl Properties {
                         })
                 });
 
-                ui.add_space(MEDIUM_SPACE);
-
                 ui.label("Scale");
-                ui.add_space(SMALL_SPACE);
+
                 xyz_drag_value(ui, &mut o.scale);
-                ui.add_space(MEDIUM_SPACE);
             }
 
             for o in objects_to_remove {
@@ -461,7 +413,6 @@ impl Properties {
             }
 
             ui.separator();
-            ui.add_space(SMALL_SPACE);
             ui.vertical_centered(|ui| {
                 if ui
                     .add(Button::new(RichText::new("+ Add Object")).frame(false))
@@ -497,10 +448,8 @@ impl Properties {
     }
 
     /// Change the render size
-    // Lippold
-    #[allow(clippy::unused_self)]
-    fn change_render_size(&mut self, scene: &mut Scene, render: &mut Render) {
-        let (x, y) = render.rsize.as_size();
+    fn change_render_size(scene: &mut Scene, render: &mut Render) {
+        let (x, y) = scene.camera.resolution;
         *render.rimage.lock() = RgbImage::new(x, y);
         scene.camera.resolution = (x, y);
         render.texture.set(
@@ -512,14 +461,22 @@ impl Properties {
         );
     }
 
-    //Lippold
-    #[allow(clippy::unused_self)]
-    pub fn save_scene(&mut self, scene: Scene) {
+    pub fn save_scene(scene: Scene) {
         serde_yaml::to_string(&scene)
             .context("Failed to serialize scene")
             .and_then(|str| std::fs::write(scene.path, str).context("Failed to save config"))
             .unwrap_or_else(|e| {
                 warn!("{}", e);
             });
+    }
+
+    fn format_render_size(size: (u32, u32)) -> &'static str {
+        match size {
+            (1920, 1080) => "FullHD",
+            (2560, 1440) => "2k",
+            (3840, 2160) => "4k",
+            (7680, 4320) => "8k",
+            _ => "Custom",
+        }
     }
 }

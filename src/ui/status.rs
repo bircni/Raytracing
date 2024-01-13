@@ -2,17 +2,17 @@ use std::sync::atomic::Ordering;
 
 use egui::{Align, Button, Color32, Layout, ProgressBar, RichText, Ui};
 use egui_file::FileDialog;
-use log::info;
+use log::{info, warn};
 
 use crate::scene::Scene;
 
 use super::render::Render;
 
-pub struct Line {
+pub struct Status {
     save_image_dialog: Option<FileDialog>,
 }
 
-impl Line {
+impl Status {
     pub fn new() -> Self {
         Self {
             save_image_dialog: None,
@@ -41,8 +41,8 @@ impl Line {
 
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 self.export_button(ui, render);
-                self.render_button(ui, render, scene, current_tab);
-                self.progress_bar(ui, render);
+                Self::render_button(ui, render, scene, current_tab);
+                Self::progress_bar(ui, render);
             });
         });
     }
@@ -69,23 +69,19 @@ impl Line {
                 .open();
         }
 
-        //Lippold
-        //if let Some(mut dialog) = self.save_image_dialog {
-        //    if dialog.show(ui.ctx()).selected() {
-        //        if let Some(file) = dialog.path() {
-        //            log::info!("Saving image to {:?}", file);
-        //            render.rimage.lock().save(file).unwrap_or_else(|e| {
-        //                warn!("Failed to save image: {}", e);
-        //            });
-        //        }
-        //    }
-        //}
+        if let Some(dialog) = self.save_image_dialog.as_mut() {
+            if dialog.show(ui.ctx()).selected() {
+                if let Some(file) = dialog.path() {
+                    log::info!("Saving image to {:?}", file);
+                    render.rimage.lock().save(file).unwrap_or_else(|e| {
+                        warn!("Failed to save image: {}", e);
+                    });
+                }
+            }
+        }
     }
 
-    //Lippold
-    #[allow(clippy::unused_self)]
     pub fn render_button(
-        &mut self,
         ui: &mut Ui,
         render: &mut Render,
         scene: &mut Scene,
@@ -105,9 +101,7 @@ impl Line {
         }
     }
 
-    //Lippold
-    #[allow(clippy::unused_self)]
-    pub fn progress_bar(&self, ui: &mut Ui, render: &Render) {
+    pub fn progress_bar(ui: &mut Ui, render: &Render) {
         let progress = f32::from(render.progress.load(Ordering::Relaxed)) / f32::from(u16::MAX);
         #[allow(clippy::float_cmp)]
         ui.add(
