@@ -72,11 +72,11 @@ impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRel
         let camera = Camera::deserialize(camera).map_err(serde::de::Error::custom)?;
 
         let settings = map
-            .get("extra_args")
+            .get("extraArgs")
             .map(Settings::deserialize)
             .transpose()
             .map_err(|e| {
-                warn!("Failed to deserialize extra_args: {}", e);
+                warn!("Failed to deserialize extraArgs: {}", e);
                 e
             })
             .unwrap_or_default()
