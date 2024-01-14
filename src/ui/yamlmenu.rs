@@ -65,7 +65,11 @@ impl YamlMenu {
                 .on_hover_text("Load Scene")
                 .clicked()
                 .then(|| {
-                    if self.open_dialog.is_none() {
+                    if !self
+                        .open_dialog
+                        .as_ref()
+                        .is_some_and(egui_file::FileDialog::visible)
+                    {
                         let mut dialog =
                             FileDialog::open_file(None).filename_filter(Box::new(|p| {
                                 Path::new(p)

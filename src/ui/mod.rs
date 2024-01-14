@@ -16,7 +16,8 @@ use anyhow::Context;
 use eframe::CreationContext;
 use egui::mutex::Mutex;
 use egui::{
-    vec2, CentralPanel, ColorImage, ImageData, ScrollArea, SidePanel, TextStyle, TextureOptions,
+    vec2, Align, CentralPanel, ColorImage, Direction, ImageData, Layout, ScrollArea, SidePanel,
+    TextStyle, TextureOptions,
 };
 use image::ImageBuffer;
 
@@ -122,7 +123,13 @@ impl eframe::App for App {
                     match self.yaml_menu.scene_mut() {
                         Some(scene) => self.preview.show(ui, scene),
                         None => {
-                            ui.label("No scene loaded");
+                            ui.with_layout(
+                                Layout::centered_and_justified(Direction::LeftToRight)
+                                    .with_main_align(Align::Center),
+                                |ui| {
+                                    ui.heading("No scene loaded");
+                                },
+                            );
                         }
                     }
                 }
