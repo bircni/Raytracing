@@ -23,12 +23,15 @@ impl RenderResult {
 
             let response = response.on_hover_and_drag_cursor(CursorIcon::Grab);
 
-            self.zoom += ui.input(|i| i.scroll_delta.y);
-            self.zoom = self.zoom.clamp(
-                -response.rect.width().min(response.rect.height()) / 4.0,
-                std::f32::INFINITY,
-            );
-            self.position += response.drag_delta();
+            // Check if the dialog is being hovered over or active
+            if response.has_focus() || response.hovered() {
+                self.zoom += ui.input(|i| i.scroll_delta.y);
+                self.zoom = self.zoom.clamp(
+                    -response.rect.width().min(response.rect.height()) / 4.0,
+                    std::f32::INFINITY,
+                );
+                self.position += response.drag_delta();
+            }
 
             response.double_clicked().then(|| {
                 self.zoom = 0.0;
