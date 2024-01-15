@@ -186,11 +186,11 @@
         <span class="kw">let </span>camera = Camera::deserialize(camera).map_err(serde::de::Error::custom)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>settings = map
-            .get(<span class="string">&quot;extra_args&quot;</span>)
+            .get(<span class="string">&quot;extraArgs&quot;</span>)
             .map(Settings::deserialize)
             .transpose()
             .map_err(|e| {
-                <span class="macro">warn!</span>(<span class="string">&quot;Failed to deserialize extra_args: {}&quot;</span>, e);
+                <span class="macro">warn!</span>(<span class="string">&quot;Failed to deserialize extraArgs: {}&quot;</span>, e);
                 e
             })
             .unwrap_or_default()

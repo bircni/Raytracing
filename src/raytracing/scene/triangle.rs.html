@@ -101,7 +101,6 @@
 <a href="#101" id="101">101</a>
 <a href="#102" id="102">102</a>
 <a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>bvh::{aabb::Bounded, bounding_hierarchy::BHShape};
 <span class="kw">use </span>nalgebra::{Point3, Vector2, Vector3};
 
@@ -123,8 +122,7 @@
 }
 
 <span class="kw">impl </span>Triangle {
-    <span class="comment">//quick fix for linter
-    </span><span class="attr">#[allow(clippy::too_many_arguments)]
+    <span class="attr">#[allow(clippy::too_many_arguments)]
     </span><span class="kw">pub fn </span>new(
         a: Point3&lt;f32&gt;,
         b: Point3&lt;f32&gt;,

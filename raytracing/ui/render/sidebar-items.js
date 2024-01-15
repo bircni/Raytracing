@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {};
+window.SIDEBAR_ITEMS = {"fn":["rendering_thread"],"struct":["Render","ThreadArgs"]};

@@ -61,8 +61,6 @@
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
-<a href="#64" id="64">64</a>
-<a href="#65" id="65">65</a>
 </pre></div><pre class="rust"><code><span class="attr">#![warn(clippy::pedantic)]
 #![warn(clippy::perf)]
 #![warn(clippy::style)]
@@ -91,7 +89,7 @@
         <span class="attr">#[cfg(debug_assertions)]
         </span>LevelFilter::Trace,
         <span class="attr">#[cfg(not(debug_assertions))]
-        </span>LevelFilter::Warn,
+        </span>LevelFilter::Info,
         ConfigBuilder::new()
             .add_filter_allow_str(<span class="string">&quot;raytracing&quot;</span>)
             .build(),
@@ -100,13 +98,11 @@
     )
     .context(<span class="string">&quot;Failed to initialize logger&quot;</span>)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>scene = Scene::load(<span class="string">&quot;./res/test/config.yaml&quot;</span>).context(<span class="string">&quot;Failed to load scene&quot;</span>)<span class="question-mark">?</span>;
-
     eframe::run_native(
         <span class="string">&quot;RayTracer&quot;</span>,
         eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
-                .with_inner_size(egui::vec2(<span class="number">1200.0</span>, <span class="number">900.0</span>))
+                .with_inner_size(egui::vec2(<span class="number">1600.0</span>, <span class="number">900.0</span>))
                 .with_icon(
                     eframe::icon_data::from_png_bytes(<span class="macro">include_bytes!</span>(<span class="string">&quot;../res/icon.png&quot;</span>))
                         .unwrap_or_default(),
@@ -119,7 +115,7 @@
             ..Default::default()
         },
         Box::new(|cc| {
-            Box::new(ui::App::new(cc, scene).unwrap_or_else(|e| {
+            Box::new(ui::App::new(cc).unwrap_or_else(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to create app: {}&quot;</span>, e);
                 std::process::exit(<span class="number">1</span>);
             }))

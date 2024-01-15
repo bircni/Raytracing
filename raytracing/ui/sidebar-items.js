@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["RenderSize"],"mod":["preview","properties","render"],"struct":["App"]};
+window.SIDEBAR_ITEMS = {"enum":["Tab"],"mod":["preview","properties","render","renderresult","status","yamlmenu"],"struct":["App"]};
