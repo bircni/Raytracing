@@ -16,7 +16,7 @@ pub struct Render {
     pub progress: Arc<AtomicU16>,
     pub thread: Option<std::thread::JoinHandle<()>>,
     pub cancel: Arc<AtomicBool>,
-    pub rimage: Arc<Mutex<RgbImage>>,
+    pub image_buffer: Arc<Mutex<RgbImage>>,
     pub time: Arc<AtomicU32>,
 }
 
@@ -27,12 +27,14 @@ impl Render {
             progress: Arc::new(AtomicU16::new(0)),
             thread: None,
             cancel: Arc::new(AtomicBool::new(false)),
-            rimage,
+            image_buffer: rimage,
             time: Arc::new(AtomicU32::new(0)),
         }
     }
     pub fn render(&mut self, ctx: egui::Context, scene: &Scene) {
         let rsize = scene.camera.resolution;
+        info!("Rendering scene with resolution {:?}", rsize);
+
         self.texture.set(
             ImageData::Color(Arc::new(ColorImage {
                 size: [rsize.0 as usize, rsize.1 as usize],
@@ -40,6 +42,7 @@ impl Render {
             })),
             TextureOptions::default(),
         );
+        *self.image_buffer.lock() = RgbImage::new(rsize.0, rsize.1);
 
         self.progress.store(0, Ordering::Relaxed);
         self.time.store(0, Ordering::Relaxed);
@@ -51,7 +54,7 @@ impl Render {
             scene: scene.clone(),
             rendering_progress: self.progress.clone(),
             texture: self.texture.clone(),
-            image_buffer: self.rimage.clone(),
+            image_buffer: self.image_buffer.clone(),
             rendering_time: self.time.clone(),
         };
 
@@ -144,6 +147,7 @@ fn rendering_thread(
                 TextureOptions::default(),
             );
             let mut image = image_buffer.lock();
+
             for x in 0..block_size[0] {
                 for y in 0..block_size[1] {
                     image.put_pixel(
@@ -157,6 +161,7 @@ fn rendering_thread(
                     );
                 }
             }
+
             ctx.request_repaint();
         });
 

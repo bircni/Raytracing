@@ -411,7 +411,7 @@ impl Properties {
     /// Change the render size
     fn change_render_size(scene: &mut Scene, render: &mut Render) {
         let (x, y) = scene.camera.resolution;
-        *render.rimage.lock() = RgbImage::new(x, y);
+        *render.image_buffer.lock() = RgbImage::new(x, y);
         scene.camera.resolution = (x, y);
         render.texture.set(
             ImageData::Color(Arc::new(ColorImage {
