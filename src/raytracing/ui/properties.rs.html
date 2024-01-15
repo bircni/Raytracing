@@ -845,7 +845,7 @@
     <span class="doccomment">/// Change the render size
     </span><span class="kw">fn </span>change_render_size(scene: <span class="kw-2">&amp;mut </span>Scene, render: <span class="kw-2">&amp;mut </span>Render) {
         <span class="kw">let </span>(x, y) = scene.camera.resolution;
-        <span class="kw-2">*</span>render.rimage.lock() = RgbImage::new(x, y);
+        <span class="kw-2">*</span>render.image_buffer.lock() = RgbImage::new(x, y);
         scene.camera.resolution = (x, y);
         render.texture.set(
             ImageData::Color(Arc::new(ColorImage {

@@ -203,7 +203,7 @@
             <span class="kw">if </span>dialog.show(ui.ctx()).selected() {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = dialog.path() {
                     <span class="macro">log::info!</span>(<span class="string">&quot;Saving image to {:?}&quot;</span>, file);
-                    render.rimage.lock().save(file).unwrap_or_else(|e| {
+                    render.image_buffer.lock().save(file).unwrap_or_else(|e| {
                         <span class="macro">warn!</span>(<span class="string">&quot;Failed to save image: {}&quot;</span>, e);
                     });
                 }

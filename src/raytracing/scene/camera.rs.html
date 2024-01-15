@@ -85,6 +85,18 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>nalgebra::{Point3, Rotation3, Vector3};
 
 <span class="kw">use </span><span class="kw">crate</span>::raytracer::Ray;
@@ -96,6 +108,18 @@
     <span class="kw">pub </span>up: Vector3&lt;f32&gt;,
     <span class="kw">pub </span>fov: f32,
     <span class="kw">pub </span>resolution: (u32, u32),
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>Camera {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            position: Point3::new(<span class="number">1.0</span>, <span class="number">1.0</span>, <span class="number">1.0</span>),
+            look_at: Point3::origin(),
+            up: Vector3::y(),
+            fov: <span class="number">60.0_f32</span>.to_radians(),
+            resolution: (<span class="number">1920</span>, <span class="number">1080</span>),
+        }
+    }
 }
 
 <span class="kw">impl </span>Camera {
