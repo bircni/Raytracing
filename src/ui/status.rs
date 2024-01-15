@@ -73,7 +73,7 @@ impl Status {
             if dialog.show(ui.ctx()).selected() {
                 if let Some(file) = dialog.path() {
                     log::info!("Saving image to {:?}", file);
-                    render.rimage.lock().save(file).unwrap_or_else(|e| {
+                    render.image_buffer.lock().save(file).unwrap_or_else(|e| {
                         warn!("Failed to save image: {}", e);
                     });
                 }

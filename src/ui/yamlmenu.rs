@@ -5,11 +5,12 @@ use egui::{hex_color, include_image, Align, ImageButton, Layout, Ui};
 use egui_file::FileDialog;
 use log::{info, warn};
 
-use crate::scene::Scene;
+use crate::scene::{Camera, Scene, Settings};
 
 pub struct YamlMenu {
     scene: Option<Scene>,
     open_dialog: Option<FileDialog>,
+    create_dialog: Option<FileDialog>,
 }
 
 impl YamlMenu {
@@ -17,6 +18,7 @@ impl YamlMenu {
         Self {
             scene: None,
             open_dialog: None,
+            create_dialog: None,
         }
     }
 
@@ -44,6 +46,25 @@ impl YamlMenu {
                 }
 
                 self.open_dialog = None;
+            }
+        }
+
+        if let Some(dialog) = self.create_dialog.as_mut() {
+            if dialog.show(ui.ctx()).selected() {
+                if let Some(path) = dialog.path() {
+                    info!("New scene at {}", path.display());
+                    self.scene = Some(Scene {
+                        path: path.to_path_buf(),
+                        objects: vec![],
+                        lights: vec![],
+                        camera: Camera::default(),
+                        settings: Settings::default(),
+                    });
+
+                    self.save_scene();
+                }
+
+                self.create_dialog = None;
             }
         }
 
@@ -91,6 +112,31 @@ impl YamlMenu {
                     .on_hover_text("Save Scene")
                     .clicked()
                     .then(|| self.save_scene());
+                });
+
+                ui.add_sized(
+                    [20.0, 20.0],
+                    ImageButton::new(include_image!("../../res/icons/plus-solid.svg"))
+                        .tint(tint_color),
+                )
+                .on_hover_text("New Scene")
+                .clicked()
+                .then(|| {
+                    if !self
+                        .create_dialog
+                        .as_ref()
+                        .is_some_and(egui_file::FileDialog::visible)
+                    {
+                        let mut dialog =
+                            FileDialog::save_file(None).filename_filter(Box::new(|p| {
+                                Path::new(p)
+                                    .extension()
+                                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
+                            }));
+
+                        dialog.open();
+                        self.create_dialog = Some(dialog);
+                    }
                 });
 
                 ui.add_enabled_ui(self.scene.is_some(), |ui| {
