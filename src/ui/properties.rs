@@ -6,12 +6,11 @@ use std::{
 use anyhow::Context;
 use egui::{
     color_picker, hex_color, include_image, Align, Button, Color32, ColorImage, DragValue,
-    FontFamily, ImageButton, ImageData, Layout, RichText, ScrollArea, SidePanel, Slider,
-    TextureOptions, Ui,
+    FontFamily, ImageButton, ImageData, Layout, RichText, Slider, TextureOptions, Ui,
 };
 use egui_file::FileDialog;
 use image::RgbImage;
-use log::{info, warn};
+use log::warn;
 use nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
 
 use crate::{
@@ -44,55 +43,17 @@ impl Properties {
         }
     }
     pub fn show(&mut self, scene: &mut Scene, ui: &mut Ui, render: &mut Render) {
-        SidePanel::right("panel")
-            .show_separator_line(true)
-            .show_inside(ui, |ui| {
-                ScrollArea::new([false, true]).show(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        ui.heading("Properties");
+        ui.horizontal(|ui| {
+            ui.heading("Properties");
+        });
 
-                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            let tint_color = if ui.visuals().dark_mode {
-                                hex_color!("#ffffff")
-                            } else {
-                                hex_color!("#000000")
-                            };
-                            ui.add_sized(
-                                [20.0, 20.0],
-                                ImageButton::new(include_image!(
-                                    "../../res/icons/floppy-disk-solid.svg"
-                                ))
-                                .tint(tint_color),
-                            )
-                            .on_hover_text("Save Scene")
-                            .clicked()
-                            .then(|| {
-                                Self::save_scene(scene.clone());
-                            });
-                            ui.add_sized(
-                                [20.0, 20.0],
-                                ImageButton::new(include_image!(
-                                    "../../res/icons/arrow-rotate-left-solid.svg"
-                                ))
-                                .tint(tint_color),
-                            )
-                            .on_hover_text("Reset Scene")
-                            .clicked()
-                            .then(|| {
-                                info!("Resetting scene");
-                            });
-                        });
-                    });
+        Self::camera_settings(scene, ui);
 
-                    Self::camera_settings(scene, ui);
+        self.scene_settings(scene, ui, render);
 
-                    self.scene_settings(scene, ui, render);
+        Self::lights(ui, scene);
 
-                    Self::lights(ui, scene);
-
-                    self.objects(ui, scene);
-                });
-            });
+        self.objects(ui, scene);
     }
 
     pub fn camera_settings(scene: &mut Scene, ui: &mut egui::Ui) {
@@ -459,15 +420,6 @@ impl Properties {
             })),
             TextureOptions::default(),
         );
-    }
-
-    pub fn save_scene(scene: Scene) {
-        serde_yaml::to_string(&scene)
-            .context("Failed to serialize scene")
-            .and_then(|str| std::fs::write(scene.path, str).context("Failed to save config"))
-            .unwrap_or_else(|e| {
-                warn!("{}", e);
-            });
     }
 
     fn format_render_size(size: (u32, u32)) -> &'static str {

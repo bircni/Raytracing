@@ -35,8 +35,6 @@ fn main() -> anyhow::Result<()> {
     )
     .context("Failed to initialize logger")?;
 
-    let scene = Scene::load("./res/test/config.yaml").context("Failed to load scene")?;
-
     eframe::run_native(
         "RayTracer",
         eframe::NativeOptions {
@@ -54,7 +52,7 @@ fn main() -> anyhow::Result<()> {
             ..Default::default()
         },
         Box::new(|cc| {
-            Box::new(ui::App::new(cc, scene).unwrap_or_else(|e| {
+            Box::new(ui::App::new(cc).unwrap_or_else(|e| {
                 error!("Failed to create app: {}", e);
                 std::process::exit(1);
             }))

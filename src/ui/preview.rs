@@ -244,6 +244,7 @@ impl Preview {
         if activate {
             response.request_focus();
         }
+        
         ui.ctx()
             .send_viewport_cmd(egui::ViewportCommand::CursorVisible(!activate));
         ui.ctx()
@@ -254,12 +255,14 @@ impl Preview {
         ui.vertical(|ui| {
         let available_size = ui.available_size();
         let aspect_ratio = scene.camera.resolution.0 as f32 / scene.camera.resolution.1 as f32;
+
         // compute largest rectangle with aspect_ratio that fits in available_size
         let (width, height) = if available_size.x / available_size.y > aspect_ratio {
             (available_size.y * aspect_ratio, available_size.y)
         } else {
             (available_size.x, available_size.x / aspect_ratio)
         };
+
         Frame::canvas(ui.style())
             .outer_margin(10.0)
             .inner_margin(0.0)
@@ -275,14 +278,17 @@ impl Preview {
                 let (response, painter) =
                     ui.allocate_painter(Vec2 { x: width -20.0, y: height -20.0 }, Sense::click_and_drag());
                 painter.add(Preview::paint(response.rect, scene));
+                
                 if response.hover_pos().is_some() && !self.active_movement {
                     egui::show_tooltip(ui.ctx(), egui::Id::new("preview_tooltip"), |ui| {
                         ui.label("Click to change camera position");
                     });
                 }
+
                 if response.clicked() {
                     self.change_preview_movement(ui, &response, true);
                 }
+
                 if self.active_movement {
                     painter.debug_text(
                         pos2(response.rect.left(), response.rect.top()),
@@ -292,6 +298,7 @@ impl Preview {
                     );
                     ui.ctx()
                     .send_viewport_cmd(egui::ViewportCommand::CursorVisible(false));
+
                 self.move_camera(ui, &response, scene);
             }
             if !response.has_focus() && self.active_movement {
@@ -330,6 +337,7 @@ impl Preview {
                 self.pause_count = 0;
             }
         }
+
         if !self.pause_delta {
             // move look_at point in a sphere around camera with constant distance 1 using mouse
             let new_point =
@@ -338,8 +346,10 @@ impl Preview {
             scene.camera.look_at =
                 scene.camera.position + (new_point - scene.camera.position).normalize();
         }
+        
         scene.camera.fov = (scene.camera.fov - (ui.input(|i| i.scroll_delta.y) * 0.001))
             .clamp(0.0_f32.to_radians(), 180.0_f32.to_radians());
+
         // movement using keyboard
         ui.input(|i| {
             // reset look_at point facing [0, 0, 0]
@@ -604,6 +614,3 @@ impl CallbackTrait for PreviewRenderer {
     }
 }
 
-impl Drop for Preview {
-    fn drop(&mut self) {}
-}
