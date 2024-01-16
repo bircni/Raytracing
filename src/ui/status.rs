@@ -92,7 +92,7 @@ impl Status {
                 render.cancel.store(true, Ordering::Relaxed);
             });
         } else {
-            ui.add_enabled_ui(render.thread.is_none(), |ui| {
+            ui.add_enabled_ui(render.thread.is_none() && scene.is_some(), |ui| {
                 ui.button("Render").clicked().then(|| {
                     if let Some(scene) = scene {
                         render.render(ui.ctx().clone(), scene);
@@ -122,7 +122,7 @@ impl Status {
                     })
                     .color(Color32::WHITE),
                 )
-                .fill(Color32::DARK_BLUE),
+                .fill(Color32::BLUE),
         );
 
         ui.label("Rendering progress");
