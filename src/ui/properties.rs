@@ -116,12 +116,15 @@ impl Properties {
                     egui::ComboBox::from_id_source(0)
                         .selected_text(text)
                         .show_ui(ui, |ui| {
-                            (ui.selectable_value(
-                                &mut scene.camera.resolution,
-                                (1920, 1080),
-                                "Full HD",
-                            )
-                            .changed()
+                            (ui.selectable_value(&mut scene.camera.resolution, (1280, 720), "HD")
+                                .changed()
+                                || ui
+                                    .selectable_value(
+                                        &mut scene.camera.resolution,
+                                        (1920, 1080),
+                                        "Full HD",
+                                    )
+                                    .changed()
                                 || ui
                                     .selectable_value(
                                         &mut scene.camera.resolution,
@@ -348,14 +351,14 @@ impl Properties {
                 ui.horizontal(|ui| {
                     let (mut x, mut y, mut z) = o.rotation.euler_angles();
 
-                    [&mut x, &mut y, &mut z]
+                    [("x", &mut x), ("y", &mut y), ("z", &mut z)]
                         .iter_mut()
-                        .any(|angle| {
+                        .any(|(prefix, angle)| {
                             ui.add(
                                 DragValue::new(*angle)
                                     .speed(0.01)
-                                    .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
-                                    .prefix("x: "),
+                                    .custom_formatter(|f, _| format!("{:.1}°", f.to_degrees()))
+                                    .prefix(format!("{prefix}: ")),
                             )
                             .changed()
                         })
@@ -424,6 +427,7 @@ impl Properties {
 
     fn format_render_size(size: (u32, u32)) -> &'static str {
         match size {
+            (1280, 720) => "HD",
             (1920, 1080) => "FullHD",
             (2560, 1440) => "2k",
             (3840, 2160) => "4k",
