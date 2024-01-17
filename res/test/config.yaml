@@ -76,6 +76,6 @@ camera:
     y: 1.0
     z: 0.0
   fieldOfView: 63.02536
-  width: 3840
-  height: 2160
+  width: 1920
+  height: 1080
 extraArgs:
