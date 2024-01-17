@@ -36,7 +36,7 @@ fn main() -> anyhow::Result<()> {
     .context("Failed to initialize logger")?;
 
     eframe::run_native(
-        "RayTracer",
+        "TrayRacer",
         eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
                 .with_inner_size(egui::vec2(1600.0, 900.0))
@@ -44,7 +44,8 @@ fn main() -> anyhow::Result<()> {
                     eframe::icon_data::from_png_bytes(include_bytes!("../res/icon.png"))
                         .unwrap_or_default(),
                 )
-                .with_app_id("raytracer"),
+                .with_app_id("raytracer")
+                .with_title("Trayracer"),
             renderer: Renderer::Wgpu,
             depth_buffer: 32,
             follow_system_theme: true,

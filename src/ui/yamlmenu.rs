@@ -30,6 +30,7 @@ impl YamlMenu {
         self.scene.as_mut()
     }
 
+    #[allow(clippy::too_many_lines)]
     pub fn show(&mut self, ui: &mut Ui) {
         if let Some(dialog) = self.open_dialog.as_mut() {
             if dialog.show(ui.ctx()).selected() {

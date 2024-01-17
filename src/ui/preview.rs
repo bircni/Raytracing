@@ -244,7 +244,7 @@ impl Preview {
         if activate {
             response.request_focus();
         }
-        
+
         ui.ctx()
             .send_viewport_cmd(egui::ViewportCommand::CursorVisible(!activate));
         ui.ctx()
@@ -278,7 +278,6 @@ impl Preview {
                 let (response, painter) =
                     ui.allocate_painter(Vec2 { x: width -20.0, y: height -20.0 }, Sense::click_and_drag());
                 painter.add(Preview::paint(response.rect, scene));
-                
                 if response.hover_pos().is_some() && !self.active_movement {
                     egui::show_tooltip(ui.ctx(), egui::Id::new("preview_tooltip"), |ui| {
                         ui.label("Click to change camera position");
@@ -346,7 +345,7 @@ impl Preview {
             scene.camera.look_at =
                 scene.camera.position + (new_point - scene.camera.position).normalize();
         }
-        
+
         scene.camera.fov = (scene.camera.fov - (ui.input(|i| i.scroll_delta.y) * 0.001))
             .clamp(0.0_f32.to_radians(), 180.0_f32.to_radians());
 
@@ -613,4 +612,3 @@ impl CallbackTrait for PreviewRenderer {
         render_pass.draw(0..vertex_count as u32, 0..1);
     }
 }
-
