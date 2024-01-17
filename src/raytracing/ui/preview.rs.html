@@ -612,8 +612,6 @@
 <a href="#612" id="612">612</a>
 <a href="#613" id="613">613</a>
 <a href="#614" id="614">614</a>
-<a href="#615" id="615">615</a>
-<a href="#616" id="616">616</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::borrow::Cow;
 
 <span class="kw">use </span>egui::{pos2, Align2, Color32, Frame, Key, Rect, Sense, Shape, Ui, Vec2};
@@ -860,7 +858,7 @@
         <span class="kw">if </span>activate {
             response.request_focus();
         }
-        
+
         ui.ctx()
             .send_viewport_cmd(egui::ViewportCommand::CursorVisible(!activate));
         ui.ctx()
@@ -894,7 +892,6 @@
                 <span class="kw">let </span>(response, painter) =
                     ui.allocate_painter(Vec2 { x: width -<span class="number">20.0</span>, y: height -<span class="number">20.0 </span>}, Sense::click_and_drag());
                 painter.add(Preview::paint(response.rect, scene));
-                
                 <span class="kw">if </span>response.hover_pos().is_some() &amp;&amp; !<span class="self">self</span>.active_movement {
                     egui::show_tooltip(ui.ctx(), egui::Id::new(<span class="string">&quot;preview_tooltip&quot;</span>), |ui| {
                         ui.label(<span class="string">&quot;Click to change camera position&quot;</span>);
@@ -962,7 +959,7 @@
             scene.camera.look_at =
                 scene.camera.position + (new_point - scene.camera.position).normalize();
         }
-        
+
         scene.camera.fov = (scene.camera.fov - (ui.input(|i| i.scroll_delta.y) * <span class="number">0.001</span>))
             .clamp(<span class="number">0.0_f32</span>.to_radians(), <span class="number">180.0_f32</span>.to_radians());
 
@@ -1229,5 +1226,4 @@
         render_pass.draw(<span class="number">0</span>..vertex_count <span class="kw">as </span>u32, <span class="number">0</span>..<span class="number">1</span>);
     }
 }
-
 </code></pre></div></section></main></body></html>

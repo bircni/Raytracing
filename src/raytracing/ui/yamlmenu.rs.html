@@ -187,6 +187,7 @@
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::Path;
 
 <span class="kw">use </span>anyhow::Context;
@@ -219,7 +220,8 @@
         <span class="self">self</span>.scene.as_mut()
     }
 
-    <span class="kw">pub fn </span>show(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
+    <span class="attr">#[allow(clippy::too_many_lines)]
+    </span><span class="kw">pub fn </span>show(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="self">self</span>.open_dialog.as_mut() {
             <span class="kw">if </span>dialog.show(ui.ctx()).selected() {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = dialog.path() {

@@ -432,6 +432,10 @@
 <a href="#432" id="432">432</a>
 <a href="#433" id="433">433</a>
 <a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     path::{Path, PathBuf},
     sync::Arc,
@@ -550,12 +554,15 @@
                     egui::ComboBox::from_id_source(<span class="number">0</span>)
                         .selected_text(text)
                         .show_ui(ui, |ui| {
-                            (ui.selectable_value(
-                                <span class="kw-2">&amp;mut </span>scene.camera.resolution,
-                                (<span class="number">1920</span>, <span class="number">1080</span>),
-                                <span class="string">&quot;Full HD&quot;</span>,
-                            )
-                            .changed()
+                            (ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">1280</span>, <span class="number">720</span>), <span class="string">&quot;HD&quot;</span>)
+                                .changed()
+                                || ui
+                                    .selectable_value(
+                                        <span class="kw-2">&amp;mut </span>scene.camera.resolution,
+                                        (<span class="number">1920</span>, <span class="number">1080</span>),
+                                        <span class="string">&quot;Full HD&quot;</span>,
+                                    )
+                                    .changed()
                                 || ui
                                     .selectable_value(
                                         <span class="kw-2">&amp;mut </span>scene.camera.resolution,
@@ -782,14 +789,14 @@
                 ui.horizontal(|ui| {
                     <span class="kw">let </span>(<span class="kw-2">mut </span>x, <span class="kw-2">mut </span>y, <span class="kw-2">mut </span>z) = o.rotation.euler_angles();
 
-                    [<span class="kw-2">&amp;mut </span>x, <span class="kw-2">&amp;mut </span>y, <span class="kw-2">&amp;mut </span>z]
+                    [(<span class="string">&quot;x&quot;</span>, <span class="kw-2">&amp;mut </span>x), (<span class="string">&quot;y&quot;</span>, <span class="kw-2">&amp;mut </span>y), (<span class="string">&quot;z&quot;</span>, <span class="kw-2">&amp;mut </span>z)]
                         .iter_mut()
-                        .any(|angle| {
+                        .any(|(prefix, angle)| {
                             ui.add(
                                 DragValue::new(<span class="kw-2">*</span>angle)
                                     .speed(<span class="number">0.01</span>)
-                                    .custom_formatter(|x, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{:.2}°&quot;</span>, x.to_degrees()))
-                                    .prefix(<span class="string">&quot;x: &quot;</span>),
+                                    .custom_formatter(|f, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{:.1}°&quot;</span>, f.to_degrees()))
+                                    .prefix(<span class="macro">format!</span>(<span class="string">&quot;{prefix}: &quot;</span>)),
                             )
                             .changed()
                         })
@@ -858,6 +865,7 @@
 
     <span class="kw">fn </span>format_render_size(size: (u32, u32)) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
         <span class="kw">match </span>size {
+            (<span class="number">1280</span>, <span class="number">720</span>) =&gt; <span class="string">&quot;HD&quot;</span>,
             (<span class="number">1920</span>, <span class="number">1080</span>) =&gt; <span class="string">&quot;FullHD&quot;</span>,
             (<span class="number">2560</span>, <span class="number">1440</span>) =&gt; <span class="string">&quot;2k&quot;</span>,
             (<span class="number">3840</span>, <span class="number">2160</span>) =&gt; <span class="string">&quot;4k&quot;</span>,

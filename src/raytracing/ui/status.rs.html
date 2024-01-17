@@ -222,7 +222,7 @@
                 render.cancel.store(<span class="bool-val">true</span>, Ordering::Relaxed);
             });
         } <span class="kw">else </span>{
-            ui.add_enabled_ui(render.thread.is_none(), |ui| {
+            ui.add_enabled_ui(render.thread.is_none() &amp;&amp; scene.is_some(), |ui| {
                 ui.button(<span class="string">&quot;Render&quot;</span>).clicked().then(|| {
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(scene) = scene {
                         render.render(ui.ctx().clone(), scene);
@@ -252,7 +252,7 @@
                     })
                     .color(Color32::WHITE),
                 )
-                .fill(Color32::DARK_BLUE),
+                .fill(Color32::BLUE),
         );
 
         ui.label(<span class="string">&quot;Rendering progress&quot;</span>);
