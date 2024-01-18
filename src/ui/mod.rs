@@ -33,6 +33,7 @@ pub struct App {
     preview: Preview,
     render_result: RenderResult,
     yaml_menu: YamlMenu,
+    show_popup: bool,
 }
 
 #[derive(PartialEq)]
@@ -77,6 +78,7 @@ impl App {
             preview: Preview::new(),
             render_result: RenderResult::new(),
             yaml_menu: YamlMenu::new(),
+            show_popup: false,
         })
     }
 }
@@ -98,6 +100,7 @@ impl eframe::App for App {
                 self.yaml_menu.scene_mut(),
                 &mut self.render,
                 &mut self.current_tab,
+                &mut self.show_popup,
             );
 
             ui.vertical_centered(|ui| {

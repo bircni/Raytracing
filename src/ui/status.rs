@@ -1,6 +1,6 @@
 use std::sync::atomic::Ordering;
 
-use egui::{Align, Button, Color32, Layout, ProgressBar, RichText, Ui};
+use egui::{Align, Button, Color32, Layout, Pos2, ProgressBar, RichText, Ui, Window};
 use egui_file::FileDialog;
 use log::{info, warn};
 
@@ -25,6 +25,7 @@ impl Status {
         scene: Option<&mut Scene>,
         render: &mut Render,
         current_tab: &mut Tab,
+        show_popup: &mut bool,
     ) {
         ui.horizontal(|ui| {
             ui.selectable_label(*current_tab == Tab::Preview, "Preview")
@@ -40,11 +41,34 @@ impl Status {
                 });
 
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                self.about_us_button(ui, show_popup);
                 self.export_button(ui, render);
                 Self::render_button(ui, render, scene, current_tab);
                 Self::progress_bar(ui, render);
             });
         });
+    }
+
+    pub fn about_us_button(&mut self, ui: &mut Ui, show_popup: &mut bool) {
+        ui.button(" ? ").clicked().then(|| {
+            *show_popup = true;
+        });
+
+        if *show_popup {
+            Window::new("About us")
+                .resizable(true)
+                .collapsible(false)
+                .movable(false)
+                .min_size((500.0, 100.0))
+                .show(ui.ctx(), |ui| {
+                    ui.add_space(10.0);
+                    ui.label("We are Team TrayRacer.\n\nNicolas Bircks: Product Owner\nJonas Kluger: Scrum Master\nFabian Lippolt: Rust Profi\nDeveloper: Deniz Karagöz, Philipp Hamann, Marcel Süß, Tim Lanzinger");
+                    ui.separator();
+                    if ui.button("Close").clicked() {
+                        *show_popup = false;
+                    }
+                });
+        }
     }
 
     pub fn export_button(&mut self, ui: &mut Ui, render: &mut Render) {
