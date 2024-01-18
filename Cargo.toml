@@ -1,6 +1,6 @@
 [package]
 name = "raytracing"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -55,7 +55,7 @@ eframe = { version = "0.25", features = [
 egui = { version = "0.25", features = ["log", "color-hex"] }
 egui-wgpu = { version = "0.25" }
 egui_file = "0.14.1"
-egui_extras = { version = "0.25", features = ["svg"] }
+egui_extras = { version = "0.25", features = ["svg", "image"] }
 color-hex = "0.2.0"
 
 # BVH

@@ -1,6 +1,7 @@
 use std::sync::atomic::Ordering;
 
-use egui::{Align, Button, Color32, Layout, ProgressBar, RichText, Ui};
+use egui::special_emojis::GITHUB;
+use egui::{Align, Button, Color32, Layout, ProgressBar, RichText, Ui, Window};
 use egui_file::FileDialog;
 use log::{info, warn};
 
@@ -10,12 +11,14 @@ use super::{render::Render, Tab};
 
 pub struct Status {
     save_image_dialog: Option<FileDialog>,
+    show_popup: bool,
 }
 
 impl Status {
     pub fn new() -> Self {
         Self {
             save_image_dialog: None,
+            show_popup: false,
         }
     }
 
@@ -40,11 +43,49 @@ impl Status {
                 });
 
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                self.about_us_button(ui);
                 self.export_button(ui, render);
                 Self::render_button(ui, render, scene, current_tab);
                 Self::progress_bar(ui, render);
             });
+            self.about_window(ui);
         });
+    }
+
+    pub fn about_us_button(&mut self, ui: &mut Ui) {
+        ui.add(Button::new(" ? ").rounding(40.0))
+            .clicked()
+            .then(|| {
+                self.show_popup = true;
+            });
+    }
+
+    fn about_window(&mut self, ui: &mut Ui) {
+        Window::new("About us")
+            .resizable(false)
+            .collapsible(false)
+            .movable(false)
+            .open(&mut self.show_popup)
+            .min_size((100.0, 100.0))
+            .show(ui.ctx(), |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(5.0);
+                    ui.add(
+                        egui::Image::new(egui::include_image!("../../res/icon.png"))
+                            .max_width(150.0)
+                            .rounding(10.0),
+                    );
+                    ui.label(RichText::new("TrayRacer"));
+                    ui.label(format!("Version: {}", env!("CARGO_PKG_VERSION")));
+                    ui.hyperlink_to(
+                        format!("{GITHUB} GitHub"),
+                        "https://github.com/bircni/Raytracing",
+                    );
+                    ui.hyperlink_to("Built with egui", "https://docs.rs/egui/");
+                    ui.label("© 2024 Team TrayRacer");
+                    ui.add_space(5.0);
+                });
+            });
     }
 
     pub fn export_button(&mut self, ui: &mut Ui, render: &mut Render) {
