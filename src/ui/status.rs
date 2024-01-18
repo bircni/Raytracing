@@ -1,7 +1,9 @@
 use std::sync::atomic::Ordering;
 
 use egui::special_emojis::GITHUB;
-use egui::{Align, Button, Color32, Layout, ProgressBar, RichText, Ui, Window};
+use egui::{
+    vec2, Align, Align2, Button, Color32, Frame, Layout, ProgressBar, RichText, Ui, Window,
+};
 use egui_file::FileDialog;
 use log::{info, warn};
 
@@ -61,29 +63,29 @@ impl Status {
     }
 
     fn about_window(&mut self, ui: &mut Ui) {
-        Window::new("About us")
+        Window::new("About")
             .resizable(false)
             .collapsible(false)
-            .movable(false)
             .open(&mut self.show_popup)
-            .min_size((100.0, 100.0))
+            .anchor(Align2::CENTER_CENTER, (0.0, 0.0))
+            .fixed_size(vec2(200.0, 150.0))
+            .frame(Frame::window(ui.style()).fill(ui.style().visuals.widgets.open.weak_bg_fill))
             .show(ui.ctx(), |ui| {
                 ui.vertical_centered(|ui| {
-                    ui.add_space(5.0);
                     ui.add(
                         egui::Image::new(egui::include_image!("../../res/icon.png"))
-                            .max_width(150.0)
+                            .shrink_to_fit()
                             .rounding(10.0),
                     );
-                    ui.label(RichText::new("TrayRacer"));
+
                     ui.label(format!("Version: {}", env!("CARGO_PKG_VERSION")));
                     ui.hyperlink_to(
                         format!("{GITHUB} GitHub"),
                         "https://github.com/bircni/Raytracing",
                     );
+
                     ui.hyperlink_to("Built with egui", "https://docs.rs/egui/");
                     ui.label("© 2024 Team TrayRacer");
-                    ui.add_space(5.0);
                 });
             });
     }
