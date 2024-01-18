@@ -35,6 +35,6 @@ impl IlluminationModel {
     }
 
     pub fn transparency(self) -> bool {
-        self.0 == 5 || self.0 == 7
+        self.0 == 6 || self.0 == 7
     }
 }

@@ -10,13 +10,13 @@ edition = "2021"
 cargo-husky = "1.5.0"
 
 # error handling
-anyhow = "1.0.78"
+anyhow = "1.0.79"
 
 # time
 chrono = { version = "0.4.31", default-features = false, features = ["clock"] }
 
 # image loading and saving
-image = { version = "0.24.7", default-features = false, features = [
+image = { version = "0.24.8", default-features = false, features = [
     "png",
     "jpeg",
     "tiff",
@@ -43,7 +43,7 @@ ordered-float = "4.2.0"
 
 # generic serialization / deserialization
 serde = { version = "1", features = ["derive"] }
-serde_yaml = "0.9.29"
+serde_yaml = "0.9.30"
 
 # GUI
 eframe = { version = "0.25", features = [
@@ -55,7 +55,7 @@ eframe = { version = "0.25", features = [
 ], default-features = false }
 egui = { version = "0.25", features = ["log", "color-hex"] }
 egui-wgpu = { version = "0.25" }
-egui_file = "0.14.0"
+egui_file = "0.14.1"
 egui_extras = { version = "0.25", features = ["svg"] }
 color-hex = "0.2.0"
 
@@ -70,3 +70,7 @@ cargo-husky = { version = "1.5.0", default-features = false, features = [
 
 [lints.rust]
 unsafe_code = "forbid"
+
+[profile.perftest]
+inherits = "release"
+debug = true

@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Context;
+use log::warn;
 use serde::{de::DeserializeSeed, Deserialize, Serialize};
 
 pub use self::{
@@ -26,7 +27,7 @@ pub struct Scene {
     #[serde(rename = "pointLights")]
     pub lights: Vec<Light>,
     pub camera: Camera,
-    #[serde(rename = "extra_args", default)]
+    #[serde(rename = "extraArgs", default)]
     pub settings: Settings,
 }
 
@@ -71,9 +72,14 @@ impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRel
         let camera = Camera::deserialize(camera).map_err(serde::de::Error::custom)?;
 
         let settings = map
-            .get("extra_args")
-            .map(|v| Settings::deserialize(v).map_err(serde::de::Error::custom))
-            .transpose()?
+            .get("extraArgs")
+            .map(Settings::deserialize)
+            .transpose()
+            .map_err(|e| {
+                warn!("Failed to deserialize extraArgs: {}", e);
+                e
+            })
+            .unwrap_or_default()
             .unwrap_or_default();
 
         let scene = Scene {

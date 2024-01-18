@@ -11,6 +11,18 @@ pub struct Camera {
     pub resolution: (u32, u32),
 }
 
+impl Default for Camera {
+    fn default() -> Self {
+        Self {
+            position: Point3::new(1.0, 1.0, 1.0),
+            look_at: Point3::origin(),
+            up: Vector3::y(),
+            fov: 60.0_f32.to_radians(),
+            resolution: (1920, 1080),
+        }
+    }
+}
+
 impl Camera {
     /// Returns a ray from the given pixel coordinates.
     /// x and y are in the range -1..1 and represent

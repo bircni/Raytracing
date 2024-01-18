@@ -16,7 +16,7 @@ impl Default for Settings {
         Self {
             max_bounces: 4,
             samples: 1,
-            ambient_color: Color::default(),
+            ambient_color: Color::new(0.34, 0.14, 0.04).normalize(),
             ambient_intensity: 0.5,
             skybox: Skybox::default(),
         }

@@ -1,25 +1,25 @@
 models:
-- filePath: ./1.obj
+- filePath: ./floor.obj
   position:
     x: 0.7
     y: -0.1
     z: -0.5
   rotation:
-    x: 1.6295541e-15
-    y: -0.0
+    x: 0.0
+    y: 0.0
     z: 0.0
   scale:
     x: 1.0
     y: 1.0
     z: 1.0
-- filePath: ./2.obj
+- filePath: ./car.obj
   position:
     x: 0.7
     y: -0.1
     z: -0.5
   rotation:
-    x: 0.000008648687
-    y: -0.0
+    x: 0.0
+    y: 0.0
     z: 0.0
   scale:
     x: 1.0
@@ -76,16 +76,6 @@ camera:
     y: 1.0
     z: 0.0
   fieldOfView: 63.02536
-  width: 3840
-  height: 2160
-extra_args:
-  max_bounces: 3
-  samples: 64
-  ambient_color:
-    r: 0.343427
-    g: 0.14273214
-    b: 0.045266237
-  skybox: !Color
-    - 0.3507291
-    - 0.47097892
-    - 0.53371817
+  width: 1920
+  height: 1080
+extraArgs:
