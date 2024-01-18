@@ -9,6 +9,7 @@ pub struct Settings {
     pub ambient_color: Color,
     pub ambient_intensity: f32,
     pub skybox: Skybox,
+    pub anti_aliasing: bool,
 }
 
 impl Default for Settings {
@@ -19,6 +20,7 @@ impl Default for Settings {
             ambient_color: Color::new(0.34, 0.14, 0.04).normalize(),
             ambient_intensity: 0.5,
             skybox: Skybox::default(),
+            anti_aliasing: false,
         }
     }
 }
@@ -52,6 +54,7 @@ mod yaml {
                     .unwrap_or_default(),
                 ambient_intensity: yaml_extras.ambient_color.norm(),
                 skybox: yaml_extras.skybox,
+                anti_aliasing: false,
             })
         }
     }

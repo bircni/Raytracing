@@ -95,6 +95,8 @@ impl Properties {
 
             Self::render_options(ui, render, scene);
 
+            ui.checkbox(&mut scene.settings.anti_aliasing, "Anti-Aliasing");
+
             self.skybox_options(ui, scene);
 
             ui.label("Ambient Color:");
