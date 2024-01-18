@@ -213,16 +213,6 @@
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
-<a href="#220" id="220">220</a>
-<a href="#221" id="221">221</a>
-<a href="#222" id="222">222</a>
-<a href="#223" id="223">223</a>
-<a href="#224" id="224">224</a>
-<a href="#225" id="225">225</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>image::RgbImage;
 <span class="kw">use </span>nalgebra::{Point3, Vector2, Vector3};
 <span class="kw">use </span>ordered_float::OrderedFloat;
@@ -274,16 +264,6 @@
 
     <span class="kw">fn </span>reflect(incoming: Vector3&lt;f32&gt;, normal: Vector3&lt;f32&gt;) -&gt; Vector3&lt;f32&gt; {
         incoming - <span class="number">2.0 </span>* incoming.dot(<span class="kw-2">&amp;</span>normal) * normal
-    }
-
-    <span class="kw">fn </span>refract(incident_ray: Vector3&lt;f32&gt;, surface_normal: Vector3&lt;f32&gt;, eta: f32) -&gt; Vector3&lt;f32&gt; {
-        <span class="kw">let </span>cos_theta_i = -surface_normal.dot(<span class="kw-2">&amp;</span>incident_ray);
-        <span class="kw">let </span>sin_theta_t_squared = eta.powi(<span class="number">2</span>) * (<span class="number">1.0 </span>- cos_theta_i.powi(<span class="number">2</span>));
-        <span class="kw">if </span>sin_theta_t_squared &gt; <span class="number">1.0 </span>{
-            <span class="kw">return </span>Vector3::zeros();
-        }
-        <span class="kw">let </span>cos_theta_t = (<span class="number">1.0 </span>- sin_theta_t_squared).sqrt();
-        eta * incident_ray + (eta * cos_theta_i - cos_theta_t) * surface_normal
     }
 
     <span class="kw">fn </span>skybox(<span class="kw-2">&amp;</span><span class="self">self</span>, direction: Vector3&lt;f32&gt;) -&gt; Color {

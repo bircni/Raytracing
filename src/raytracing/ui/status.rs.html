@@ -169,10 +169,14 @@
 <a href="#169" id="169">169</a>
 <a href="#170" id="170">170</a>
 <a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::Ordering;
 
 <span class="kw">use </span>egui::special_emojis::GITHUB;
-<span class="kw">use </span>egui::{Align, Button, Color32, Layout, ProgressBar, RichText, Ui, Window};
+<span class="kw">use </span>egui::{
+    vec2, Align, Align2, Button, Color32, Frame, Layout, ProgressBar, RichText, Ui, Window,
+};
 <span class="kw">use </span>egui_file::FileDialog;
 <span class="kw">use </span>log::{info, warn};
 
@@ -232,29 +236,29 @@
     }
 
     <span class="kw">fn </span>about_window(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
-        Window::new(<span class="string">&quot;About us&quot;</span>)
+        Window::new(<span class="string">&quot;About&quot;</span>)
             .resizable(<span class="bool-val">false</span>)
             .collapsible(<span class="bool-val">false</span>)
-            .movable(<span class="bool-val">false</span>)
             .open(<span class="kw-2">&amp;mut </span><span class="self">self</span>.show_popup)
-            .min_size((<span class="number">100.0</span>, <span class="number">100.0</span>))
+            .anchor(Align2::CENTER_CENTER, (<span class="number">0.0</span>, <span class="number">0.0</span>))
+            .fixed_size(vec2(<span class="number">200.0</span>, <span class="number">150.0</span>))
+            .frame(Frame::window(ui.style()).fill(ui.style().visuals.widgets.open.weak_bg_fill))
             .show(ui.ctx(), |ui| {
                 ui.vertical_centered(|ui| {
-                    ui.add_space(<span class="number">5.0</span>);
                     ui.add(
                         egui::Image::new(<span class="macro">egui::include_image!</span>(<span class="string">&quot;../../res/icon.png&quot;</span>))
-                            .max_width(<span class="number">150.0</span>)
+                            .shrink_to_fit()
                             .rounding(<span class="number">10.0</span>),
                     );
-                    ui.label(RichText::new(<span class="string">&quot;TrayRacer&quot;</span>));
+
                     ui.label(<span class="macro">format!</span>(<span class="string">&quot;Version: {}&quot;</span>, <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>)));
                     ui.hyperlink_to(
                         <span class="macro">format!</span>(<span class="string">&quot;{GITHUB} GitHub&quot;</span>),
                         <span class="string">&quot;https://github.com/bircni/Raytracing&quot;</span>,
                     );
+
                     ui.hyperlink_to(<span class="string">&quot;Built with egui&quot;</span>, <span class="string">&quot;https://docs.rs/egui/&quot;</span>);
                     ui.label(<span class="string">&quot;© 2024 Team TrayRacer&quot;</span>);
-                    ui.add_space(<span class="number">5.0</span>);
                 });
             });
     }
