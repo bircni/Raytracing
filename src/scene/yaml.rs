@@ -1,7 +1,7 @@
 pub mod color {
     use serde::{Deserialize, Serialize};
 
-    use crate::Color;
+    use crate::scene::Color;
 
     #[derive(Serialize, Deserialize)]
     struct Yaml {

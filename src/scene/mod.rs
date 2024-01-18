@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use log::warn;
+use nalgebra::Vector3;
 use serde::{de::DeserializeSeed, Deserialize, Serialize};
 
 pub use self::{
@@ -17,6 +18,8 @@ mod settings;
 mod skybox;
 mod triangle;
 mod yaml;
+
+pub type Color = Vector3<f32>;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Scene {

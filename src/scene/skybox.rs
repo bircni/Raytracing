@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
-use crate::Color;
 use image::RgbImage;
+
+use super::Color;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Skybox {
@@ -18,8 +19,9 @@ impl Default for Skybox {
 mod yaml {
     use serde::{Deserialize, Serialize};
 
+    use crate::scene::Color;
+
     use super::Skybox;
-    use crate::Color;
 
     #[derive(Serialize, Deserialize)]
     pub enum SkyboxDef {

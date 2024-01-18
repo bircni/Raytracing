@@ -14,8 +14,8 @@ use log::warn;
 use nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
 
 use crate::{
-    scene::{Light, Object, Skybox},
-    Color, Scene,
+    scene::{Color, Light, Object, Skybox},
+    Scene,
 };
 
 use super::render::Render;

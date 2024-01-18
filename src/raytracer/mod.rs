@@ -2,10 +2,7 @@ use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
 
-use crate::{
-    scene::{Material, Scene, Skybox},
-    Color,
-};
+use crate::scene::{Color, Material, Scene, Skybox};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ray {
@@ -49,16 +46,6 @@ impl Raytracer {
 
     fn reflect(incoming: Vector3<f32>, normal: Vector3<f32>) -> Vector3<f32> {
         incoming - 2.0 * incoming.dot(&normal) * normal
-    }
-
-    fn refract(incident_ray: Vector3<f32>, surface_normal: Vector3<f32>, eta: f32) -> Vector3<f32> {
-        let cos_theta_i = -surface_normal.dot(&incident_ray);
-        let sin_theta_t_squared = eta.powi(2) * (1.0 - cos_theta_i.powi(2));
-        if sin_theta_t_squared > 1.0 {
-            return Vector3::zeros();
-        }
-        let cos_theta_t = (1.0 - sin_theta_t_squared).sqrt();
-        eta * incident_ray + (eta * cos_theta_i - cos_theta_t) * surface_normal
     }
 
     fn skybox(&self, direction: Vector3<f32>) -> Color {

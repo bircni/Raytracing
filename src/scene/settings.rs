@@ -1,6 +1,4 @@
-use crate::Color;
-
-use super::Skybox;
+use super::{Color, Skybox};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Settings {
@@ -24,7 +22,7 @@ impl Default for Settings {
 }
 
 mod yaml {
-    use crate::{scene::Skybox, Color};
+    use crate::scene::{Color, Skybox};
 
     use super::Settings;
     use serde::{Deserialize, Serialize};

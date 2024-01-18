@@ -10,15 +10,12 @@ use nalgebra::{
 use obj::SimplePolygon;
 use ordered_float::OrderedFloat;
 
-use crate::{
-    raytracer::{Hit, Ray},
-    Color,
-};
-
 use super::{
     material::{IlluminationModel, Material},
     triangle::Triangle,
+    Color,
 };
+use crate::raytracer::{Hit, Ray};
 
 #[derive(Debug, Clone)]
 pub struct Object {

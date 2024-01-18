@@ -35,22 +35,20 @@ pub struct App {
     yaml_menu: YamlMenu,
 }
 
-#[derive(PartialEq)]
-enum Tab {
-    Preview,
-    RenderResult,
-}
-
+/// Main application
+/// This holds all the UI elements and manages the application state
 impl App {
     pub fn new(cc: &CreationContext) -> anyhow::Result<Self> {
         egui_extras::install_image_loaders(&cc.egui_ctx);
 
+        // Initialize the preview renderer with the wgpu context
         Preview::init(
             cc.wgpu_render_state
                 .as_ref()
                 .context("Failed to get wgpu context")?,
         );
 
+        // create initial render texture
         let (render_texture, image_buffer) = {
             let texture = cc.egui_ctx.load_texture(
                 "render",
@@ -141,4 +139,10 @@ impl eframe::App for App {
             }
         });
     }
+}
+
+#[derive(PartialEq)]
+enum Tab {
+    Preview,
+    RenderResult,
 }

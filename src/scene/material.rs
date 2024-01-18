@@ -1,6 +1,6 @@
 use image::RgbImage;
 
-use crate::Color;
+use super::Color;
 
 #[derive(Debug, Clone)]
 pub struct Material {
