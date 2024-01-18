@@ -128,9 +128,51 @@
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::Ordering;
 
-<span class="kw">use </span>egui::{Align, Button, Color32, Layout, ProgressBar, RichText, Ui};
+<span class="kw">use </span>egui::special_emojis::GITHUB;
+<span class="kw">use </span>egui::{Align, Button, Color32, Layout, ProgressBar, RichText, Ui, Window};
 <span class="kw">use </span>egui_file::FileDialog;
 <span class="kw">use </span>log::{info, warn};
 
@@ -140,12 +182,14 @@
 
 <span class="kw">pub struct </span>Status {
     save_image_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
+    show_popup: bool,
 }
 
 <span class="kw">impl </span>Status {
     <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             save_image_dialog: <span class="prelude-val">None</span>,
+            show_popup: <span class="bool-val">false</span>,
         }
     }
 
@@ -170,11 +214,49 @@
                 });
 
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                <span class="self">self</span>.about_us_button(ui);
                 <span class="self">self</span>.export_button(ui, render);
                 <span class="self">Self</span>::render_button(ui, render, scene, current_tab);
                 <span class="self">Self</span>::progress_bar(ui, render);
             });
+            <span class="self">self</span>.about_window(ui);
         });
+    }
+
+    <span class="kw">pub fn </span>about_us_button(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
+        ui.add(Button::new(<span class="string">&quot; ? &quot;</span>).rounding(<span class="number">40.0</span>))
+            .clicked()
+            .then(|| {
+                <span class="self">self</span>.show_popup = <span class="bool-val">true</span>;
+            });
+    }
+
+    <span class="kw">fn </span>about_window(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
+        Window::new(<span class="string">&quot;About us&quot;</span>)
+            .resizable(<span class="bool-val">false</span>)
+            .collapsible(<span class="bool-val">false</span>)
+            .movable(<span class="bool-val">false</span>)
+            .open(<span class="kw-2">&amp;mut </span><span class="self">self</span>.show_popup)
+            .min_size((<span class="number">100.0</span>, <span class="number">100.0</span>))
+            .show(ui.ctx(), |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(<span class="number">5.0</span>);
+                    ui.add(
+                        egui::Image::new(<span class="macro">egui::include_image!</span>(<span class="string">&quot;../../res/icon.png&quot;</span>))
+                            .max_width(<span class="number">150.0</span>)
+                            .rounding(<span class="number">10.0</span>),
+                    );
+                    ui.label(RichText::new(<span class="string">&quot;TrayRacer&quot;</span>));
+                    ui.label(<span class="macro">format!</span>(<span class="string">&quot;Version: {}&quot;</span>, <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>)));
+                    ui.hyperlink_to(
+                        <span class="macro">format!</span>(<span class="string">&quot;{GITHUB} GitHub&quot;</span>),
+                        <span class="string">&quot;https://github.com/bircni/Raytracing&quot;</span>,
+                    );
+                    ui.hyperlink_to(<span class="string">&quot;Built with egui&quot;</span>, <span class="string">&quot;https://docs.rs/egui/&quot;</span>);
+                    ui.label(<span class="string">&quot;© 2024 Team TrayRacer&quot;</span>);
+                    ui.add_space(<span class="number">5.0</span>);
+                });
+            });
     }
 
     <span class="kw">pub fn </span>export_button(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui, render: <span class="kw-2">&amp;mut </span>Render) {
