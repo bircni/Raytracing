@@ -1,7 +1,6 @@
 use std::sync::atomic::Ordering;
 
 use egui::special_emojis::GITHUB;
-use egui::style::Widgets;
 use egui::{
     vec2, Align, Align2, Button, Color32, Frame, Layout, ProgressBar, RichText, Ui, Window,
 };
@@ -64,7 +63,7 @@ impl Status {
     }
 
     fn about_window(&mut self, ui: &mut Ui) {
-        Window::new("About us")
+        Window::new("About")
             .resizable(false)
             .collapsible(false)
             .open(&mut self.show_popup)
@@ -79,7 +78,6 @@ impl Status {
                             .rounding(10.0),
                     );
 
-                    ui.label(RichText::new("TrayRacer"));
                     ui.label(format!("Version: {}", env!("CARGO_PKG_VERSION")));
                     ui.hyperlink_to(
                         format!("{GITHUB} GitHub"),
