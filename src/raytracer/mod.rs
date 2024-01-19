@@ -217,7 +217,7 @@ impl Raytracer {
         anti_aliasing: bool,
     ) -> Color {
         if anti_aliasing {
-            let samples_per_pixel = 4;
+            let samples_per_pixel = 64;
             //let samples_per_pixel = self.scene.settings.samples_per_pixel;
             let sqrt_samples = (samples_per_pixel as f32).sqrt() as u32;
 

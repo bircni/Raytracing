@@ -97,6 +97,11 @@ impl Properties {
 
             ui.checkbox(&mut scene.settings.anti_aliasing, "Anti-Aliasing");
 
+            if scene.settings.anti_aliasing {
+                ui.label("Samples per pixel:");
+                ui.add(Slider::new(&mut scene.settings.samples, 1..=128).clamp_to_range(true));
+            }
+
             self.skybox_options(ui, scene);
 
             ui.label("Ambient Color:");

@@ -38,6 +38,7 @@ mod yaml {
         #[serde(with = "super::super::yaml::color")]
         pub ambient_color: Color,
         pub skybox: Skybox,
+        pub anti_aliasing: bool,
     }
 
     impl<'de> Deserialize<'de> for Settings {
@@ -69,6 +70,7 @@ mod yaml {
                 samples: self.samples,
                 ambient_color: self.ambient_color * self.ambient_intensity,
                 skybox: self.skybox.clone(),
+                anti_aliasing: self.anti_aliasing,
             }
             .serialize(serializer)
         }
