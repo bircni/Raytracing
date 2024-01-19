@@ -11,16 +11,17 @@ use crate::scene::Scene;
 
 use super::{render::Render, Tab};
 
-pub struct Status {
-    save_image_dialog: Option<FileDialog>,
-    show_popup: bool,
+pub struct StatusBar {
+    save_render_dialog: Option<FileDialog>,
+    /// Whether the about window should be shown
+    show_about: bool,
 }
 
-impl Status {
+impl StatusBar {
     pub fn new() -> Self {
         Self {
-            save_image_dialog: None,
-            show_popup: false,
+            save_render_dialog: None,
+            show_about: false,
         }
     }
 
@@ -58,7 +59,7 @@ impl Status {
         ui.add(Button::new(" ? ").rounding(40.0))
             .clicked()
             .then(|| {
-                self.show_popup = true;
+                self.show_about = true;
             });
     }
 
@@ -66,7 +67,7 @@ impl Status {
         Window::new("About")
             .resizable(false)
             .collapsible(false)
-            .open(&mut self.show_popup)
+            .open(&mut self.show_about)
             .anchor(Align2::CENTER_CENTER, (0.0, 0.0))
             .fixed_size(vec2(200.0, 150.0))
             .frame(Frame::window(ui.style()).fill(ui.style().visuals.widgets.open.weak_bg_fill))
@@ -99,7 +100,7 @@ impl Status {
             .clicked()
         {
             info!("Exporting image");
-            self.save_image_dialog
+            self.save_render_dialog
                 .get_or_insert_with(|| {
                     FileDialog::save_file(None)
                         .default_filename("render.png")
@@ -112,13 +113,18 @@ impl Status {
                 .open();
         }
 
-        if let Some(dialog) = self.save_image_dialog.as_mut() {
+        if let Some(dialog) = self.save_render_dialog.as_mut() {
             if dialog.show(ui.ctx()).selected() {
-                if let Some(file) = dialog.path() {
-                    log::info!("Saving image to {:?}", file);
-                    render.image_buffer.lock().save(file).unwrap_or_else(|e| {
-                        warn!("Failed to save image: {}", e);
-                    });
+                match dialog.path() {
+                    Some(path) => {
+                        log::info!("Saving image to {:?}", path);
+                        render.image.lock().save(path).unwrap_or_else(|e| {
+                            warn!("Failed to save image: {}", e);
+                        });
+                    }
+                    None => {
+                        warn!("Save dialog returned no path");
+                    }
                 }
             }
         }
@@ -148,21 +154,23 @@ impl Status {
 
     pub fn progress_bar(ui: &mut Ui, render: &Render) {
         let progress = f32::from(render.progress.load(Ordering::Relaxed)) / f32::from(u16::MAX);
-        #[allow(clippy::float_cmp)]
         ui.add(
             ProgressBar::new(progress)
                 .desired_width(ui.available_width() / 3.0)
                 .text(
-                    RichText::new(if progress == 1.0 {
-                        format!(
-                            "Done in: {:.2} s",
-                            render.time.load(Ordering::Relaxed) as f32 / 1000.0
-                        )
-                    } else if progress > 0.0 {
-                        format!("{:.1}%", progress * 100.0)
-                    } else {
-                        String::new()
-                    })
+                    RichText::new(
+                        #[allow(clippy::float_cmp)]
+                        if progress == 1.0 {
+                            format!(
+                                "Done in: {:.2} s",
+                                render.time.load(Ordering::Relaxed) as f32 / 1000.0
+                            )
+                        } else if progress > 0.0 {
+                            format!("{:.1}%", progress * 100.0)
+                        } else {
+                            String::new()
+                        },
+                    )
                     .color(Color32::WHITE),
                 )
                 .fill(Color32::BLUE),

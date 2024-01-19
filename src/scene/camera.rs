@@ -1,6 +1,5 @@
-use nalgebra::{Point3, Rotation3, Vector3};
-
 use crate::raytracer::Ray;
+use nalgebra::{Point3, Rotation3, Vector3};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Camera {
@@ -44,10 +43,9 @@ impl Camera {
 }
 
 mod yaml {
+    use super::Camera;
     use nalgebra::{Point3, Vector3};
     use serde::{Deserialize, Serialize};
-
-    use super::Camera;
 
     #[derive(Serialize, Deserialize)]
     pub struct CameraDef {

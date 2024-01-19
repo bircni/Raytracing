@@ -48,10 +48,8 @@ fn vs_main(
 
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
-    
-    
     var color: vec3<f32> = uniforms.ambient_color * uniforms.ambient_intensity * in.color;
-    
+
     for (var i = 0u; i < uniforms.lights_count; i = i + 1u) {
         var light: Light = lights[i];
         var light_dir: vec3<f32> = normalize(light.position - in.position.xyz);

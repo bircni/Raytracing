@@ -1,54 +1,60 @@
-mod preview;
-mod properties;
-mod render;
-mod renderresult;
-mod status;
-mod yamlmenu;
-
 use self::preview::Preview;
 use self::render::Render;
 use self::renderresult::RenderResult;
-use self::status::Status;
+use self::statusbar::StatusBar;
 use self::yamlmenu::YamlMenu;
-
+use crate::scene::Scene;
 use crate::ui::properties::Properties;
 use anyhow::Context;
 use eframe::CreationContext;
-use egui::mutex::Mutex;
+use egui::mutex::{Mutex, RwLock};
 use egui::{
     vec2, Align, CentralPanel, ColorImage, Direction, ImageData, Layout, ScrollArea, SidePanel,
     TextStyle, TextureOptions,
 };
 use image::ImageBuffer;
-
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread::JoinHandle;
 
+mod preview;
+mod properties;
+mod render;
+mod renderresult;
+mod statusbar;
+mod yamlmenu;
+
+/// Main application
+/// This holds all the UI elements and application state
 pub struct App {
     current_tab: Tab,
     render: Render,
     properties: Properties,
-    status: Status,
+    statusbar: StatusBar,
     preview: Preview,
     render_result: RenderResult,
     yaml_menu: YamlMenu,
+    scene: Arc<RwLock<Option<Scene>>>,
 }
 
-/// Main application
-/// This holds all the UI elements and manages the application state
+#[derive(PartialEq)]
+enum Tab {
+    Preview,
+    RenderResult,
+}
+
 impl App {
     pub fn new(cc: &CreationContext) -> anyhow::Result<Self> {
         egui_extras::install_image_loaders(&cc.egui_ctx);
 
         // Initialize the preview renderer with the wgpu context
-        Preview::init(
+        preview::gpu::init_wgpu(
             cc.wgpu_render_state
                 .as_ref()
                 .context("Failed to get wgpu context")?,
         );
 
-        // create initial render texture
+        // create initial render texture (GPU exclusive) and image buffer (CPU exclusive)
         let (render_texture, image_buffer) = {
             let texture = cc.egui_ctx.load_texture(
                 "render",
@@ -67,20 +73,25 @@ impl App {
             s.spacing.item_spacing = vec2(10.0, std::f32::consts::PI * 1.76643);
         });
 
+        let scene = Arc::new(RwLock::new(None));
+
         Ok(Self {
             current_tab: Tab::Preview,
             render: Render::new(render_texture, image_buffer),
             properties: Properties::new(),
-            status: Status::new(),
-            preview: Preview::new(),
+            statusbar: StatusBar::new(),
+            preview: Preview::new(scene.clone()),
             render_result: RenderResult::new(),
             yaml_menu: YamlMenu::new(),
+            scene,
         })
     }
 }
 
+/// Main application loop (called every frame)
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // check if the render thread has finished and reset it
         self.render
             .thread
             .as_ref()
@@ -90,13 +101,12 @@ impl eframe::App for App {
                 self.render.cancel.store(false, Ordering::Relaxed);
             });
 
+        // lock the scene for the duration of the frame
+        let mut scene = self.scene.write();
+
         CentralPanel::default().show(ctx, |ui| {
-            self.status.show(
-                ui,
-                self.yaml_menu.scene_mut(),
-                &mut self.render,
-                &mut self.current_tab,
-            );
+            self.statusbar
+                .show(ui, scene.as_mut(), &mut self.render, &mut self.current_tab);
 
             ui.vertical_centered(|ui| {
                 ui.separator();
@@ -108,17 +118,17 @@ impl eframe::App for App {
                         .show_separator_line(true)
                         .show_inside(ui, |ui| {
                             ScrollArea::new([false, true]).show(ui, |ui| {
-                                self.yaml_menu.show(ui);
+                                self.yaml_menu.show(&mut scene, ui);
 
                                 ui.separator();
 
-                                if let Some(scene) = self.yaml_menu.scene_mut() {
+                                if let Some(scene) = scene.as_mut() {
                                     self.properties.show(scene, ui, &mut self.render);
                                 }
                             });
                         });
 
-                    match self.yaml_menu.scene_mut() {
+                    match scene.as_mut() {
                         Some(scene) => self.preview.show(ui, scene),
                         None => {
                             ui.with_layout(
@@ -132,17 +142,11 @@ impl eframe::App for App {
                     }
                 }
                 Tab::RenderResult => {
-                    if let Some(scene) = self.yaml_menu.scene() {
+                    if let Some(scene) = scene.as_ref() {
                         self.render_result.show(ui, scene, &self.render);
                     }
                 }
             }
         });
     }
-}
-
-#[derive(PartialEq)]
-enum Tab {
-    Preview,
-    RenderResult,
 }
