@@ -128,43 +128,41 @@ impl eframe::App for App {
                             });
                         });
 
-                    match scene.as_mut() {
-                        Some(scene) => self.preview.show(ui, scene),
-                        None => {
-                            // TODO: make this implicit somehow
-                            let tint_color = if ui.visuals().dark_mode {
-                                hex_color!("#ffffff")
-                            } else {
-                                hex_color!("#000000")
-                            };
-                            ui.with_layout(
-                                Layout::centered_and_justified(Direction::LeftToRight)
-                                    .with_main_align(Align::Center),
-                                |ui| {
-                                    //ui.heading("No scene loaded");
-                                    ui.add_sized(
-                                        [20.0, 20.0],
-                                        ImageButton::new(include_image!(
-                                            "../../res/icons/plus-solid.svg"
-                                        ))
-                                        .tint(tint_color),
-                                    )
-                                    .on_hover_text("New Scene")
-                                    .clicked()
-                                    .then(|| self.yaml_menu.create_scene());
-                                    ui.add_sized(
-                                        [20.0, 20.0],
-                                        ImageButton::new(include_image!(
-                                            "../../res/icons/folder-open-solid.svg"
-                                        ))
-                                        .tint(tint_color),
-                                    )
-                                    .on_hover_text("Load Scene")
-                                    .clicked()
-                                    .then(|| self.yaml_menu.load_scene());
-                                },
-                            );
-                        }
+                    if let Some(scene) = scene.as_mut() {
+                        self.preview.show(ui, scene);
+                    } else {
+                        // TODO: make this implicit somehow
+                        let tint_color = if ui.visuals().dark_mode {
+                            hex_color!("#ffffff")
+                        } else {
+                            hex_color!("#000000")
+                        };
+                        ui.with_layout(
+                            Layout::centered_and_justified(Direction::LeftToRight)
+                                .with_main_align(Align::Center),
+                            |ui| {
+                                ui.add_sized(
+                                    [20.0, 20.0],
+                                    ImageButton::new(include_image!(
+                                        "../../res/icons/plus-solid.svg"
+                                    ))
+                                    .tint(tint_color),
+                                )
+                                .on_hover_text("New Scene")
+                                .clicked()
+                                .then(|| self.yaml_menu.create_scene());
+                                ui.add_sized(
+                                    [20.0, 20.0],
+                                    ImageButton::new(include_image!(
+                                        "../../res/icons/folder-open-solid.svg"
+                                    ))
+                                    .tint(tint_color),
+                                )
+                                .on_hover_text("Load Scene")
+                                .clicked()
+                                .then(|| self.yaml_menu.load_scene());
+                            },
+                        );
                     }
                 }
                 Tab::RenderResult => {
