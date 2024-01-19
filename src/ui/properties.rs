@@ -5,8 +5,8 @@ use crate::{
 };
 use anyhow::Context;
 use egui::{
-    color_picker, hex_color, include_image, Align, Button, DragValue, FontFamily, ImageButton,
-    Layout, RichText, Slider, Ui,
+    color_picker, hex_color, include_image, Align, Button, CollapsingHeader, DragValue, FontFamily,
+    ImageButton, Layout, RichText, Slider, Ui,
 };
 use egui_file::FileDialog;
 use log::warn;
@@ -43,9 +43,15 @@ impl Properties {
 
         Self::camera_settings(scene, ui);
 
+        ui.add_space(5.0);
+
         self.scene_settings(scene, ui, render);
 
+        ui.add_space(5.0);
+
         Self::lights(ui, scene);
+
+        ui.add_space(5.0);
 
         self.objects(ui, scene);
     }
@@ -80,24 +86,30 @@ impl Properties {
     }
 
     fn scene_settings(&mut self, scene: &mut Scene, ui: &mut Ui, render: &mut Render) {
-        ui.group(|ui| {
-            ui.vertical_centered(|ui| {
-                ui.label(RichText::new("Scene Settings").size(16.0));
+        ui.vertical(|ui| {
+            ui.group(|ui| {
+                CollapsingHeader::new(RichText::new("Scene Settings").size(16.0))
+                    .default_open(true)
+                    .show_unindented(ui, |ui| {
+                        ui.separator();
+
+                        Self::render_options(ui, render, scene);
+
+                        self.skybox_options(ui, scene);
+
+                        ui.label("Ambient Color:");
+                        color_picker::color_edit_button_rgb(
+                            ui,
+                            scene.settings.ambient_color.as_mut(),
+                        );
+
+                        ui.label("Ambient Intensitiy:");
+                        ui.add(
+                            Slider::new(&mut scene.settings.ambient_intensity, 0.0..=1.0)
+                                .clamp_to_range(true),
+                        );
+                    });
             });
-
-            ui.separator();
-
-            Self::render_options(ui, render, scene);
-
-            self.skybox_options(ui, scene);
-
-            ui.label("Ambient Color:");
-            color_picker::color_edit_button_rgb(ui, scene.settings.ambient_color.as_mut());
-
-            ui.label("Ambient Intensitiy:");
-            ui.add(
-                Slider::new(&mut scene.settings.ambient_intensity, 0.0..=1.0).clamp_to_range(true),
-            );
         });
     }
 
@@ -141,7 +153,7 @@ impl Properties {
     }
 
     fn skybox_options(&mut self, ui: &mut Ui, scene: &mut Scene) {
-        ui.label("Skybox:");
+        ui.label("Background:");
 
         if let Some(dialog) = &mut self.skybox_dialog {
             if dialog.show(ui.ctx()).selected() {
@@ -179,24 +191,17 @@ impl Properties {
 
                 ui.radio(
                     matches!(scene.settings.skybox, Skybox::Image { .. }),
-                    "Image",
+                    "Skybox",
                 )
                 .clicked()
-                .then(|| {
-                    let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
-                        Path::new(p)
-                            .extension()
-                            .map_or(false, |ext| ext.eq_ignore_ascii_case("exr"))
-                    }));
-
-                    dialog.open();
-
-                    self.skybox_dialog = Some(dialog);
-                });
+                .then(|| self.load_skybox_img());
             });
 
             match &mut scene.settings.skybox {
                 Skybox::Image { path, .. } => {
+                    ui.button("Reload skybox")
+                        .clicked()
+                        .then(|| self.load_skybox_img());
                     ui.label(path.display().to_string());
                 }
                 Skybox::Color(c) => {
@@ -206,171 +211,196 @@ impl Properties {
         });
     }
 
-    fn lights(ui: &mut Ui, scene: &mut Scene) {
-        ui.group(|ui| {
-            ui.vertical_centered(|ui| {
-                ui.label(RichText::new(format!("Lights ({})", scene.lights.len())).size(16.0))
-            });
+    fn load_skybox_img(&mut self) {
+        let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
+            Path::new(p)
+                .extension()
+                .map_or(false, |ext| ext.eq_ignore_ascii_case("exr"))
+        }));
 
-            scene
-                .lights
-                .iter_mut()
-                .enumerate()
-                .filter_map(|(n, light)| {
-                    let mut remove = false;
+        dialog.open();
+
+        self.skybox_dialog = Some(dialog);
+    }
+
+    fn lights(ui: &mut Ui, scene: &mut Scene) {
+        ui.vertical(|ui| {
+            ui.group(|ui| {
+                CollapsingHeader::new(
+                    RichText::new(format!("Lights ({})", scene.lights.len())).size(16.0),
+                )
+                .show_unindented(ui, |ui| {
+                    scene
+                        .lights
+                        .iter_mut()
+                        .enumerate()
+                        .filter_map(|(n, light)| {
+                            let mut remove = false;
+
+                            ui.separator();
+
+                            ui.horizontal(|ui| {
+                                ui.label(
+                                    RichText::new(format!("Light {n}"))
+                                        .size(14.0)
+                                        .family(FontFamily::Monospace),
+                                );
+                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                    remove = ui
+                                        .add_sized(
+                                            [20.0, 20.0],
+                                            ImageButton::new(include_image!(
+                                                "../../res/icons/trash-solid.svg"
+                                            ))
+                                            .tint(hex_color!("#cc0000")),
+                                        )
+                                        .clicked();
+                                });
+                            });
+
+                            ui.label("Position:");
+
+                            xyz_drag_value(ui, &mut light.position);
+
+                            ui.label("Intensity:");
+
+                            ui.add(
+                                Slider::new(&mut light.intensity, 0.0..=100.0).clamp_to_range(true),
+                            );
+
+                            ui.label("Color:");
+
+                            color_picker::color_edit_button_rgb(ui, light.color.as_mut());
+
+                            remove.then_some(n)
+                        })
+                        .collect::<Vec<_>>()
+                        .into_iter()
+                        .for_each(|n| {
+                            scene.lights.remove(n);
+                        });
 
                     ui.separator();
-
-                    ui.horizontal(|ui| {
-                        ui.label(
-                            RichText::new(format!("Light {n}"))
-                                .size(14.0)
-                                .family(FontFamily::Monospace),
-                        );
-                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            remove = ui
-                                .add_sized(
-                                    [20.0, 20.0],
-                                    ImageButton::new(include_image!(
-                                        "../../res/icons/trash-solid.svg"
-                                    ))
-                                    .tint(hex_color!("#cc0000")),
-                                )
-                                .clicked();
-                        });
+                    ui.vertical_centered(|ui| {
+                        ui.add(Button::new(RichText::new("+ Add Light")).frame(false))
+                            .clicked()
+                            .then(|| {
+                                scene.lights.push(Light {
+                                    position: nalgebra::Point3::new(5.0, 2.0, 2.0),
+                                    intensity: 3.0,
+                                    color: nalgebra::Vector3::new(1.0, 1.0, 1.0),
+                                });
+                            });
                     });
-
-                    ui.label("Position:");
-
-                    xyz_drag_value(ui, &mut light.position);
-
-                    ui.label("Intensity:");
-
-                    ui.add(Slider::new(&mut light.intensity, 0.0..=100.0).clamp_to_range(true));
-
-                    ui.label("Color:");
-
-                    color_picker::color_edit_button_rgb(ui, light.color.as_mut());
-
-                    remove.then_some(n)
-                })
-                .collect::<Vec<_>>()
-                .into_iter()
-                .for_each(|n| {
-                    scene.lights.remove(n);
                 });
-
-            ui.separator();
-            ui.vertical_centered(|ui| {
-                ui.add(Button::new(RichText::new("+ Add Light")).frame(false))
-                    .clicked()
-                    .then(|| {
-                        scene.lights.push(Light {
-                            position: nalgebra::Point3::new(5.0, 2.0, 2.0),
-                            intensity: 3.0,
-                            color: nalgebra::Vector3::new(1.0, 1.0, 1.0),
-                        });
-                    });
             });
         });
     }
 
     fn objects(&mut self, ui: &mut Ui, scene: &mut Scene) {
-        ui.group(|ui| {
-            ui.vertical_centered(|ui| {
-                ui.label(RichText::new(format!("Objects ({})", scene.objects.len())).size(16.0));
-            });
+        ui.vertical(|ui| {
+            ui.group(|ui| {
+                CollapsingHeader::new(
+                    RichText::new(format!("Objects ({})", scene.objects.len())).size(16.0),
+                )
+                .show_unindented(ui, |ui| {
+                    let mut objects_to_remove = Vec::new();
 
-            let mut objects_to_remove = Vec::new();
+                    for (n, o) in scene.objects.iter_mut().enumerate() {
+                        ui.separator();
 
-            for (n, o) in scene.objects.iter_mut().enumerate() {
-                ui.separator();
+                        ui.horizontal(|ui| {
+                            ui.label(
+                                RichText::new(format!("Object {} ({} ▲)", n, o.triangles.len()))
+                                    .size(14.0)
+                                    .family(FontFamily::Monospace),
+                            );
+                            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                if ui
+                                    .add_sized(
+                                        [20.0, 20.0],
+                                        ImageButton::new(include_image!(
+                                            "../../res/icons/trash-solid.svg"
+                                        ))
+                                        .tint(hex_color!("#cc0000")),
+                                    )
+                                    .clicked()
+                                {
+                                    objects_to_remove.push(n);
+                                }
+                            });
+                        });
 
-                ui.horizontal(|ui| {
-                    ui.label(
-                        RichText::new(format!("Object {} ({} ▲)", n, o.triangles.len()))
-                            .size(14.0)
-                            .family(FontFamily::Monospace),
-                    );
-                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        ui.label("Position");
+
+                        xyz_drag_value(ui, &mut o.translation);
+
+                        ui.label("Rotation");
+
+                        ui.horizontal(|ui| {
+                            let (mut x, mut y, mut z) = o.rotation.euler_angles();
+
+                            [("x", &mut x), ("y", &mut y), ("z", &mut z)]
+                                .iter_mut()
+                                .any(|(prefix, angle)| {
+                                    ui.add(
+                                        DragValue::new(*angle)
+                                            .speed(0.01)
+                                            .custom_formatter(|f, _| {
+                                                format!("{:.1}°", f.to_degrees())
+                                            })
+                                            .prefix(format!("{prefix}: ")),
+                                    )
+                                    .changed()
+                                })
+                                .then(|| {
+                                    o.rotation =
+                                        nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
+                                })
+                        });
+
+                        ui.label("Scale");
+
+                        xyz_drag_value(ui, &mut o.scale);
+                    }
+
+                    for o in objects_to_remove {
+                        scene.objects.remove(o);
+                    }
+
+                    ui.separator();
+                    ui.vertical_centered(|ui| {
                         if ui
-                            .add_sized(
-                                [20.0, 20.0],
-                                ImageButton::new(include_image!("../../res/icons/trash-solid.svg"))
-                                    .tint(hex_color!("#cc0000")),
-                            )
+                            .add(Button::new(RichText::new("+ Add Object")).frame(false))
                             .clicked()
                         {
-                            objects_to_remove.push(n);
+                            let mut dialog =
+                                FileDialog::open_file(None).show_files_filter(Box::new(|path| {
+                                    path.extension().is_some_and(|ext| ext == "obj")
+                                }));
+                            dialog.open();
+                            self.object_dialog = Some(dialog);
+                        }
+
+                        if let Some(dialog) = &mut self.object_dialog {
+                            if dialog.show(ui.ctx()).selected() {
+                                if let Some(file) = dialog.path() {
+                                    match Object::from_obj(
+                                        file,
+                                        Translation3::identity(),
+                                        UnitQuaternion::identity(),
+                                        Scale3::identity(),
+                                    ) {
+                                        Ok(object) => {
+                                            scene.objects.push(object);
+                                        }
+                                        Err(e) => warn!("Failed to load object: {}", e),
+                                    }
+                                }
+                            }
                         }
                     });
                 });
-
-                ui.label("Position");
-
-                xyz_drag_value(ui, &mut o.translation);
-
-                ui.label("Rotation");
-
-                ui.horizontal(|ui| {
-                    let (mut x, mut y, mut z) = o.rotation.euler_angles();
-
-                    [("x", &mut x), ("y", &mut y), ("z", &mut z)]
-                        .iter_mut()
-                        .any(|(prefix, angle)| {
-                            ui.add(
-                                DragValue::new(*angle)
-                                    .speed(0.01)
-                                    .custom_formatter(|f, _| format!("{:.1}°", f.to_degrees()))
-                                    .prefix(format!("{prefix}: ")),
-                            )
-                            .changed()
-                        })
-                        .then(|| {
-                            o.rotation = nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
-                        })
-                });
-
-                ui.label("Scale");
-
-                xyz_drag_value(ui, &mut o.scale);
-            }
-
-            for o in objects_to_remove {
-                scene.objects.remove(o);
-            }
-
-            ui.separator();
-            ui.vertical_centered(|ui| {
-                if ui
-                    .add(Button::new(RichText::new("+ Add Object")).frame(false))
-                    .clicked()
-                {
-                    let mut dialog =
-                        FileDialog::open_file(None).show_files_filter(Box::new(|path| {
-                            path.extension().is_some_and(|ext| ext == "obj")
-                        }));
-                    dialog.open();
-                    self.object_dialog = Some(dialog);
-                }
-
-                if let Some(dialog) = &mut self.object_dialog {
-                    if dialog.show(ui.ctx()).selected() {
-                        if let Some(file) = dialog.path() {
-                            match Object::from_obj(
-                                file,
-                                Translation3::identity(),
-                                UnitQuaternion::identity(),
-                                Scale3::identity(),
-                            ) {
-                                Ok(object) => {
-                                    scene.objects.push(object);
-                                }
-                                Err(e) => warn!("Failed to load object: {}", e),
-                            }
-                        }
-                    }
-                }
             });
         });
     }

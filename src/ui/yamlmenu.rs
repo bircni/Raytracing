@@ -81,6 +81,41 @@ impl YamlMenu {
         });
     }
 
+    pub fn load_scene(&mut self) {
+        if !self
+            .open_yaml_dialog
+            .as_ref()
+            .is_some_and(egui_file::FileDialog::visible)
+        {
+            let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
+                Path::new(p)
+                    .extension()
+                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
+            }));
+
+            dialog.open();
+
+            self.open_yaml_dialog = Some(dialog);
+        }
+    }
+
+    pub fn create_scene(&mut self) {
+        if !self
+            .create_yaml_dialog
+            .as_ref()
+            .is_some_and(egui_file::FileDialog::visible)
+        {
+            let mut dialog = FileDialog::save_file(None).filename_filter(Box::new(|p| {
+                Path::new(p)
+                    .extension()
+                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
+            }));
+
+            dialog.open();
+            self.create_yaml_dialog = Some(dialog);
+        }
+    }
+
     fn buttons(&mut self, scene: &mut Option<Scene>, ui: &mut Ui) {
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
             // TODO: make this implicit somehow
@@ -98,23 +133,7 @@ impl YamlMenu {
             )
             .on_hover_text("Load Scene")
             .clicked()
-            .then(|| {
-                if !self
-                    .open_yaml_dialog
-                    .as_ref()
-                    .is_some_and(egui_file::FileDialog::visible)
-                {
-                    let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
-                        Path::new(p)
-                            .extension()
-                            .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
-                    }));
-
-                    dialog.open();
-
-                    self.open_yaml_dialog = Some(dialog);
-                }
-            });
+            .then(|| self.load_scene());
 
             // save button
             ui.add_enabled_ui(scene.is_some(), |ui| {
@@ -135,22 +154,7 @@ impl YamlMenu {
             )
             .on_hover_text("New Scene")
             .clicked()
-            .then(|| {
-                if !self
-                    .create_yaml_dialog
-                    .as_ref()
-                    .is_some_and(egui_file::FileDialog::visible)
-                {
-                    let mut dialog = FileDialog::save_file(None).filename_filter(Box::new(|p| {
-                        Path::new(p)
-                            .extension()
-                            .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
-                    }));
-
-                    dialog.open();
-                    self.create_yaml_dialog = Some(dialog);
-                }
-            });
+            .then(|| self.create_scene());
 
             // reload button
             ui.add_enabled_ui(scene.is_some(), |ui| {
