@@ -3,6 +3,7 @@
 #![warn(clippy::style)]
 #![deny(clippy::all)]
 #![deny(clippy::unwrap_used)]
+#![deny(clippy::expect_used)]
 #![allow(clippy::cast_precision_loss)]
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_sign_loss)]
@@ -34,18 +35,17 @@ fn main() -> anyhow::Result<()> {
     )
     .context("Failed to initialize logger")?;
 
-    let scene = Scene::load("./res/config.yaml").context("Failed to load scene")?;
-
     eframe::run_native(
-        "RayTracer",
+        "TrayRacer",
         eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
-                .with_inner_size(egui::vec2(1200.0, 900.0))
+                .with_inner_size(egui::vec2(1600.0, 900.0))
                 .with_icon(
-                    eframe::icon_data::from_png_bytes(&include_bytes!("../res/icon.png")[..])
-                        .expect("Could not load Icon!"),
+                    eframe::icon_data::from_png_bytes(include_bytes!("../res/icon.png"))
+                        .unwrap_or_default(),
                 )
-                .with_app_id("raytracer"),
+                .with_app_id("raytracer")
+                .with_title("Trayracer"),
             renderer: Renderer::Wgpu,
             depth_buffer: 32,
             follow_system_theme: true,
@@ -53,7 +53,7 @@ fn main() -> anyhow::Result<()> {
             ..Default::default()
         },
         Box::new(|cc| {
-            Box::new(ui::App::new(cc, scene).unwrap_or_else(|e| {
+            Box::new(ui::App::new(cc).unwrap_or_else(|e| {
                 error!("Failed to create app: {}", e);
                 std::process::exit(1);
             }))

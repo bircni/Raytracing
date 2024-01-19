@@ -1,18 +1,24 @@
-use std::sync::Arc;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
+use anyhow::Context;
 use egui::{
     color_picker, hex_color, include_image, Align, Button, Color32, ColorImage, DragValue,
-    FontFamily, ImageButton, ImageData, Layout, RichText, ScrollArea, SidePanel, Slider, TextStyle,
-    TextureOptions, Ui,
+    FontFamily, ImageButton, ImageData, Layout, RichText, Slider, TextureOptions, Ui,
 };
 use egui_file::FileDialog;
 use image::RgbImage;
 use log::warn;
-use nalgebra::{coordinates::XYZ, Similarity3};
+use nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
 
-use crate::scene::{Light, Object};
+use crate::{
+    scene::{Light, Object, Skybox},
+    Color, Scene,
+};
 
-use super::{App, RenderSize};
+use super::render::Render;
 
 fn xyz_drag_value(ui: &mut Ui, value: &mut XYZ<f32>) {
     ui.horizontal(|ui| {
@@ -22,50 +28,35 @@ fn xyz_drag_value(ui: &mut Ui, value: &mut XYZ<f32>) {
     });
 }
 
-impl App {
-    pub fn properties(&mut self, ui: &mut Ui) {
-        SidePanel::right("panel")
-            .show_separator_line(true)
-            .show_inside(ui, |ui| {
-                ScrollArea::new([false, true]).show(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        ui.heading("Properties");
+pub struct Properties {
+    skybox_file_dialog: Option<FileDialog>,
+    opened_file: Option<PathBuf>,
+    open_file_dialog: Option<FileDialog>,
+}
 
-                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            ui.add_sized(
-                                [20.0, 20.0],
-                                ImageButton::new(include_image!(
-                                    "../../res/icons/floppy-disk-solid.svg"
-                                ))
-                                .tint(hex_color!("#ffffff")),
-                            )
-                            .clicked()
-                            .then(|| {
-                                self.save_scene();
-                            });
-                        });
-                    });
+impl Properties {
+    pub fn new() -> Self {
+        Self {
+            skybox_file_dialog: None,
+            opened_file: None,
+            open_file_dialog: None,
+        }
+    }
+    pub fn show(&mut self, scene: &mut Scene, ui: &mut Ui, render: &mut Render) {
+        ui.horizontal(|ui| {
+            ui.heading("Properties");
+        });
 
-                    ui.add_space(5.0);
+        Self::camera_settings(scene, ui);
 
-                    self.camera_settings(ui);
+        self.scene_settings(scene, ui, render);
 
-                    ui.add_space(10.0);
+        Self::lights(ui, scene);
 
-                    self.scene_settings(ui);
-
-                    ui.add_space(10.0);
-
-                    self.lights(ui);
-
-                    ui.add_space(10.0);
-
-                    self.objects(ui);
-                });
-            });
+        self.objects(ui, scene);
     }
 
-    fn camera_settings(&mut self, ui: &mut egui::Ui) {
+    pub fn camera_settings(scene: &mut Scene, ui: &mut egui::Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
                 ui.label(RichText::new("Camera").size(16.0));
@@ -75,14 +66,17 @@ impl App {
 
             ui.vertical(|ui| {
                 ui.label("Position:");
-                xyz_drag_value(ui, &mut self.scene.camera.position);
+
+                xyz_drag_value(ui, &mut scene.camera.position);
 
                 ui.label("Look at:");
-                xyz_drag_value(ui, &mut self.scene.camera.look_at);
+
+                xyz_drag_value(ui, &mut scene.camera.look_at);
 
                 ui.label("Field of View:");
+
                 ui.add(
-                    Slider::new(&mut self.scene.camera.fov, 0.0..=std::f32::consts::PI)
+                    Slider::new(&mut scene.camera.fov, 0.0..=std::f32::consts::PI)
                         .step_by(0.01)
                         .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
                         .clamp_to_range(true),
@@ -91,7 +85,7 @@ impl App {
         });
     }
 
-    fn scene_settings(&mut self, ui: &mut Ui) {
+    fn scene_settings(&mut self, scene: &mut Scene, ui: &mut Ui, render: &mut Render) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
                 ui.label(RichText::new("Scene Settings").size(16.0));
@@ -99,112 +93,162 @@ impl App {
 
             ui.separator();
 
-            ui.label("Render Size:");
+            Self::render_options(ui, render, scene);
 
-            ui.vertical(|ui| {
-                let mut render_size = self.render_size.as_size();
-                ui.add_enabled_ui(self.rendering_thread.is_none(), |ui| {
-                    ui.vertical(|ui| {
-                        egui::ComboBox::from_id_source(0)
-                            .selected_text(format!("{}", self.render_size))
-                            .show_ui(ui, |ui| {
-                                (ui.selectable_value(
-                                    &mut self.render_size,
-                                    RenderSize::FullHD,
-                                    format!("{}", RenderSize::FullHD),
-                                )
+            self.skybox_options(ui, scene);
+
+            ui.label("Ambient Color:");
+            color_picker::color_edit_button_rgb(ui, scene.settings.ambient_color.as_mut());
+
+            ui.label("Ambient Intensitiy:");
+            ui.add(
+                Slider::new(&mut scene.settings.ambient_intensity, 0.0..=1.0).clamp_to_range(true),
+            );
+        });
+    }
+
+    fn render_options(ui: &mut Ui, render: &mut Render, scene: &mut Scene) {
+        ui.label("Render Size:");
+        ui.vertical(|ui| {
+            ui.add_enabled_ui(render.thread.is_none(), |ui| {
+                ui.vertical(|ui| {
+                    let text = Self::format_render_size(scene.camera.resolution);
+                    egui::ComboBox::from_id_source(0)
+                        .selected_text(text)
+                        .show_ui(ui, |ui| {
+                            (ui.selectable_value(&mut scene.camera.resolution, (1280, 720), "HD")
                                 .changed()
-                                    | ui.selectable_value(
-                                        &mut self.render_size,
-                                        RenderSize::Wqhd,
-                                        format!("{}", RenderSize::Wqhd),
+                                || ui
+                                    .selectable_value(
+                                        &mut scene.camera.resolution,
+                                        (1920, 1080),
+                                        "Full HD",
                                     )
                                     .changed()
-                                    || ui
-                                        .selectable_value(
-                                            &mut self.render_size,
-                                            RenderSize::Uhd1,
-                                            format!("{}", RenderSize::Uhd1),
-                                        )
-                                        .changed()
-                                    || ui
-                                        .selectable_value(
-                                            &mut self.render_size,
-                                            RenderSize::Uhd2,
-                                            format!("{}", RenderSize::Uhd2),
-                                        )
-                                        .changed()
-                                    || ui
-                                        .selectable_value(
-                                            &mut self.render_size,
-                                            RenderSize::Custom([render_size.0, render_size.1]),
-                                            format!("{}", RenderSize::Custom([0, 0])),
-                                        )
-                                        .changed())
-                                .then(|| {
-                                    self.change_render_size();
-                                });
+                                || ui
+                                    .selectable_value(
+                                        &mut scene.camera.resolution,
+                                        (2560, 1440),
+                                        "2k",
+                                    )
+                                    .changed()
+                                || ui
+                                    .selectable_value(
+                                        &mut scene.camera.resolution,
+                                        (3840, 2160),
+                                        "4k",
+                                    )
+                                    .changed()
+                                || ui
+                                    .selectable_value(
+                                        &mut scene.camera.resolution,
+                                        (7680, 4320),
+                                        "8k",
+                                    )
+                                    .changed())
+                            .then(|| {
+                                Self::change_render_size(scene, render);
                             });
-                        ui.horizontal(|ui| {
-                            ui.add_enabled_ui(
-                                self.rendering_thread.is_none()
-                                    && matches!(self.render_size, RenderSize::Custom(_)),
-                                |ui| {
-                                    let (x, y) = match &mut self.render_size {
-                                        RenderSize::Custom([x, y]) => (x, y),
-                                        _ => (&mut render_size.0, &mut render_size.1),
-                                    };
-                                    (ui.add(
-                                        DragValue::new(x)
-                                            .speed(1.0)
-                                            .clamp_range(10..=8192)
-                                            .prefix("w: "),
-                                    )
-                                    .changed()
-                                        || ui
-                                            .add(
-                                                DragValue::new(y)
-                                                    .speed(1.0)
-                                                    .clamp_range(10..=8192)
-                                                    .prefix("h: "),
-                                            )
-                                            .changed())
-                                    .then(|| {
-                                        self.change_render_size();
-                                    });
-                                },
-                            );
+                        });
+                    ui.horizontal(|ui| {
+                        let (x, y) = &mut scene.camera.resolution;
+                        (ui.add(
+                            DragValue::new(x)
+                                .speed(1.0)
+                                .clamp_range(10..=8192)
+                                .prefix("w: "),
+                        )
+                        .changed()
+                            || ui
+                                .add(
+                                    DragValue::new(y)
+                                        .speed(1.0)
+                                        .clamp_range(10..=8192)
+                                        .prefix("h: "),
+                                )
+                                .changed())
+                        .then(|| {
+                            Self::change_render_size(scene, render);
                         });
                     });
                 });
             });
-
-            ui.label("Background Color:");
-            color_picker::color_edit_button_rgb(ui, self.scene.settings.background_color.as_mut());
-
-            ui.label("Ambient Color:");
-            color_picker::color_edit_button_rgb(ui, self.scene.settings.ambient_color.as_mut());
-
-            ui.label("Ambient Intensitiy:");
-            ui.add(
-                Slider::new(&mut self.scene.settings.ambient_intensity, 0.0..=1.0)
-                    .clamp_to_range(true),
-            );
-
-            ui.separator();
         });
     }
 
-    fn lights(&mut self, ui: &mut Ui) {
-        ui.group(|ui| {
-            ui.vertical_centered(|ui| {
-                ui.label(
-                    RichText::new(format!("Lights ({})", self.scene.lights.len()))
-                        .text_style(TextStyle::Name("subheading".into())),
+    fn skybox_options(&mut self, ui: &mut Ui, scene: &mut Scene) {
+        ui.label("Skybox:");
+
+        if let Some(dialog) = &mut self.skybox_file_dialog {
+            if dialog.show(ui.ctx()).selected() {
+                match (|| {
+                    let path = dialog.path().ok_or(anyhow::anyhow!("No path selected"))?;
+
+                    let image = image::open(path)
+                        .context("Failed to open image")?
+                        .into_rgb8();
+
+                    Ok::<_, anyhow::Error>(Skybox::Image {
+                        path: path.to_path_buf(),
+                        image,
+                    })
+                })() {
+                    Ok(skybox) => {
+                        scene.settings.skybox = skybox;
+                    }
+                    Err(e) => {
+                        warn!("Failed to load skybox: {}", e);
+                    }
+                }
+
+                self.skybox_file_dialog = None;
+            }
+        }
+
+        ui.vertical(|ui| {
+            ui.horizontal(|ui| {
+                ui.radio(matches!(scene.settings.skybox, Skybox::Color(_)), "Color")
+                    .clicked()
+                    .then(|| {
+                        scene.settings.skybox = Skybox::Color(Color::default());
+                    });
+
+                ui.radio(
+                    matches!(scene.settings.skybox, Skybox::Image { .. }),
+                    "Image",
                 )
+                .clicked()
+                .then(|| {
+                    let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
+                        Path::new(p)
+                            .extension()
+                            .map_or(false, |ext| ext.eq_ignore_ascii_case("exr"))
+                    }));
+
+                    dialog.open();
+
+                    self.skybox_file_dialog = Some(dialog);
+                });
             });
 
-            self.scene
+            match &mut scene.settings.skybox {
+                Skybox::Image { path, .. } => {
+                    ui.label(path.display().to_string());
+                }
+                Skybox::Color(c) => {
+                    ui.color_edit_button_rgb(c.as_mut());
+                }
+            }
+        });
+    }
+
+    fn lights(ui: &mut Ui, scene: &mut Scene) {
+        ui.group(|ui| {
+            ui.vertical_centered(|ui| {
+                ui.label(RichText::new(format!("Lights ({})", scene.lights.len())).size(16.0))
+            });
+
+            scene
                 .lights
                 .iter_mut()
                 .enumerate()
@@ -214,7 +258,11 @@ impl App {
                     ui.separator();
 
                     ui.horizontal(|ui| {
-                        ui.label(RichText::new(format!("Light {n}")).size(14.0));
+                        ui.label(
+                            RichText::new(format!("Light {n}"))
+                                .size(14.0)
+                                .family(FontFamily::Monospace),
+                        );
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             remove = ui
                                 .add_sized(
@@ -229,12 +277,15 @@ impl App {
                     });
 
                     ui.label("Position:");
+
                     xyz_drag_value(ui, &mut light.position);
 
                     ui.label("Intensity:");
+
                     ui.add(Slider::new(&mut light.intensity, 0.0..=100.0).clamp_to_range(true));
 
                     ui.label("Color:");
+
                     color_picker::color_edit_button_rgb(ui, light.color.as_mut());
 
                     remove.then_some(n)
@@ -242,7 +293,7 @@ impl App {
                 .collect::<Vec<_>>()
                 .into_iter()
                 .for_each(|n| {
-                    self.scene.lights.remove(n);
+                    scene.lights.remove(n);
                 });
 
             ui.separator();
@@ -250,7 +301,7 @@ impl App {
                 ui.add(Button::new(RichText::new("+ Add Light")).frame(false))
                     .clicked()
                     .then(|| {
-                        self.scene.lights.push(Light {
+                        scene.lights.push(Light {
                             position: nalgebra::Point3::new(5.0, 2.0, 2.0),
                             intensity: 3.0,
                             color: nalgebra::Vector3::new(1.0, 1.0, 1.0),
@@ -260,17 +311,15 @@ impl App {
         });
     }
 
-    fn objects(&mut self, ui: &mut Ui) {
+    fn objects(&mut self, ui: &mut Ui, scene: &mut Scene) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
-                ui.label(
-                    RichText::new(format!("Objects ({})", self.scene.objects.len())).size(16.0),
-                );
+                ui.label(RichText::new(format!("Objects ({})", scene.objects.len())).size(16.0));
             });
 
             let mut objects_to_remove = Vec::new();
 
-            for (n, o) in self.scene.objects.iter_mut().enumerate() {
+            for (n, o) in scene.objects.iter_mut().enumerate() {
                 ui.separator();
 
                 ui.horizontal(|ui| {
@@ -294,44 +343,37 @@ impl App {
                 });
 
                 ui.label("Position");
-                xyz_drag_value(ui, &mut o.transform.isometry.translation);
+
+                xyz_drag_value(ui, &mut o.translation);
 
                 ui.label("Rotation");
-                ui.horizontal(|ui| {
-                    let (mut x, mut y, mut z) = o.transform.isometry.rotation.euler_angles();
 
-                    [&mut x, &mut y, &mut z]
+                ui.horizontal(|ui| {
+                    let (mut x, mut y, mut z) = o.rotation.euler_angles();
+
+                    [("x", &mut x), ("y", &mut y), ("z", &mut z)]
                         .iter_mut()
-                        .any(|angle| {
+                        .any(|(prefix, angle)| {
                             ui.add(
                                 DragValue::new(*angle)
                                     .speed(0.01)
-                                    .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
-                                    .prefix("x: "),
+                                    .custom_formatter(|f, _| format!("{:.1}°", f.to_degrees()))
+                                    .prefix(format!("{prefix}: ")),
                             )
                             .changed()
                         })
                         .then(|| {
-                            o.transform.isometry.rotation =
-                                nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
+                            o.rotation = nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
                         })
                 });
 
                 ui.label("Scale");
-                let mut scale = o.transform.scaling();
-                ui.add(
-                    DragValue::new(&mut scale)
-                        .clamp_range(f32::EPSILON..=f32::INFINITY)
-                        .speed(0.01),
-                )
-                .changed()
-                .then(|| {
-                    o.transform.set_scaling(scale);
-                });
+
+                xyz_drag_value(ui, &mut o.scale);
             }
 
             for o in objects_to_remove {
-                self.scene.objects.remove(o);
+                scene.objects.remove(o);
             }
 
             ui.separator();
@@ -351,9 +393,14 @@ impl App {
                 if let Some(dialog) = &mut self.open_file_dialog {
                     if dialog.show(ui.ctx()).selected() {
                         if let Some(file) = dialog.path() {
-                            match Object::from_obj(file, Similarity3::identity()) {
+                            match Object::from_obj(
+                                file,
+                                Translation3::identity(),
+                                UnitQuaternion::identity(),
+                                Scale3::identity(),
+                            ) {
                                 Ok(object) => {
-                                    self.scene.objects.push(object);
+                                    scene.objects.push(object);
                                 }
                                 Err(e) => warn!("Failed to load object: {}", e),
                             }
@@ -365,16 +412,27 @@ impl App {
     }
 
     /// Change the render size
-    fn change_render_size(&mut self) {
-        let (x, y) = self.render_size.as_size();
-        *self.render_image.lock() = RgbImage::new(x, y);
-
-        self.render_texture.set(
+    fn change_render_size(scene: &mut Scene, render: &mut Render) {
+        let (x, y) = scene.camera.resolution;
+        *render.image_buffer.lock() = RgbImage::new(x, y);
+        scene.camera.resolution = (x, y);
+        render.texture.set(
             ImageData::Color(Arc::new(ColorImage {
                 size: [x as usize, y as usize],
                 pixels: vec![Color32::BLACK; (x * y) as usize],
             })),
             TextureOptions::default(),
         );
+    }
+
+    fn format_render_size(size: (u32, u32)) -> &'static str {
+        match size {
+            (1280, 720) => "HD",
+            (1920, 1080) => "FullHD",
+            (2560, 1440) => "2k",
+            (3840, 2160) => "4k",
+            (7680, 4320) => "8k",
+            _ => "Custom",
+        }
     }
 }

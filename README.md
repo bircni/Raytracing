@@ -8,6 +8,7 @@ This is the main repository for the raytracing project.
 
 <div align="center">
 <img src="./docs/assets/window-screenshot.png" alt="Screenshot" width="800"/>
+<img src="./docs/assets/render.png" alt="Screenshot" width="800"/>
 </div>
 
 ## Usage

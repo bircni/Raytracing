@@ -8,6 +8,19 @@ pub struct Camera {
     pub look_at: Point3<f32>,
     pub up: Vector3<f32>,
     pub fov: f32,
+    pub resolution: (u32, u32),
+}
+
+impl Default for Camera {
+    fn default() -> Self {
+        Self {
+            position: Point3::new(1.0, 1.0, 1.0),
+            look_at: Point3::origin(),
+            up: Vector3::y(),
+            fov: 60.0_f32.to_radians(),
+            resolution: (1920, 1080),
+        }
+    }
 }
 
 impl Camera {
@@ -40,11 +53,16 @@ mod yaml {
     pub struct CameraDef {
         #[serde(with = "super::super::yaml::point")]
         pub position: Point3<f32>,
+        #[serde(rename = "lookAt")]
         #[serde(with = "super::super::yaml::point")]
         pub look_at: Point3<f32>,
+        #[serde(rename = "upVec")]
         #[serde(with = "super::super::yaml::vector")]
         pub up_vec: Vector3<f32>,
+        #[serde(rename = "fieldOfView")]
         pub field_of_view: f32,
+        pub width: u32,
+        pub height: u32,
     }
 
     impl<'de> Deserialize<'de> for Camera {
@@ -57,6 +75,7 @@ mod yaml {
                 look_at: yaml_camera.look_at,
                 up: yaml_camera.up_vec,
                 fov: yaml_camera.field_of_view.to_radians(),
+                resolution: (yaml_camera.width, yaml_camera.height),
             })
         }
     }
@@ -71,6 +90,8 @@ mod yaml {
                 look_at: self.look_at,
                 up_vec: self.up,
                 field_of_view: self.fov.to_degrees(),
+                width: self.resolution.0,
+                height: self.resolution.1,
             }
             .serialize(serializer)
         }

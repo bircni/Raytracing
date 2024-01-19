@@ -1,6 +1,6 @@
 [package]
 name = "raytracing"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -10,15 +10,17 @@ edition = "2021"
 cargo-husky = "1.5.0"
 
 # error handling
-anyhow = "1.0.75"
+anyhow = "1.0.79"
 
 # time
 chrono = { version = "0.4.31", default-features = false, features = ["clock"] }
 
 # image loading and saving
-image = { version = "0.24.7", default-features = false, features = [
+image = { version = "0.24.8", default-features = false, features = [
     "png",
     "jpeg",
+    "tiff",
+    "openexr",
 ] }
 
 # logging
@@ -36,24 +38,24 @@ rayon = "1.8.0"
 bytemuck = { version = "1.14.0", features = ["derive"] }
 
 # total order for floats
-ordered-float = "4.1.1"
+ordered-float = "4.2.0"
 
 # generic serialization / deserialization
 serde = { version = "1", features = ["derive"] }
-serde_yaml = "0.9.27"
+serde_yaml = "0.9.30"
 
 # GUI
-eframe = { version = "0.24.1", features = [
+eframe = { version = "0.25", features = [
     "wgpu",
     "accesskit",
     "default_fonts",
     "wayland",
     "x11",
 ], default-features = false }
-egui = { version = "0.24.1", features = ["log", "color-hex"] }
-egui-wgpu = { version = "0.24.1" }
-egui_file = { version = "0.13.0" }
-egui_extras = { version = "0.24.1", features = ["svg"] }
+egui = { version = "0.25", features = ["log", "color-hex"] }
+egui-wgpu = { version = "0.25" }
+egui_file = "0.14.1"
+egui_extras = { version = "0.25", features = ["svg", "image"] }
 color-hex = "0.2.0"
 
 # BVH
@@ -67,3 +69,7 @@ cargo-husky = { version = "1.5.0", default-features = false, features = [
 
 [lints.rust]
 unsafe_code = "forbid"
+
+[profile.perftest]
+inherits = "release"
+debug = true
