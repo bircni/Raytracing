@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["init_wgpu"],"struct":["Resources","ShaderLight","ShaderUniforms","VertexCount","WgpuPainter"]};

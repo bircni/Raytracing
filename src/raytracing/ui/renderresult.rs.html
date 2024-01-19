@@ -92,15 +92,13 @@
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>egui::{pos2, Color32, CursorIcon, Frame, Rect, Rounding, Sense, Stroke, Ui, Vec2};
-
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::render::Render;
 <span class="kw">use </span><span class="kw">crate</span>::scene::Scene;
-
-<span class="kw">use </span><span class="kw">super</span>::render::Render;
+<span class="kw">use </span>egui::{pos2, Color32, CursorIcon, Frame, Rect, Rounding, Sense, Stroke, Ui, Vec2};
 
 <span class="kw">pub struct </span>RenderResult {
-    zoom: f32,
+    <span class="comment">// zoom factor where 0 is no zoom
+    </span>zoom: f32,
     position: Vec2,
 }
 

@@ -112,10 +112,33 @@
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
 <a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>log::warn;
+<span class="kw">use </span>nalgebra::Vector3;
 <span class="kw">use </span>serde::{de::DeserializeSeed, Deserialize, Serialize};
 
 <span class="kw">pub use </span><span class="self">self</span>::{
@@ -132,7 +155,9 @@
 <span class="kw">mod </span>triangle;
 <span class="kw">mod </span>yaml;
 
-<span class="attr">#[derive(Debug, Clone, Serialize)]
+<span class="kw">pub type </span>Color = Vector3&lt;f32&gt;;
+
+<span class="attr">#[derive(Debug, Serialize)]
 </span><span class="kw">pub struct </span>Scene {
     <span class="attr">#[serde(skip)]
     </span><span class="kw">pub </span>path: PathBuf,
@@ -143,6 +168,24 @@
     <span class="kw">pub </span>camera: Camera,
     <span class="attr">#[serde(rename = <span class="string">&quot;extraArgs&quot;</span>, default)]
     </span><span class="kw">pub </span>settings: Settings,
+}
+
+<span class="kw">impl </span>Clone <span class="kw">for </span>Scene {
+    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="comment">// Cloning a scene is necessary in some cases, but
+        // it may be a very expensive operation, so we issue
+        // a warning when in debug mode
+        </span><span class="attr">#[cfg(debug_assertions)]
+        </span><span class="macro">warn!</span>(<span class="string">&quot;Cloning scene&quot;</span>);
+
+        <span class="self">Self </span>{
+            path: <span class="self">self</span>.path.clone(),
+            objects: <span class="self">self</span>.objects.clone(),
+            lights: <span class="self">self</span>.lights.clone(),
+            camera: <span class="self">self</span>.camera.clone(),
+            settings: <span class="self">self</span>.settings.clone(),
+        }
+    }
 }
 
 <span class="kw">struct </span>WithRelativePath&lt;P: AsRef&lt;std::path::Path&gt;&gt;(P);
@@ -185,7 +228,8 @@
             .ok_or_else(|| serde::de::Error::missing_field(<span class="string">&quot;camera&quot;</span>))<span class="question-mark">?</span>;
         <span class="kw">let </span>camera = Camera::deserialize(camera).map_err(serde::de::Error::custom)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>settings = map
+        <span class="comment">// dont fail if extraArgs is missing but warn
+        </span><span class="kw">let </span>settings = map
             .get(<span class="string">&quot;extraArgs&quot;</span>)
             .map(Settings::deserialize)
             .transpose()

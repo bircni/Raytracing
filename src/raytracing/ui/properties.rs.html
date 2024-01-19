@@ -386,77 +386,20 @@
 <a href="#386" id="386">386</a>
 <a href="#387" id="387">387</a>
 <a href="#388" id="388">388</a>
-<a href="#389" id="389">389</a>
-<a href="#390" id="390">390</a>
-<a href="#391" id="391">391</a>
-<a href="#392" id="392">392</a>
-<a href="#393" id="393">393</a>
-<a href="#394" id="394">394</a>
-<a href="#395" id="395">395</a>
-<a href="#396" id="396">396</a>
-<a href="#397" id="397">397</a>
-<a href="#398" id="398">398</a>
-<a href="#399" id="399">399</a>
-<a href="#400" id="400">400</a>
-<a href="#401" id="401">401</a>
-<a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
-<a href="#404" id="404">404</a>
-<a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
-<a href="#408" id="408">408</a>
-<a href="#409" id="409">409</a>
-<a href="#410" id="410">410</a>
-<a href="#411" id="411">411</a>
-<a href="#412" id="412">412</a>
-<a href="#413" id="413">413</a>
-<a href="#414" id="414">414</a>
-<a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a>
-<a href="#417" id="417">417</a>
-<a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a>
-<a href="#420" id="420">420</a>
-<a href="#421" id="421">421</a>
-<a href="#422" id="422">422</a>
-<a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
-<a href="#429" id="429">429</a>
-<a href="#430" id="430">430</a>
-<a href="#431" id="431">431</a>
-<a href="#432" id="432">432</a>
-<a href="#433" id="433">433</a>
-<a href="#434" id="434">434</a>
-<a href="#435" id="435">435</a>
-<a href="#436" id="436">436</a>
-<a href="#437" id="437">437</a>
-<a href="#438" id="438">438</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{
-    path::{Path, PathBuf},
-    sync::Arc,
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::render::Render;
+<span class="kw">use crate</span>::{
+    scene::{Color, Light, Object, Skybox},
+    Scene,
 };
-
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>egui::{
-    color_picker, hex_color, include_image, Align, Button, Color32, ColorImage, DragValue,
-    FontFamily, ImageButton, ImageData, Layout, RichText, Slider, TextureOptions, Ui,
+    color_picker, hex_color, include_image, Align, Button, DragValue, FontFamily, ImageButton,
+    Layout, RichText, Slider, Ui,
 };
 <span class="kw">use </span>egui_file::FileDialog;
-<span class="kw">use </span>image::RgbImage;
 <span class="kw">use </span>log::warn;
 <span class="kw">use </span>nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
-
-<span class="kw">use crate</span>::{
-    scene::{Light, Object, Skybox},
-    Color, Scene,
-};
-
-<span class="kw">use </span><span class="kw">super</span>::render::Render;
+<span class="kw">use </span>std::path::Path;
 
 <span class="kw">fn </span>xyz_drag_value(ui: <span class="kw-2">&amp;mut </span>Ui, value: <span class="kw-2">&amp;mut </span>XYZ&lt;f32&gt;) {
     ui.horizontal(|ui| {
@@ -467,19 +410,20 @@
 }
 
 <span class="kw">pub struct </span>Properties {
-    skybox_file_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
-    opened_file: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
-    open_file_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
+    <span class="doccomment">/// Dialog to select a skybox image
+    </span>skybox_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
+    <span class="doccomment">/// Dialog to add a new object
+    </span>object_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
 }
 
 <span class="kw">impl </span>Properties {
     <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            skybox_file_dialog: <span class="prelude-val">None</span>,
-            opened_file: <span class="prelude-val">None</span>,
-            open_file_dialog: <span class="prelude-val">None</span>,
+            skybox_dialog: <span class="prelude-val">None</span>,
+            object_dialog: <span class="prelude-val">None</span>,
         }
     }
+
     <span class="kw">pub fn </span>show(<span class="kw-2">&amp;mut </span><span class="self">self</span>, scene: <span class="kw-2">&amp;mut </span>Scene, ui: <span class="kw-2">&amp;mut </span>Ui, render: <span class="kw-2">&amp;mut </span>Render) {
         ui.horizontal(|ui| {
             ui.heading(<span class="string">&quot;Properties&quot;</span>);
@@ -554,60 +498,30 @@
                     egui::ComboBox::from_id_source(<span class="number">0</span>)
                         .selected_text(text)
                         .show_ui(ui, |ui| {
-                            (ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">1280</span>, <span class="number">720</span>), <span class="string">&quot;HD&quot;</span>)
-                                .changed()
-                                || ui
-                                    .selectable_value(
-                                        <span class="kw-2">&amp;mut </span>scene.camera.resolution,
-                                        (<span class="number">1920</span>, <span class="number">1080</span>),
-                                        <span class="string">&quot;Full HD&quot;</span>,
-                                    )
-                                    .changed()
-                                || ui
-                                    .selectable_value(
-                                        <span class="kw-2">&amp;mut </span>scene.camera.resolution,
-                                        (<span class="number">2560</span>, <span class="number">1440</span>),
-                                        <span class="string">&quot;2k&quot;</span>,
-                                    )
-                                    .changed()
-                                || ui
-                                    .selectable_value(
-                                        <span class="kw-2">&amp;mut </span>scene.camera.resolution,
-                                        (<span class="number">3840</span>, <span class="number">2160</span>),
-                                        <span class="string">&quot;4k&quot;</span>,
-                                    )
-                                    .changed()
-                                || ui
-                                    .selectable_value(
-                                        <span class="kw-2">&amp;mut </span>scene.camera.resolution,
-                                        (<span class="number">7680</span>, <span class="number">4320</span>),
-                                        <span class="string">&quot;8k&quot;</span>,
-                                    )
-                                    .changed())
-                            .then(|| {
-                                <span class="self">Self</span>::change_render_size(scene, render);
-                            });
+                            ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">1280</span>, <span class="number">720</span>), <span class="string">&quot;HD&quot;</span>);
+                            ui.selectable_value(
+                                <span class="kw-2">&amp;mut </span>scene.camera.resolution,
+                                (<span class="number">1920</span>, <span class="number">1080</span>),
+                                <span class="string">&quot;Full HD&quot;</span>,
+                            );
+                            ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">2560</span>, <span class="number">1440</span>), <span class="string">&quot;2k&quot;</span>);
+                            ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">3840</span>, <span class="number">2160</span>), <span class="string">&quot;4k&quot;</span>);
+                            ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">7680</span>, <span class="number">4320</span>), <span class="string">&quot;8k&quot;</span>);
                         });
                     ui.horizontal(|ui| {
                         <span class="kw">let </span>(x, y) = <span class="kw-2">&amp;mut </span>scene.camera.resolution;
-                        (ui.add(
+                        ui.add(
                             DragValue::new(x)
                                 .speed(<span class="number">1.0</span>)
                                 .clamp_range(<span class="number">10</span>..=<span class="number">8192</span>)
                                 .prefix(<span class="string">&quot;w: &quot;</span>),
-                        )
-                        .changed()
-                            || ui
-                                .add(
-                                    DragValue::new(y)
-                                        .speed(<span class="number">1.0</span>)
-                                        .clamp_range(<span class="number">10</span>..=<span class="number">8192</span>)
-                                        .prefix(<span class="string">&quot;h: &quot;</span>),
-                                )
-                                .changed())
-                        .then(|| {
-                            <span class="self">Self</span>::change_render_size(scene, render);
-                        });
+                        );
+                        ui.add(
+                            DragValue::new(y)
+                                .speed(<span class="number">1.0</span>)
+                                .clamp_range(<span class="number">10</span>..=<span class="number">8192</span>)
+                                .prefix(<span class="string">&quot;h: &quot;</span>),
+                        );
                     });
                 });
             });
@@ -617,7 +531,7 @@
     <span class="kw">fn </span>skybox_options(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui, scene: <span class="kw-2">&amp;mut </span>Scene) {
         ui.label(<span class="string">&quot;Skybox:&quot;</span>);
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.skybox_file_dialog {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.skybox_dialog {
             <span class="kw">if </span>dialog.show(ui.ctx()).selected() {
                 <span class="kw">match </span>(|| {
                     <span class="kw">let </span>path = dialog.path().ok_or(<span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;No path selected&quot;</span>))<span class="question-mark">?</span>;
@@ -639,7 +553,7 @@
                     }
                 }
 
-                <span class="self">self</span>.skybox_file_dialog = <span class="prelude-val">None</span>;
+                <span class="self">self</span>.skybox_dialog = <span class="prelude-val">None</span>;
             }
         }
 
@@ -665,7 +579,7 @@
 
                     dialog.open();
 
-                    <span class="self">self</span>.skybox_file_dialog = <span class="prelude-val">Some</span>(dialog);
+                    <span class="self">self</span>.skybox_dialog = <span class="prelude-val">Some</span>(dialog);
                 });
             });
 
@@ -820,15 +734,15 @@
                     .add(Button::new(RichText::new(<span class="string">&quot;+ Add Object&quot;</span>)).frame(<span class="bool-val">false</span>))
                     .clicked()
                 {
-                    <span class="kw">let </span><span class="kw-2">mut </span>dialog = FileDialog::open_file(<span class="self">self</span>.opened_file.clone())
-                        .show_files_filter(Box::new(|path| {
+                    <span class="kw">let </span><span class="kw-2">mut </span>dialog =
+                        FileDialog::open_file(<span class="prelude-val">None</span>).show_files_filter(Box::new(|path| {
                             path.extension().is_some_and(|ext| ext == <span class="string">&quot;obj&quot;</span>)
                         }));
                     dialog.open();
-                    <span class="self">self</span>.open_file_dialog = <span class="prelude-val">Some</span>(dialog);
+                    <span class="self">self</span>.object_dialog = <span class="prelude-val">Some</span>(dialog);
                 }
 
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.open_file_dialog {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.object_dialog {
                     <span class="kw">if </span>dialog.show(ui.ctx()).selected() {
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = dialog.path() {
                             <span class="kw">match </span>Object::from_obj(
@@ -847,20 +761,6 @@
                 }
             });
         });
-    }
-
-    <span class="doccomment">/// Change the render size
-    </span><span class="kw">fn </span>change_render_size(scene: <span class="kw-2">&amp;mut </span>Scene, render: <span class="kw-2">&amp;mut </span>Render) {
-        <span class="kw">let </span>(x, y) = scene.camera.resolution;
-        <span class="kw-2">*</span>render.image_buffer.lock() = RgbImage::new(x, y);
-        scene.camera.resolution = (x, y);
-        render.texture.set(
-            ImageData::Color(Arc::new(ColorImage {
-                size: [x <span class="kw">as </span>usize, y <span class="kw">as </span>usize],
-                pixels: <span class="macro">vec!</span>[Color32::BLACK; (x * y) <span class="kw">as </span>usize],
-            })),
-            TextureOptions::default(),
-        );
     }
 
     <span class="kw">fn </span>format_render_size(size: (u32, u32)) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {

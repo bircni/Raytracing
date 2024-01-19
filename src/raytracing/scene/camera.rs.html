@@ -95,11 +95,8 @@
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>nalgebra::{Point3, Rotation3, Vector3};
-
-<span class="kw">use </span><span class="kw">crate</span>::raytracer::Ray;
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::raytracer::Ray;
+<span class="kw">use </span>nalgebra::{Point3, Rotation3, Vector3};
 
 <span class="attr">#[derive(Debug, Clone, PartialEq)]
 </span><span class="kw">pub struct </span>Camera {
@@ -143,10 +140,9 @@
 }
 
 <span class="kw">mod </span>yaml {
+    <span class="kw">use </span><span class="kw">super</span>::Camera;
     <span class="kw">use </span>nalgebra::{Point3, Vector3};
     <span class="kw">use </span>serde::{Deserialize, Serialize};
-
-    <span class="kw">use </span><span class="kw">super</span>::Camera;
 
     <span class="attr">#[derive(Serialize, Deserialize)]
     </span><span class="kw">pub struct </span>CameraDef {

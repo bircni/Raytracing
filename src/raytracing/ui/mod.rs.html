@@ -142,41 +142,51 @@
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
-</pre></div><pre class="rust"><code><span class="kw">mod </span>preview;
-<span class="kw">mod </span>properties;
-<span class="kw">mod </span>render;
-<span class="kw">mod </span>renderresult;
-<span class="kw">mod </span>status;
-<span class="kw">mod </span>yamlmenu;
-
-<span class="kw">use </span><span class="self">self</span>::preview::Preview;
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="self">self</span>::preview::Preview;
 <span class="kw">use </span><span class="self">self</span>::render::Render;
 <span class="kw">use </span><span class="self">self</span>::renderresult::RenderResult;
-<span class="kw">use </span><span class="self">self</span>::status::Status;
+<span class="kw">use </span><span class="self">self</span>::statusbar::StatusBar;
 <span class="kw">use </span><span class="self">self</span>::yamlmenu::YamlMenu;
-
+<span class="kw">use </span><span class="kw">crate</span>::scene::Scene;
 <span class="kw">use </span><span class="kw">crate</span>::ui::properties::Properties;
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>eframe::CreationContext;
-<span class="kw">use </span>egui::mutex::Mutex;
+<span class="kw">use </span>egui::mutex::{Mutex, RwLock};
 <span class="kw">use </span>egui::{
     vec2, Align, CentralPanel, ColorImage, Direction, ImageData, Layout, ScrollArea, SidePanel,
     TextStyle, TextureOptions,
 };
 <span class="kw">use </span>image::ImageBuffer;
-
 <span class="kw">use </span>std::sync::atomic::Ordering;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::thread::JoinHandle;
 
-<span class="kw">pub struct </span>App {
+<span class="kw">mod </span>preview;
+<span class="kw">mod </span>properties;
+<span class="kw">mod </span>render;
+<span class="kw">mod </span>renderresult;
+<span class="kw">mod </span>statusbar;
+<span class="kw">mod </span>yamlmenu;
+
+<span class="doccomment">/// Main application
+/// This holds all the UI elements and application state
+</span><span class="kw">pub struct </span>App {
     current_tab: Tab,
     render: Render,
     properties: Properties,
-    status: Status,
+    statusbar: StatusBar,
     preview: Preview,
     render_result: RenderResult,
     yaml_menu: YamlMenu,
+    scene: Arc&lt;RwLock&lt;<span class="prelude-ty">Option</span>&lt;Scene&gt;&gt;&gt;,
 }
 
 <span class="attr">#[derive(PartialEq)]
@@ -189,13 +199,15 @@
     <span class="kw">pub fn </span>new(cc: <span class="kw-2">&amp;</span>CreationContext) -&gt; anyhow::Result&lt;<span class="self">Self</span>&gt; {
         egui_extras::install_image_loaders(<span class="kw-2">&amp;</span>cc.egui_ctx);
 
-        Preview::init(
+        <span class="comment">// Initialize the preview renderer with the wgpu context
+        </span>preview::gpu::init_wgpu(
             cc.wgpu_render_state
                 .as_ref()
                 .context(<span class="string">&quot;Failed to get wgpu context&quot;</span>)<span class="question-mark">?</span>,
         );
 
-        <span class="kw">let </span>(render_texture, image_buffer) = {
+        <span class="comment">// create initial render texture (GPU exclusive) and image buffer (CPU exclusive)
+        </span><span class="kw">let </span>(render_texture, image_buffer) = {
             <span class="kw">let </span>texture = cc.egui_ctx.load_texture(
                 <span class="string">&quot;render&quot;</span>,
                 ImageData::Color(Arc::new(ColorImage::example())),
@@ -213,21 +225,26 @@
             s.spacing.item_spacing = vec2(<span class="number">10.0</span>, std::f32::consts::PI * <span class="number">1.76643</span>);
         });
 
+        <span class="kw">let </span>scene = Arc::new(RwLock::new(<span class="prelude-val">None</span>));
+
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             current_tab: Tab::Preview,
             render: Render::new(render_texture, image_buffer),
             properties: Properties::new(),
-            status: Status::new(),
-            preview: Preview::new(),
+            statusbar: StatusBar::new(),
+            preview: Preview::new(scene.clone()),
             render_result: RenderResult::new(),
             yaml_menu: YamlMenu::new(),
+            scene,
         })
     }
 }
 
-<span class="kw">impl </span>eframe::App <span class="kw">for </span>App {
+<span class="doccomment">/// Main application loop (called every frame)
+</span><span class="kw">impl </span>eframe::App <span class="kw">for </span>App {
     <span class="kw">fn </span>update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>egui::Context, _frame: <span class="kw-2">&amp;mut </span>eframe::Frame) {
-        <span class="self">self</span>.render
+        <span class="comment">// check if the render thread has finished and reset it
+        </span><span class="self">self</span>.render
             .thread
             .as_ref()
             .is_some_and(JoinHandle::is_finished)
@@ -236,13 +253,12 @@
                 <span class="self">self</span>.render.cancel.store(<span class="bool-val">false</span>, Ordering::Relaxed);
             });
 
+        <span class="comment">// lock the scene for the duration of the frame
+        </span><span class="kw">let </span><span class="kw-2">mut </span>scene = <span class="self">self</span>.scene.write();
+
         CentralPanel::default().show(ctx, |ui| {
-            <span class="self">self</span>.status.show(
-                ui,
-                <span class="self">self</span>.yaml_menu.scene_mut(),
-                <span class="kw-2">&amp;mut </span><span class="self">self</span>.render,
-                <span class="kw-2">&amp;mut </span><span class="self">self</span>.current_tab,
-            );
+            <span class="self">self</span>.statusbar
+                .show(ui, scene.as_mut(), <span class="kw-2">&amp;mut </span><span class="self">self</span>.render, <span class="kw-2">&amp;mut </span><span class="self">self</span>.current_tab);
 
             ui.vertical_centered(|ui| {
                 ui.separator();
@@ -254,17 +270,17 @@
                         .show_separator_line(<span class="bool-val">true</span>)
                         .show_inside(ui, |ui| {
                             ScrollArea::new([<span class="bool-val">false</span>, <span class="bool-val">true</span>]).show(ui, |ui| {
-                                <span class="self">self</span>.yaml_menu.show(ui);
+                                <span class="self">self</span>.yaml_menu.show(<span class="kw-2">&amp;mut </span>scene, ui);
 
                                 ui.separator();
 
-                                <span class="kw">if let </span><span class="prelude-val">Some</span>(scene) = <span class="self">self</span>.yaml_menu.scene_mut() {
+                                <span class="kw">if let </span><span class="prelude-val">Some</span>(scene) = scene.as_mut() {
                                     <span class="self">self</span>.properties.show(scene, ui, <span class="kw-2">&amp;mut </span><span class="self">self</span>.render);
                                 }
                             });
                         });
 
-                    <span class="kw">match </span><span class="self">self</span>.yaml_menu.scene_mut() {
+                    <span class="kw">match </span>scene.as_mut() {
                         <span class="prelude-val">Some</span>(scene) =&gt; <span class="self">self</span>.preview.show(ui, scene),
                         <span class="prelude-val">None </span>=&gt; {
                             ui.with_layout(
@@ -278,7 +294,7 @@
                     }
                 }
                 Tab::RenderResult =&gt; {
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(scene) = <span class="self">self</span>.yaml_menu.scene() {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(scene) = scene.as_ref() {
                         <span class="self">self</span>.render_result.show(ui, scene, <span class="kw-2">&amp;</span><span class="self">self</span>.render);
                     }
                 }

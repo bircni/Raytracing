@@ -94,10 +94,14 @@
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
-</pre></div><pre class="rust"><code><span class="kw">pub mod </span>color {
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+</pre></div><pre class="rust"><code><span class="doccomment">/// provide (de)serialization for Color (aka. Vector3&lt;f32&gt;) from r,g,b fields
+</span><span class="kw">pub mod </span>color {
     <span class="kw">use </span>serde::{Deserialize, Serialize};
 
-    <span class="kw">use </span><span class="kw">crate</span>::Color;
+    <span class="kw">use </span><span class="kw">crate</span>::scene::Color;
 
     <span class="attr">#[derive(Serialize, Deserialize)]
     </span><span class="kw">struct </span>Yaml {
@@ -127,7 +131,8 @@
     }
 }
 
-<span class="kw">pub mod </span>point {
+<span class="doccomment">/// provide (de)serialization for Point3&lt;f32&gt; from x,y,z fields
+</span><span class="kw">pub mod </span>point {
     <span class="kw">use </span>nalgebra::Point3;
     <span class="kw">use </span>serde::{Deserialize, Serialize};
 
@@ -159,7 +164,8 @@
     }
 }
 
-<span class="kw">pub mod </span>vector {
+<span class="doccomment">/// provide (de)serialization for Vector3&lt;f32&gt; from x,y,z fields
+</span><span class="kw">pub mod </span>vector {
     <span class="kw">use </span>nalgebra::Vector3;
     <span class="kw">use </span>serde::{Deserialize, Serialize};
 

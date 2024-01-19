@@ -100,11 +100,9 @@
 <a href="#100" id="100">100</a>
 <a href="#101" id="101">101</a>
 <a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>bvh::{aabb::Bounded, bounding_hierarchy::BHShape};
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::raytracer::Ray;
+<span class="kw">use </span>bvh::{aabb::Bounded, bounding_hierarchy::BHShape};
 <span class="kw">use </span>nalgebra::{Point3, Vector2, Vector3};
-
-<span class="kw">use </span><span class="kw">crate</span>::raytracer::Ray;
 
 <span class="attr">#[derive(Debug, Clone, PartialEq)]
 </span><span class="kw">pub struct </span>Triangle {

@@ -62,6 +62,7 @@
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
 </pre></div><pre class="rust"><code><span class="attr">#![warn(clippy::pedantic)]
 #![warn(clippy::perf)]
 #![warn(clippy::style)]
@@ -74,16 +75,14 @@
 
 </span><span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>eframe::Renderer;
+<span class="kw">use </span>egui::ViewportBuilder;
 <span class="kw">use </span>log::{error, LevelFilter};
-<span class="kw">use </span>nalgebra::Vector3;
 <span class="kw">use </span>scene::Scene;
 <span class="kw">use </span>simplelog::{ColorChoice, ConfigBuilder, TerminalMode};
 
 <span class="kw">mod </span>raytracer;
 <span class="kw">mod </span>scene;
 <span class="kw">mod </span>ui;
-
-<span class="kw">type </span>Color = Vector3&lt;f32&gt;;
 
 <span class="kw">fn </span>main() -&gt; anyhow::Result&lt;()&gt; {
     simplelog::TermLogger::init(
@@ -92,24 +91,27 @@
         <span class="attr">#[cfg(not(debug_assertions))]
         </span>LevelFilter::Info,
         ConfigBuilder::new()
-            .add_filter_allow_str(<span class="string">&quot;raytracing&quot;</span>)
+            <span class="comment">// suppress all logs from dependencies
+            </span>.add_filter_allow_str(<span class="string">&quot;raytracing&quot;</span>)
             .build(),
         TerminalMode::Mixed,
         ColorChoice::Auto,
     )
     .context(<span class="string">&quot;Failed to initialize logger&quot;</span>)<span class="question-mark">?</span>;
 
+    <span class="kw">let </span>viewport = ViewportBuilder::default()
+        .with_title(<span class="string">&quot;Trayracer&quot;</span>)
+        .with_app_id(<span class="string">&quot;raytracer&quot;</span>)
+        .with_inner_size(egui::vec2(<span class="number">1600.0</span>, <span class="number">900.0</span>))
+        .with_icon(
+            eframe::icon_data::from_png_bytes(<span class="macro">include_bytes!</span>(<span class="string">&quot;../res/icon.png&quot;</span>))
+                .unwrap_or_default(),
+        );
+
     eframe::run_native(
         <span class="string">&quot;TrayRacer&quot;</span>,
         eframe::NativeOptions {
-            viewport: egui::ViewportBuilder::default()
-                .with_inner_size(egui::vec2(<span class="number">1600.0</span>, <span class="number">900.0</span>))
-                .with_icon(
-                    eframe::icon_data::from_png_bytes(<span class="macro">include_bytes!</span>(<span class="string">&quot;../res/icon.png&quot;</span>))
-                        .unwrap_or_default(),
-                )
-                .with_app_id(<span class="string">&quot;raytracer&quot;</span>)
-                .with_title(<span class="string">&quot;Trayracer&quot;</span>),
+            viewport,
             renderer: Renderer::Wgpu,
             depth_buffer: <span class="number">32</span>,
             follow_system_theme: <span class="bool-val">true</span>,

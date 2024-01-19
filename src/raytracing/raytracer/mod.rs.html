@@ -213,14 +213,11 @@
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>image::RgbImage;
+<a href="#216" id="216">216</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::scene::{Color, Material, Scene, Skybox};
+<span class="kw">use </span>image::RgbImage;
 <span class="kw">use </span>nalgebra::{Point3, Vector2, Vector3};
 <span class="kw">use </span>ordered_float::OrderedFloat;
-
-<span class="kw">use crate</span>::{
-    scene::{Material, Scene, Skybox},
-    Color,
-};
 
 <span class="attr">#[derive(Debug, Clone, Copy, PartialEq)]
 </span><span class="kw">pub struct </span>Ray {
@@ -238,9 +235,11 @@
 }
 
 <span class="kw">pub struct </span>Raytracer {
-    scene: Scene,
+    <span class="doccomment">/// Scene is cloned into here for rendering
+    </span>scene: Scene,
     delta: f32,
-    max_depth: u32,
+    <span class="doccomment">/// max number of nested shade calls
+    </span>max_depth: u32,
 }
 
 <span class="kw">impl </span>Raytracer {
@@ -267,17 +266,19 @@
     }
 
     <span class="kw">fn </span>skybox(<span class="kw-2">&amp;</span><span class="self">self</span>, direction: Vector3&lt;f32&gt;) -&gt; Color {
-        <span class="kw">let </span>direction = direction
-            .try_normalize(f32::EPSILON)
-            .unwrap_or(Vector3::y());
-
-        <span class="kw">let </span>x = <span class="number">0.5 </span>+ direction.z.atan2(direction.x) / (<span class="number">2.0 </span>* std::f32::consts::PI);
-        <span class="kw">let </span>y = <span class="number">0.5 </span>- direction.y.asin() / std::f32::consts::PI;
-
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.scene.settings.skybox {
             Skybox::Image { image, .. } =&gt; {
-                <span class="kw">let </span>x = (x * image.width() <span class="kw">as </span>f32) <span class="kw">as </span>u32 % image.width();
-                <span class="kw">let </span>y = (y * image.height() <span class="kw">as </span>f32) <span class="kw">as </span>u32 % image.height();
+                <span class="kw">let </span>direction = direction
+                    .try_normalize(f32::EPSILON)
+                    .unwrap_or(Vector3::y());
+
+                <span class="comment">// shperical mapping
+                </span><span class="kw">let </span>x = ((<span class="number">0.5 </span>+ direction.z.atan2(direction.x) / (<span class="number">2.0 </span>* std::f32::consts::PI))
+                    * image.width() <span class="kw">as </span>f32) <span class="kw">as </span>u32
+                    % image.width();
+                <span class="kw">let </span>y = ((<span class="number">0.5 </span>- direction.y.asin() / std::f32::consts::PI) * image.height() <span class="kw">as </span>f32)
+                    <span class="kw">as </span>u32
+                    % image.height();
 
                 <span class="kw">let </span>pixel = image.get_pixel(x, y);
 
@@ -302,7 +303,8 @@
         )
     }
 
-    <span class="kw">fn </span>raycast_transparent(<span class="kw-2">&amp;</span><span class="self">self</span>, ray: Ray) -&gt; Box&lt;[Hit]&gt; {
+    <span class="doccomment">/// Raycast and continue on hits if the material is transparent
+    </span><span class="kw">fn </span>raycast_transparent(<span class="kw-2">&amp;</span><span class="self">self</span>, ray: Ray) -&gt; Box&lt;[Hit]&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>hits = Vec::&lt;Hit&gt;::new();
         <span class="kw">let </span><span class="kw-2">mut </span>ray = ray;
 

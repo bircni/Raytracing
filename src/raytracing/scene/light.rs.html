@@ -50,12 +50,8 @@
 <a href="#50" id="50">50</a>
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
-<a href="#53" id="53">53</a>
-<a href="#54" id="54">54</a>
-<a href="#55" id="55">55</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>nalgebra::Point3;
-
-<span class="kw">use </span><span class="kw">crate</span>::Color;
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Color;
+<span class="kw">use </span>nalgebra::Point3;
 
 <span class="attr">#[derive(Debug, Copy, Clone, PartialEq, Default)]
 </span><span class="kw">pub struct </span>Light {
@@ -65,12 +61,10 @@
 }
 
 <span class="kw">mod </span>yaml {
+    <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::Color;
+    <span class="kw">use </span><span class="kw">super</span>::Light;
     <span class="kw">use </span>nalgebra::Point3;
     <span class="kw">use </span>serde::{Deserialize, Serialize};
-
-    <span class="kw">use </span><span class="kw">crate</span>::Color;
-
-    <span class="kw">use </span><span class="kw">super</span>::Light;
 
     <span class="attr">#[derive(Serialize, Deserialize)]
     </span><span class="kw">pub struct </span>LightDef {

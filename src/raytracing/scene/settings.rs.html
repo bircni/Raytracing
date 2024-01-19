@@ -65,20 +65,12 @@
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
-<a href="#68" id="68">68</a>
-<a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::Color;
-
-<span class="kw">use </span><span class="kw">super</span>::Skybox;
+</pre></div><pre class="rust"><code><span class="kw">use super</span>::{Color, Skybox};
 
 <span class="attr">#[derive(Debug, Clone, PartialEq)]
 </span><span class="kw">pub struct </span>Settings {
-    <span class="kw">pub </span>max_bounces: u32,
-    <span class="kw">pub </span>samples: u32,
+    <span class="comment">// TODO: Actually use these
+    </span><span class="kw">pub </span>max_bounces: u32,
     <span class="kw">pub </span>ambient_color: Color,
     <span class="kw">pub </span>ambient_intensity: f32,
     <span class="kw">pub </span>skybox: Skybox,
@@ -88,7 +80,6 @@
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             max_bounces: <span class="number">4</span>,
-            samples: <span class="number">1</span>,
             ambient_color: Color::new(<span class="number">0.34</span>, <span class="number">0.14</span>, <span class="number">0.04</span>).normalize(),
             ambient_intensity: <span class="number">0.5</span>,
             skybox: Skybox::default(),
@@ -97,7 +88,7 @@
 }
 
 <span class="kw">mod </span>yaml {
-    <span class="kw">use crate</span>::{scene::Skybox, Color};
+    <span class="kw">use </span><span class="kw">crate</span>::scene::{Color, Skybox};
 
     <span class="kw">use </span><span class="kw">super</span>::Settings;
     <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -105,7 +96,6 @@
     <span class="attr">#[derive(Serialize, Deserialize)]
     </span><span class="kw">pub struct </span>SettingsDef {
         <span class="kw">pub </span>max_bounces: u32,
-        <span class="kw">pub </span>samples: u32,
         <span class="attr">#[serde(with = <span class="string">&quot;super::super::yaml::color&quot;</span>)]
         </span><span class="kw">pub </span>ambient_color: Color,
         <span class="kw">pub </span>skybox: Skybox,
@@ -118,7 +108,6 @@
         {
             SettingsDef::deserialize(deserializer).map(|yaml_extras| Settings {
                 max_bounces: yaml_extras.max_bounces,
-                samples: yaml_extras.samples,
                 ambient_color: yaml_extras
                     .ambient_color
                     .try_normalize(<span class="number">0.0</span>)
@@ -136,7 +125,6 @@
         {
             SettingsDef {
                 max_bounces: <span class="self">self</span>.max_bounces,
-                samples: <span class="self">self</span>.samples,
                 ambient_color: <span class="self">self</span>.ambient_color * <span class="self">self</span>.ambient_intensity,
                 skybox: <span class="self">self</span>.skybox.clone(),
             }

@@ -349,12 +349,12 @@
 <a href="#349" id="349">349</a>
 <a href="#350" id="350">350</a>
 <a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
-
+</pre></div><pre class="rust"><code><span class="kw">use super</span>::{
+    material::{IlluminationModel, Material},
+    triangle::Triangle,
+    Color,
+};
+<span class="kw">use </span><span class="kw">crate</span>::raytracer::{Hit, Ray};
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>bvh::bvh::Bvh;
 <span class="kw">use </span>image::RgbImage;
@@ -364,16 +364,7 @@
 };
 <span class="kw">use </span>obj::SimplePolygon;
 <span class="kw">use </span>ordered_float::OrderedFloat;
-
-<span class="kw">use crate</span>::{
-    raytracer::{Hit, Ray},
-    Color,
-};
-
-<span class="kw">use super</span>::{
-    material::{IlluminationModel, Material},
-    triangle::Triangle,
-};
+<span class="kw">use </span>std::path::PathBuf;
 
 <span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>Object {
@@ -407,6 +398,7 @@
             <span class="string">&quot;Failed to load obj from path: {}&quot;</span>,
             path.as_ref().display()
         ))<span class="question-mark">?</span>;
+
         obj.load_mtls().context(<span class="macro">format!</span>(
             <span class="string">&quot;Failed to load materials from obj path: {}&quot;</span>,
             path.as_ref().display()
@@ -423,17 +415,16 @@
                 specular_color: m.ks.map(Color::from),
                 specular_exponent: m.ns,
                 diffuse_texture: {
-                    <span class="kw">let </span>path = m
-                        .map_kd
+                    m.map_kd
                         .as_deref()
-                        .and_then(|p| path.as_ref().parent().map(|pa| pa.join(p)));
-                    path.and_then(|p| {
-                        load_texture(p.as_path())
-                            .map_err(|e| {
-                                <span class="macro">warn!</span>(<span class="string">&quot;Failed to load texture from path: {:?}: {}&quot;</span>, p, e);
-                            })
-                            .ok()
-                    })
+                        .and_then(|p| path.as_ref().parent().map(|pa| pa.join(p)))
+                        .and_then(|p| {
+                            load_texture(p.as_path())
+                                .map_err(|e| {
+                                    <span class="macro">warn!</span>(<span class="string">&quot;Failed to load texture from path: {:?}: {}&quot;</span>, p, e);
+                                })
+                                .ok()
+                        })
                 },
                 illumination_model: m
                     .illum
@@ -558,7 +549,8 @@
     }
 }
 
-<span class="kw">fn </span>triangulate(
+<span class="doccomment">/// Triangulate a polygon and compute normals and uv coordinates if they are missing
+</span><span class="kw">fn </span>triangulate(
     obj: <span class="kw-2">&amp;</span>obj::Obj,
     poly: <span class="kw-2">&amp;</span>SimplePolygon,
     material_index: <span class="prelude-ty">Option</span>&lt;usize&gt;,

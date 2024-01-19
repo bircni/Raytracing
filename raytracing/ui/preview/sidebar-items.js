@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["MAX_LIGHTS","MAX_OBJECTS"],"struct":["Preview","PreviewRenderer","PreviewResources","ShaderLight","ShaderUniforms","VertexCount"]};
+window.SIDEBAR_ITEMS = {"mod":["gpu"],"struct":["Preview"]};

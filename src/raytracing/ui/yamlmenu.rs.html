@@ -188,193 +188,207 @@
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::path::Path;
-
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::scene::{Camera, Scene, Settings};
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>egui::{hex_color, include_image, Align, ImageButton, Layout, Ui};
 <span class="kw">use </span>egui_file::FileDialog;
 <span class="kw">use </span>log::{info, warn};
-
-<span class="kw">use </span><span class="kw">crate</span>::scene::{Camera, Scene, Settings};
+<span class="kw">use </span>std::path::Path;
 
 <span class="kw">pub struct </span>YamlMenu {
-    scene: <span class="prelude-ty">Option</span>&lt;Scene&gt;,
-    open_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
-    create_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
+    open_yaml_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
+    create_yaml_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
 }
 
 <span class="kw">impl </span>YamlMenu {
     <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            scene: <span class="prelude-val">None</span>,
-            open_dialog: <span class="prelude-val">None</span>,
-            create_dialog: <span class="prelude-val">None</span>,
+            open_yaml_dialog: <span class="prelude-val">None</span>,
+            create_yaml_dialog: <span class="prelude-val">None</span>,
         }
     }
 
-    <span class="kw">pub fn </span>scene(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Scene&gt; {
-        <span class="self">self</span>.scene.as_ref()
-    }
-
-    <span class="kw">pub fn </span>scene_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>Scene&gt; {
-        <span class="self">self</span>.scene.as_mut()
-    }
-
-    <span class="attr">#[allow(clippy::too_many_lines)]
-    </span><span class="kw">pub fn </span>show(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="self">self</span>.open_dialog.as_mut() {
-            <span class="kw">if </span>dialog.show(ui.ctx()).selected() {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = dialog.path() {
-                    <span class="macro">info!</span>(<span class="string">&quot;Loading scene from {}&quot;</span>, path.display());
-                    Scene::load(path)
-                        .map_err(|e| {
-                            <span class="macro">warn!</span>(<span class="string">&quot;{}&quot;</span>, e);
-                        })
-                        .map(|scene| {
-                            <span class="self">self</span>.scene = <span class="prelude-val">Some</span>(scene);
-                        })
-                        .ok();
+    <span class="kw">pub fn </span>show(<span class="kw-2">&amp;mut </span><span class="self">self</span>, scene: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Option</span>&lt;Scene&gt;, ui: <span class="kw-2">&amp;mut </span>Ui) {
+        <span class="comment">// show open yaml dialog if present
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(d) = <span class="self">self</span>.open_yaml_dialog.as_mut() {
+            <span class="kw">if </span>d.show(ui.ctx()).selected() {
+                <span class="kw">match </span>d.path() {
+                    <span class="prelude-val">Some</span>(p) =&gt; {
+                        <span class="macro">info!</span>(<span class="string">&quot;Loading scene from {}&quot;</span>, p.display());
+                        Scene::load(p)
+                            .map_err(|e| {
+                                <span class="macro">warn!</span>(<span class="string">&quot;{}&quot;</span>, e);
+                            })
+                            .map(|s| {
+                                scene.replace(s);
+                            })
+                            .ok();
+                    }
+                    <span class="prelude-val">None </span>=&gt; {
+                        <span class="macro">warn!</span>(<span class="string">&quot;Open yaml dialog selected but returned no path&quot;</span>);
+                    }
                 }
 
-                <span class="self">self</span>.open_dialog = <span class="prelude-val">None</span>;
+                <span class="self">self</span>.open_yaml_dialog = <span class="prelude-val">None</span>;
             }
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="self">self</span>.create_dialog.as_mut() {
-            <span class="kw">if </span>dialog.show(ui.ctx()).selected() {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = dialog.path() {
-                    <span class="macro">info!</span>(<span class="string">&quot;New scene at {}&quot;</span>, path.display());
-                    <span class="self">self</span>.scene = <span class="prelude-val">Some</span>(Scene {
-                        path: path.to_path_buf(),
-                        objects: <span class="macro">vec!</span>[],
-                        lights: <span class="macro">vec!</span>[],
-                        camera: Camera::default(),
-                        settings: Settings::default(),
-                    });
+        <span class="comment">// show create yaml dialog if present
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(d) = <span class="self">self</span>.create_yaml_dialog.as_mut() {
+            <span class="kw">if </span>d.show(ui.ctx()).selected() {
+                <span class="kw">match </span>d.path() {
+                    <span class="prelude-val">Some</span>(p) =&gt; {
+                        <span class="macro">info!</span>(<span class="string">&quot;Created new scene at {}&quot;</span>, p.display());
+                        scene.replace(Scene {
+                            path: p.to_path_buf(),
+                            objects: <span class="macro">vec!</span>[],
+                            lights: <span class="macro">vec!</span>[],
+                            camera: Camera::default(),
+                            settings: Settings::default(),
+                        });
 
-                    <span class="self">self</span>.save_scene();
+                        <span class="self">Self</span>::save_scene(scene);
+                    }
+                    <span class="prelude-val">None </span>=&gt; {
+                        <span class="macro">warn!</span>(<span class="string">&quot;Create yaml dialog selected but returned no path&quot;</span>);
+                    }
                 }
 
-                <span class="self">self</span>.create_dialog = <span class="prelude-val">None</span>;
+                <span class="self">self</span>.create_yaml_dialog = <span class="prelude-val">None</span>;
             }
         }
 
         ui.horizontal(|ui| {
             ui.heading(<span class="string">&quot;YAML&quot;</span>);
-
-            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                <span class="kw">let </span>tint_color = <span class="kw">if </span>ui.visuals().dark_mode {
-                    <span class="macro">hex_color!</span>(<span class="string">&quot;#ffffff&quot;</span>)
-                } <span class="kw">else </span>{
-                    <span class="macro">hex_color!</span>(<span class="string">&quot;#000000&quot;</span>)
-                };
-
-                ui.add_sized(
-                    [<span class="number">20.0</span>, <span class="number">20.0</span>],
-                    ImageButton::new(<span class="macro">include_image!</span>(<span class="string">&quot;../../res/icons/folder-open-solid.svg&quot;</span>))
-                        .tint(tint_color),
-                )
-                .on_hover_text(<span class="string">&quot;Load Scene&quot;</span>)
-                .clicked()
-                .then(|| {
-                    <span class="kw">if </span>!<span class="self">self
-                        </span>.open_dialog
-                        .as_ref()
-                        .is_some_and(egui_file::FileDialog::visible)
-                    {
-                        <span class="kw">let </span><span class="kw-2">mut </span>dialog =
-                            FileDialog::open_file(<span class="prelude-val">None</span>).filename_filter(Box::new(|p| {
-                                Path::new(p)
-                                    .extension()
-                                    .map_or(<span class="bool-val">false</span>, |ext| ext.eq_ignore_ascii_case(<span class="string">&quot;yaml&quot;</span>))
-                            }));
-
-                        dialog.open();
-                        <span class="self">self</span>.open_dialog = <span class="prelude-val">Some</span>(dialog);
-                    }
-                });
-
-                ui.add_enabled_ui(<span class="self">self</span>.scene.is_some(), |ui| {
-                    ui.add_sized(
-                        [<span class="number">20.0</span>, <span class="number">20.0</span>],
-                        ImageButton::new(<span class="macro">include_image!</span>(<span class="string">&quot;../../res/icons/floppy-disk-solid.svg&quot;</span>))
-                            .tint(tint_color),
-                    )
-                    .on_hover_text(<span class="string">&quot;Save Scene&quot;</span>)
-                    .clicked()
-                    .then(|| <span class="self">self</span>.save_scene());
-                });
-
-                ui.add_sized(
-                    [<span class="number">20.0</span>, <span class="number">20.0</span>],
-                    ImageButton::new(<span class="macro">include_image!</span>(<span class="string">&quot;../../res/icons/plus-solid.svg&quot;</span>))
-                        .tint(tint_color),
-                )
-                .on_hover_text(<span class="string">&quot;New Scene&quot;</span>)
-                .clicked()
-                .then(|| {
-                    <span class="kw">if </span>!<span class="self">self
-                        </span>.create_dialog
-                        .as_ref()
-                        .is_some_and(egui_file::FileDialog::visible)
-                    {
-                        <span class="kw">let </span><span class="kw-2">mut </span>dialog =
-                            FileDialog::save_file(<span class="prelude-val">None</span>).filename_filter(Box::new(|p| {
-                                Path::new(p)
-                                    .extension()
-                                    .map_or(<span class="bool-val">false</span>, |ext| ext.eq_ignore_ascii_case(<span class="string">&quot;yaml&quot;</span>))
-                            }));
-
-                        dialog.open();
-                        <span class="self">self</span>.create_dialog = <span class="prelude-val">Some</span>(dialog);
-                    }
-                });
-
-                ui.add_enabled_ui(<span class="self">self</span>.scene.is_some(), |ui| {
-                    ui.add_sized(
-                        [<span class="number">20.0</span>, <span class="number">20.0</span>],
-                        ImageButton::new(<span class="macro">include_image!</span>(
-                            <span class="string">&quot;../../res/icons/arrow-rotate-left-solid.svg&quot;
-                        </span>))
-                        .tint(tint_color),
-                    )
-                    .on_hover_text(<span class="string">&quot;Reload Scene&quot;</span>)
-                    .clicked()
-                    .then(|| {
-                        <span class="kw">if let </span><span class="prelude-val">Some</span>(scene) = <span class="self">self</span>.scene.as_mut() {
-                            <span class="self">self</span>.scene = Scene::load(scene.path.as_path())
-                                .map_err(|e| {
-                                    <span class="macro">warn!</span>(<span class="string">&quot;{}&quot;</span>, e);
-                                })
-                                .ok();
-                        }
-                    });
-                });
-            });
+            <span class="self">self</span>.buttons(scene, ui);
         });
 
         ui.group(|ui| {
-            ui.vertical_centered(|ui| {
-                ui.label(<span class="string">&quot;Loaded scene:&quot;</span>);
-                ui.label(
-                    <span class="self">self</span>.scene
-                        .as_ref()
-                        .map_or(<span class="string">&quot;None&quot;</span>.to_string(), |s| s.path.display().to_string()),
-                );
+            ui.vertical_centered(|ui| <span class="kw">match </span>scene {
+                <span class="prelude-val">Some</span>(s) =&gt; ui.label(<span class="macro">format!</span>(<span class="string">&quot;Loaded scene: {}&quot;</span>, s.path.display())),
+                <span class="prelude-val">None </span>=&gt; ui.label(<span class="string">&quot;No scene loaded&quot;</span>),
             });
         });
     }
 
-    <span class="kw">pub fn </span>save_scene(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(scene) = <span class="self">self</span>.scene.as_ref() {
-            serde_yaml::to_string(scene)
-                .context(<span class="string">&quot;Failed to serialize scene&quot;</span>)
-                .and_then(|str| {
-                    std::fs::write(scene.path.as_path(), str).context(<span class="string">&quot;Failed to save config&quot;</span>)
-                })
-                .unwrap_or_else(|e| {
-                    <span class="macro">warn!</span>(<span class="string">&quot;{}&quot;</span>, e);
+    <span class="kw">fn </span>buttons(<span class="kw-2">&amp;mut </span><span class="self">self</span>, scene: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Option</span>&lt;Scene&gt;, ui: <span class="kw-2">&amp;mut </span>Ui) {
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+            <span class="comment">// TODO: make this implicit somehow
+            </span><span class="kw">let </span>tint_color = <span class="kw">if </span>ui.visuals().dark_mode {
+                <span class="macro">hex_color!</span>(<span class="string">&quot;#ffffff&quot;</span>)
+            } <span class="kw">else </span>{
+                <span class="macro">hex_color!</span>(<span class="string">&quot;#000000&quot;</span>)
+            };
+
+            <span class="comment">// load button
+            </span>ui.add_sized(
+                [<span class="number">20.0</span>, <span class="number">20.0</span>],
+                ImageButton::new(<span class="macro">include_image!</span>(<span class="string">&quot;../../res/icons/folder-open-solid.svg&quot;</span>))
+                    .tint(tint_color),
+            )
+            .on_hover_text(<span class="string">&quot;Load Scene&quot;</span>)
+            .clicked()
+            .then(|| {
+                <span class="kw">if </span>!<span class="self">self
+                    </span>.open_yaml_dialog
+                    .as_ref()
+                    .is_some_and(egui_file::FileDialog::visible)
+                {
+                    <span class="kw">let </span><span class="kw-2">mut </span>dialog = FileDialog::open_file(<span class="prelude-val">None</span>).filename_filter(Box::new(|p| {
+                        Path::new(p)
+                            .extension()
+                            .map_or(<span class="bool-val">false</span>, |ext| ext.eq_ignore_ascii_case(<span class="string">&quot;yaml&quot;</span>))
+                    }));
+
+                    dialog.open();
+
+                    <span class="self">self</span>.open_yaml_dialog = <span class="prelude-val">Some</span>(dialog);
+                }
+            });
+
+            <span class="comment">// save button
+            </span>ui.add_enabled_ui(scene.is_some(), |ui| {
+                ui.add_sized(
+                    [<span class="number">20.0</span>, <span class="number">20.0</span>],
+                    ImageButton::new(<span class="macro">include_image!</span>(<span class="string">&quot;../../res/icons/floppy-disk-solid.svg&quot;</span>))
+                        .tint(tint_color),
+                )
+                .on_hover_text(<span class="string">&quot;Save Scene&quot;</span>)
+                .clicked()
+                .then(|| <span class="self">Self</span>::save_scene(scene));
+            });
+
+            <span class="comment">// new button
+            </span>ui.add_sized(
+                [<span class="number">20.0</span>, <span class="number">20.0</span>],
+                ImageButton::new(<span class="macro">include_image!</span>(<span class="string">&quot;../../res/icons/plus-solid.svg&quot;</span>)).tint(tint_color),
+            )
+            .on_hover_text(<span class="string">&quot;New Scene&quot;</span>)
+            .clicked()
+            .then(|| {
+                <span class="kw">if </span>!<span class="self">self
+                    </span>.create_yaml_dialog
+                    .as_ref()
+                    .is_some_and(egui_file::FileDialog::visible)
+                {
+                    <span class="kw">let </span><span class="kw-2">mut </span>dialog = FileDialog::save_file(<span class="prelude-val">None</span>).filename_filter(Box::new(|p| {
+                        Path::new(p)
+                            .extension()
+                            .map_or(<span class="bool-val">false</span>, |ext| ext.eq_ignore_ascii_case(<span class="string">&quot;yaml&quot;</span>))
+                    }));
+
+                    dialog.open();
+                    <span class="self">self</span>.create_yaml_dialog = <span class="prelude-val">Some</span>(dialog);
+                }
+            });
+
+            <span class="comment">// reload button
+            </span>ui.add_enabled_ui(scene.is_some(), |ui| {
+                ui.add_sized(
+                    [<span class="number">20.0</span>, <span class="number">20.0</span>],
+                    ImageButton::new(<span class="macro">include_image!</span>(
+                        <span class="string">&quot;../../res/icons/arrow-rotate-left-solid.svg&quot;
+                    </span>))
+                    .tint(tint_color),
+                )
+                .on_hover_text(<span class="string">&quot;Reload Scene&quot;</span>)
+                .clicked()
+                .then(|| {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = scene.as_ref().map(|s| s.path.clone()) {
+                        <span class="kw">match </span>Scene::load(path.as_path()) {
+                            <span class="prelude-val">Ok</span>(s) =&gt; {
+                                scene.replace(s);
+                            }
+                            <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;{}&quot;</span>, e),
+                        }
+                    }
                 });
+            });
+        });
+    }
+
+    <span class="kw">fn </span>save_scene(scene: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;Scene&gt;) {
+        <span class="kw">match </span>scene {
+            <span class="prelude-val">Some</span>(scene) =&gt; {
+                serde_yaml::to_string(scene)
+                    .context(<span class="string">&quot;Failed to serialize scene&quot;</span>)
+                    .and_then(|str| {
+                        std::fs::write(scene.path.as_path(), str).context(<span class="string">&quot;Failed to save config&quot;</span>)
+                    })
+                    .unwrap_or_else(|e| {
+                        <span class="macro">warn!</span>(<span class="string">&quot;{}&quot;</span>, e);
+                    });
+            }
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;save_scene called with no scene loaded&quot;</span>);
+            }
         }
     }
 }
