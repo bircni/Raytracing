@@ -10,16 +10,14 @@
 
 use anyhow::Context;
 use eframe::Renderer;
+use egui::ViewportBuilder;
 use log::{error, LevelFilter};
-use nalgebra::Vector3;
 use scene::Scene;
 use simplelog::{ColorChoice, ConfigBuilder, TerminalMode};
 
 mod raytracer;
 mod scene;
 mod ui;
-
-type Color = Vector3<f32>;
 
 fn main() -> anyhow::Result<()> {
     simplelog::TermLogger::init(
@@ -28,6 +26,7 @@ fn main() -> anyhow::Result<()> {
         #[cfg(not(debug_assertions))]
         LevelFilter::Info,
         ConfigBuilder::new()
+            // suppress all logs from dependencies
             .add_filter_allow_str("raytracing")
             .build(),
         TerminalMode::Mixed,
@@ -35,17 +34,19 @@ fn main() -> anyhow::Result<()> {
     )
     .context("Failed to initialize logger")?;
 
+    let viewport = ViewportBuilder::default()
+        .with_title("Trayracer")
+        .with_app_id("raytracer")
+        .with_inner_size(egui::vec2(1600.0, 900.0))
+        .with_icon(
+            eframe::icon_data::from_png_bytes(include_bytes!("../res/icon.png"))
+                .unwrap_or_default(),
+        );
+
     eframe::run_native(
         "TrayRacer",
         eframe::NativeOptions {
-            viewport: egui::ViewportBuilder::default()
-                .with_inner_size(egui::vec2(1600.0, 900.0))
-                .with_icon(
-                    eframe::icon_data::from_png_bytes(include_bytes!("../res/icon.png"))
-                        .unwrap_or_default(),
-                )
-                .with_app_id("raytracer")
-                .with_title("Trayracer"),
+            viewport,
             renderer: Renderer::Wgpu,
             depth_buffer: 32,
             follow_system_theme: true,

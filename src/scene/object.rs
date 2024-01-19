@@ -1,5 +1,9 @@
-use std::path::PathBuf;
-
+use super::{
+    material::{IlluminationModel, Material},
+    triangle::Triangle,
+    Color,
+};
+use crate::raytracer::{Hit, Ray};
 use anyhow::Context;
 use bvh::bvh::Bvh;
 use image::RgbImage;
@@ -9,16 +13,7 @@ use nalgebra::{
 };
 use obj::SimplePolygon;
 use ordered_float::OrderedFloat;
-
-use crate::{
-    raytracer::{Hit, Ray},
-    Color,
-};
-
-use super::{
-    material::{IlluminationModel, Material},
-    triangle::Triangle,
-};
+use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct Object {
@@ -52,6 +47,7 @@ impl Object {
             "Failed to load obj from path: {}",
             path.as_ref().display()
         ))?;
+
         obj.load_mtls().context(format!(
             "Failed to load materials from obj path: {}",
             path.as_ref().display()
@@ -68,17 +64,16 @@ impl Object {
                 specular_color: m.ks.map(Color::from),
                 specular_exponent: m.ns,
                 diffuse_texture: {
-                    let path = m
-                        .map_kd
+                    m.map_kd
                         .as_deref()
-                        .and_then(|p| path.as_ref().parent().map(|pa| pa.join(p)));
-                    path.and_then(|p| {
-                        load_texture(p.as_path())
-                            .map_err(|e| {
-                                warn!("Failed to load texture from path: {:?}: {}", p, e);
-                            })
-                            .ok()
-                    })
+                        .and_then(|p| path.as_ref().parent().map(|pa| pa.join(p)))
+                        .and_then(|p| {
+                            load_texture(p.as_path())
+                                .map_err(|e| {
+                                    warn!("Failed to load texture from path: {:?}: {}", p, e);
+                                })
+                                .ok()
+                        })
                 },
                 illumination_model: m
                     .illum
@@ -203,6 +198,7 @@ impl Object {
     }
 }
 
+/// Triangulate a polygon and compute normals and uv coordinates if they are missing
 fn triangulate(
     obj: &obj::Obj,
     poly: &SimplePolygon,

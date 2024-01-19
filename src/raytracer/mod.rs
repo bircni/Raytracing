@@ -1,11 +1,7 @@
+use crate::scene::{Color, Material, Scene, Skybox};
 use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
-
-use crate::{
-    scene::{Material, Scene, Skybox},
-    Color,
-};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ray {
@@ -23,8 +19,10 @@ pub struct Hit<'a> {
 }
 
 pub struct Raytracer {
+    /// Scene is cloned into here for rendering
     scene: Scene,
     delta: f32,
+    /// max number of nested shade calls
     max_depth: u32,
 }
 
@@ -52,17 +50,19 @@ impl Raytracer {
     }
 
     fn skybox(&self, direction: Vector3<f32>) -> Color {
-        let direction = direction
-            .try_normalize(f32::EPSILON)
-            .unwrap_or(Vector3::y());
-
-        let x = 0.5 + direction.z.atan2(direction.x) / (2.0 * std::f32::consts::PI);
-        let y = 0.5 - direction.y.asin() / std::f32::consts::PI;
-
         match &self.scene.settings.skybox {
             Skybox::Image { image, .. } => {
-                let x = (x * image.width() as f32) as u32 % image.width();
-                let y = (y * image.height() as f32) as u32 % image.height();
+                let direction = direction
+                    .try_normalize(f32::EPSILON)
+                    .unwrap_or(Vector3::y());
+
+                // shperical mapping
+                let x = ((0.5 + direction.z.atan2(direction.x) / (2.0 * std::f32::consts::PI))
+                    * image.width() as f32) as u32
+                    % image.width();
+                let y = ((0.5 - direction.y.asin() / std::f32::consts::PI) * image.height() as f32)
+                    as u32
+                    % image.height();
 
                 let pixel = image.get_pixel(x, y);
 
@@ -87,6 +87,7 @@ impl Raytracer {
         )
     }
 
+    /// Raycast and continue on hits if the material is transparent
     fn raycast_transparent(&self, ray: Ray) -> Box<[Hit]> {
         let mut hits = Vec::<Hit>::new();
         let mut ray = ray;

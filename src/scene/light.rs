@@ -1,6 +1,5 @@
+use super::Color;
 use nalgebra::Point3;
-
-use crate::Color;
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct Light {
@@ -10,12 +9,10 @@ pub struct Light {
 }
 
 mod yaml {
+    use super::super::Color;
+    use super::Light;
     use nalgebra::Point3;
     use serde::{Deserialize, Serialize};
-
-    use crate::Color;
-
-    use super::Light;
 
     #[derive(Serialize, Deserialize)]
     pub struct LightDef {

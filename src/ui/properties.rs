@@ -1,24 +1,17 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
+use super::render::Render;
+use crate::{
+    scene::{Color, Light, Object, Skybox},
+    Scene,
 };
-
 use anyhow::Context;
 use egui::{
-    color_picker, hex_color, include_image, Align, Button, Color32, ColorImage, DragValue,
-    FontFamily, ImageButton, ImageData, Layout, RichText, Slider, TextureOptions, Ui,
+    color_picker, hex_color, include_image, Align, Button, DragValue, FontFamily, ImageButton,
+    Layout, RichText, Slider, Ui,
 };
 use egui_file::FileDialog;
-use image::RgbImage;
 use log::warn;
 use nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
-
-use crate::{
-    scene::{Light, Object, Skybox},
-    Color, Scene,
-};
-
-use super::render::Render;
+use std::path::Path;
 
 fn xyz_drag_value(ui: &mut Ui, value: &mut XYZ<f32>) {
     ui.horizontal(|ui| {
@@ -29,19 +22,20 @@ fn xyz_drag_value(ui: &mut Ui, value: &mut XYZ<f32>) {
 }
 
 pub struct Properties {
-    skybox_file_dialog: Option<FileDialog>,
-    opened_file: Option<PathBuf>,
-    open_file_dialog: Option<FileDialog>,
+    /// Dialog to select a skybox image
+    skybox_dialog: Option<FileDialog>,
+    /// Dialog to add a new object
+    object_dialog: Option<FileDialog>,
 }
 
 impl Properties {
     pub fn new() -> Self {
         Self {
-            skybox_file_dialog: None,
-            opened_file: None,
-            open_file_dialog: None,
+            skybox_dialog: None,
+            object_dialog: None,
         }
     }
+
     pub fn show(&mut self, scene: &mut Scene, ui: &mut Ui, render: &mut Render) {
         ui.horizontal(|ui| {
             ui.heading("Properties");
@@ -116,60 +110,30 @@ impl Properties {
                     egui::ComboBox::from_id_source(0)
                         .selected_text(text)
                         .show_ui(ui, |ui| {
-                            (ui.selectable_value(&mut scene.camera.resolution, (1280, 720), "HD")
-                                .changed()
-                                || ui
-                                    .selectable_value(
-                                        &mut scene.camera.resolution,
-                                        (1920, 1080),
-                                        "Full HD",
-                                    )
-                                    .changed()
-                                || ui
-                                    .selectable_value(
-                                        &mut scene.camera.resolution,
-                                        (2560, 1440),
-                                        "2k",
-                                    )
-                                    .changed()
-                                || ui
-                                    .selectable_value(
-                                        &mut scene.camera.resolution,
-                                        (3840, 2160),
-                                        "4k",
-                                    )
-                                    .changed()
-                                || ui
-                                    .selectable_value(
-                                        &mut scene.camera.resolution,
-                                        (7680, 4320),
-                                        "8k",
-                                    )
-                                    .changed())
-                            .then(|| {
-                                Self::change_render_size(scene, render);
-                            });
+                            ui.selectable_value(&mut scene.camera.resolution, (1280, 720), "HD");
+                            ui.selectable_value(
+                                &mut scene.camera.resolution,
+                                (1920, 1080),
+                                "Full HD",
+                            );
+                            ui.selectable_value(&mut scene.camera.resolution, (2560, 1440), "2k");
+                            ui.selectable_value(&mut scene.camera.resolution, (3840, 2160), "4k");
+                            ui.selectable_value(&mut scene.camera.resolution, (7680, 4320), "8k");
                         });
                     ui.horizontal(|ui| {
                         let (x, y) = &mut scene.camera.resolution;
-                        (ui.add(
+                        ui.add(
                             DragValue::new(x)
                                 .speed(1.0)
                                 .clamp_range(10..=8192)
                                 .prefix("w: "),
-                        )
-                        .changed()
-                            || ui
-                                .add(
-                                    DragValue::new(y)
-                                        .speed(1.0)
-                                        .clamp_range(10..=8192)
-                                        .prefix("h: "),
-                                )
-                                .changed())
-                        .then(|| {
-                            Self::change_render_size(scene, render);
-                        });
+                        );
+                        ui.add(
+                            DragValue::new(y)
+                                .speed(1.0)
+                                .clamp_range(10..=8192)
+                                .prefix("h: "),
+                        );
                     });
                 });
             });
@@ -179,7 +143,7 @@ impl Properties {
     fn skybox_options(&mut self, ui: &mut Ui, scene: &mut Scene) {
         ui.label("Skybox:");
 
-        if let Some(dialog) = &mut self.skybox_file_dialog {
+        if let Some(dialog) = &mut self.skybox_dialog {
             if dialog.show(ui.ctx()).selected() {
                 match (|| {
                     let path = dialog.path().ok_or(anyhow::anyhow!("No path selected"))?;
@@ -201,7 +165,7 @@ impl Properties {
                     }
                 }
 
-                self.skybox_file_dialog = None;
+                self.skybox_dialog = None;
             }
         }
 
@@ -227,7 +191,7 @@ impl Properties {
 
                     dialog.open();
 
-                    self.skybox_file_dialog = Some(dialog);
+                    self.skybox_dialog = Some(dialog);
                 });
             });
 
@@ -382,15 +346,15 @@ impl Properties {
                     .add(Button::new(RichText::new("+ Add Object")).frame(false))
                     .clicked()
                 {
-                    let mut dialog = FileDialog::open_file(self.opened_file.clone())
-                        .show_files_filter(Box::new(|path| {
+                    let mut dialog =
+                        FileDialog::open_file(None).show_files_filter(Box::new(|path| {
                             path.extension().is_some_and(|ext| ext == "obj")
                         }));
                     dialog.open();
-                    self.open_file_dialog = Some(dialog);
+                    self.object_dialog = Some(dialog);
                 }
 
-                if let Some(dialog) = &mut self.open_file_dialog {
+                if let Some(dialog) = &mut self.object_dialog {
                     if dialog.show(ui.ctx()).selected() {
                         if let Some(file) = dialog.path() {
                             match Object::from_obj(
@@ -409,20 +373,6 @@ impl Properties {
                 }
             });
         });
-    }
-
-    /// Change the render size
-    fn change_render_size(scene: &mut Scene, render: &mut Render) {
-        let (x, y) = scene.camera.resolution;
-        *render.image_buffer.lock() = RgbImage::new(x, y);
-        scene.camera.resolution = (x, y);
-        render.texture.set(
-            ImageData::Color(Arc::new(ColorImage {
-                size: [x as usize, y as usize],
-                pixels: vec![Color32::BLACK; (x * y) as usize],
-            })),
-            TextureOptions::default(),
-        );
     }
 
     fn format_render_size(size: (u32, u32)) -> &'static str {
