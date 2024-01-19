@@ -1,53 +1,68 @@
 models:
-  - file_path: ./res/test.obj
-    position:
-      x: 0.7
-      y: -0.1
-      z: -0.5
-    rotation:
-      x: 17.761688
-      y: -12.605077
-      z: -6.5614495e-7
-    scale: 1.0
-point_lights:
-  - position:
-      x: 5.0
-      y: 2.0
-      z: 2.0
-    ke:
-      r: 5.332843
-      g: 11.98801
-      b: 12.322679
-  - position:
-      x: -5.0
-      y: 5.0
-      z: -2.0
-    ke:
-      r: 25.186932
-      g: 4.616624
-      b: 15.630268
-camera:
+- filePath: ./floor.obj
   position:
-    x: -2.0
-    y: 1.5
-    z: 5.0
-  look_at:
+    x: 0.7
+    y: -0.1
+    z: -0.5
+  rotation:
     x: 0.0
     y: 0.0
     z: 0.0
-  up_vec:
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+pointLights:
+- position:
+    x: -2.0
+    y: 3.5
+    z: -0.8
+  Ke:
+    r: 0.5773503
+    g: 0.5773503
+    b: 0.5773503
+  intensity: 40.0
+- position:
+    x: 5.5
+    y: 0.3
+    z: -4.5
+  Ke:
+    r: 0.672333
+    g: 0.24602187
+    b: 0.6981702
+  intensity: 22.0
+- position:
+    x: 2.0
+    y: 4.0
+    z: 1.6
+  Ke:
+    r: 0.57888657
+    g: 0.5770311
+    b: 0.57612985
+  intensity: 23.0
+- position:
+    x: -0.7
+    y: 1.0
+    z: 5.2
+  Ke:
+    r: 1.0
+    g: 1.0
+    b: 1.0
+  intensity: 6.0
+camera:
+  position:
+    x: 3.7080245
+    y: 2.1147687
+    z: 7.0919194
+  lookAt:
+    x: 3.3485944
+    y: 1.793123
+    z: 6.215932
+  upVec:
     x: 0.0
     y: 1.0
     z: 0.0
-  field_of_view: 80.21409
-extra_args:
-  max_bounces: 3
-  samples: 64
-  background_color:
-    r: 0.67296165
-    g: 0.8369991
-    b: 0.6643321
-  ambient_color:
-    r: 0.17478774
-    g: 0.17023797
-    b: 0.08521756
+  fieldOfView: 63.02536
+  width: 1920
+  height: 1080
+extraArgs:
