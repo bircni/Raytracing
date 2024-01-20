@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Diagram</title>
+    <link rel="stylesheet" href="diagram.css">
+</head>
+<style>
+    :root {
+        --bg: #72727240;
+        --border: 1px solid #333;
+    }
+
+    html {
+        font-family: monospace;
+    }
+
+    body {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    h1 {
+        text-align: center;
+    }
+
+    .module::before {
+        content: "";
+        display: block;
+        height: 2rem;
+        width: 5rem;
+        position: relative;
+        top: calc(-2rem - 2px);
+        left: -1px;
+        background-color: var(--bg);
+        border: var(--border);
+        border-radius: 0.25rem 0.25rem 0 0;
+        margin-bottom: -2rem;
+    }
+
+    .module {
+        background-color: var(--bg);
+        border: var(--border);
+        border-radius: 0 0.25rem 0.25rem 0.25rem;
+        margin: 5rem 1rem 5rem 1rem;
+        width: fit-content;
+    }
+
+    .module-contents>.module {
+        margin: 3rem 1rem 1rem 1rem;
+    }
+
+    .module-name {
+        font-size: x-large;
+        font-weight: bold;
+        padding: 0.5rem;
+        text-align: center;
+    }
+
+    .module-contents {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .struct {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        justify-content: start;
+        padding: 0.5rem;
+        padding-top: 0;
+        margin: 1rem;
+        border: var(--border);
+        border-radius: 0.25rem;
+    }
+
+    .struct-public-fields,
+    .struct-private-fields {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        justify-content: start;
+    }
+
+    .struct-name {
+        font-size: large;
+        font-weight: bold;
+        align-self: center;
+        padding: 0.5rem;
+        border-bottom: var(--border);
+        width: 100%;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .struct-field {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .struct-public-fields>.struct-field>.struct-field-name::before {
+        content: "+ ";
+    }
+
+    .struct-private-fields>.struct-field>.struct-field-name::before {
+        content: "- ";
+    }
+
+    .struct-field-type::before {
+        content: ": ";
+    }
+</style>
+
+<body>
+    <h1>Diagram</h1>
+
+
+    <div class="module">
+        <div class="module-name">raytracer</div>
+        <div class="module-contents">
+
+            <div class="struct">
+                <div class="struct-name">Ray</div>
+                <div class="struct-public-fields">
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">origin</div>
+                        <div class="struct-field-type">Point3&lt;f32&gt;</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">direction</div>
+                        <div class="struct-field-type">Vector3&lt;f32&gt;</div>
+                    </div>
+
+                </div>
+                <div class="struct-private-fields">
+
+                </div>
+            </div>
+
+            <div class="struct">
+                <div class="struct-name">Hit&lt;&#39;a&gt;</div>
+                <div class="struct-public-fields">
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">name</div>
+                        <div class="struct-field-type">&amp;&#39;a str</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">point</div>
+                        <div class="struct-field-type">Point3&lt;f32&gt;</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">normal</div>
+                        <div class="struct-field-type">Vector3&lt;f32&gt;</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">material</div>
+                        <div class="struct-field-type">Option&lt;&amp;&#39;a Material&gt;</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">uv</div>
+                        <div class="struct-field-type">Vector2&lt;f32&gt;</div>
+                    </div>
+
+                </div>
+                <div class="struct-private-fields">
+
+                </div>
+            </div>
+
+            <div class="struct">
+                <div class="struct-name">Raytracer</div>
+                <div class="struct-public-fields">
+
+                </div>
+                <div class="struct-private-fields">
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">scene</div>
+                        <div class="struct-field-type">Scene</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">delta</div>
+                        <div class="struct-field-type">f32</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">max_depth</div>
+                        <div class="struct-field-type">u32</div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="module">
+        <div class="module-name">scene</div>
+        <div class="module-contents">
+
+            <div class="struct">
+                <div class="struct-name">Scene</div>
+                <div class="struct-public-fields">
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">path</div>
+                        <div class="struct-field-type">PathBuf</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">objects</div>
+                        <div class="struct-field-type">Vec&lt;Object&gt;</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">lights</div>
+                        <div class="struct-field-type">Vec&lt;Light&gt;</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">camera</div>
+                        <div class="struct-field-type">Camera</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">settings</div>
+                        <div class="struct-field-type">Settings</div>
+                    </div>
+
+                </div>
+                <div class="struct-private-fields">
+
+                </div>
+            </div>
+
+            <div class="struct">
+                <div class="struct-name">WithRelativePath&lt;P: AsRef&lt;std::path::Path&gt;&gt;</div>
+                <div class="struct-public-fields">
+
+                </div>
+                <div class="struct-private-fields">
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">0</div>
+                        <div class="struct-field-type">P</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">camera</div>
+                <div class="module-contents">
+
+                    <div class="struct">
+                        <div class="struct-name">Camera</div>
+                        <div class="struct-public-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">position</div>
+                                <div class="struct-field-type">Point3&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">look_at</div>
+                                <div class="struct-field-type">Point3&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">up</div>
+                                <div class="struct-field-type">Vector3&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">fov</div>
+                                <div class="struct-field-type">f32</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">resolution</div>
+                                <div class="struct-field-type">(u32, u32)</div>
+                            </div>
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                        </div>
+                    </div>
+
+                    <div class="module">
+                        <div class="module-name">yaml</div>
+                        <div class="module-contents">
+
+                            <div class="struct">
+                                <div class="struct-name">CameraDef</div>
+                                <div class="struct-public-fields">
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">position</div>
+                                        <div class="struct-field-type">Point3&lt;f32&gt;</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">look_at</div>
+                                        <div class="struct-field-type">Point3&lt;f32&gt;</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">up_vec</div>
+                                        <div class="struct-field-type">Vector3&lt;f32&gt;</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">field_of_view</div>
+                                        <div class="struct-field-type">f32</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">width</div>
+                                        <div class="struct-field-type">u32</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">height</div>
+                                        <div class="struct-field-type">u32</div>
+                                    </div>
+
+                                </div>
+                                <div class="struct-private-fields">
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">light</div>
+                <div class="module-contents">
+
+                    <div class="struct">
+                        <div class="struct-name">Light</div>
+                        <div class="struct-public-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">position</div>
+                                <div class="struct-field-type">Point3&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">color</div>
+                                <div class="struct-field-type">Color</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">intensity</div>
+                                <div class="struct-field-type">f32</div>
+                            </div>
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                        </div>
+                    </div>
+
+                    <div class="module">
+                        <div class="module-name">yaml</div>
+                        <div class="module-contents">
+
+                            <div class="struct">
+                                <div class="struct-name">LightDef</div>
+                                <div class="struct-public-fields">
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">position</div>
+                                        <div class="struct-field-type">Point3&lt;f32&gt;</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">ke</div>
+                                        <div class="struct-field-type">Color</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">intensity</div>
+                                        <div class="struct-field-type">f32</div>
+                                    </div>
+
+                                </div>
+                                <div class="struct-private-fields">
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">material</div>
+                <div class="module-contents">
+
+                    <div class="struct">
+                        <div class="struct-name">Material</div>
+                        <div class="struct-public-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">name</div>
+                                <div class="struct-field-type">String</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">diffuse_color</div>
+                                <div class="struct-field-type">Option&lt;Color&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">specular_color</div>
+                                <div class="struct-field-type">Option&lt;Color&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">specular_exponent</div>
+                                <div class="struct-field-type">Option&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">diffuse_texture</div>
+                                <div class="struct-field-type">Option&lt;RgbImage&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">illumination_model</div>
+                                <div class="struct-field-type">IlluminationModel</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">dissolve</div>
+                                <div class="struct-field-type">Option&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">refraction_index</div>
+                                <div class="struct-field-type">Option&lt;f32&gt;</div>
+                            </div>
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                        </div>
+                    </div>
+
+                    <div class="struct">
+                        <div class="struct-name">IlluminationModel</div>
+                        <div class="struct-public-fields">
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">0</div>
+                                <div class="struct-field-type">i32</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">object</div>
+                <div class="module-contents">
+
+                    <div class="struct">
+                        <div class="struct-name">Object</div>
+                        <div class="struct-public-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">triangles</div>
+                                <div class="struct-field-type">Vec&lt;Triangle&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">materials</div>
+                                <div class="struct-field-type">Vec&lt;Material&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">translation</div>
+                                <div class="struct-field-type">Translation3&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">rotation</div>
+                                <div class="struct-field-type">UnitQuaternion&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">scale</div>
+                                <div class="struct-field-type">Scale3&lt;f32&gt;</div>
+                            </div>
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">name</div>
+                                <div class="struct-field-type">String</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">path</div>
+                                <div class="struct-field-type">PathBuf</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">bvh</div>
+                                <div class="struct-field-type">Bvh&lt;f32, 3&gt;</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="struct">
+                        <div class="struct-name">WithRelativePath&lt;P: AsRef&lt;std::path::Path&gt;&gt;</div>
+                        <div class="struct-public-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">0</div>
+                                <div class="struct-field-type">P</div>
+                            </div>
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                        </div>
+                    </div>
+
+                    <div class="module">
+                        <div class="module-name">yaml</div>
+                        <div class="module-contents">
+
+                            <div class="struct">
+                                <div class="struct-name">ObjectDef</div>
+                                <div class="struct-public-fields">
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">file_path</div>
+                                        <div class="struct-field-type">PathBuf</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">position</div>
+                                        <div class="struct-field-type">Point3&lt;f32&gt;</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">rotation</div>
+                                        <div class="struct-field-type">Vector3&lt;f32&gt;</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">scale</div>
+                                        <div class="struct-field-type">Vector3&lt;f32&gt;</div>
+                                    </div>
+
+                                </div>
+                                <div class="struct-private-fields">
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">settings</div>
+                <div class="module-contents">
+
+                    <div class="struct">
+                        <div class="struct-name">Settings</div>
+                        <div class="struct-public-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">max_bounces</div>
+                                <div class="struct-field-type">u32</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">samples</div>
+                                <div class="struct-field-type">u32</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">ambient_color</div>
+                                <div class="struct-field-type">Color</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">ambient_intensity</div>
+                                <div class="struct-field-type">f32</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">skybox</div>
+                                <div class="struct-field-type">Skybox</div>
+                            </div>
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                        </div>
+                    </div>
+
+                    <div class="module">
+                        <div class="module-name">yaml</div>
+                        <div class="module-contents">
+
+                            <div class="struct">
+                                <div class="struct-name">SettingsDef</div>
+                                <div class="struct-public-fields">
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">max_bounces</div>
+                                        <div class="struct-field-type">u32</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">samples</div>
+                                        <div class="struct-field-type">u32</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">ambient_color</div>
+                                        <div class="struct-field-type">Color</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">skybox</div>
+                                        <div class="struct-field-type">Skybox</div>
+                                    </div>
+
+                                </div>
+                                <div class="struct-private-fields">
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">skybox</div>
+                <div class="module-contents">
+
+                    <div class="module">
+                        <div class="module-name">yaml</div>
+                        <div class="module-contents">
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">triangle</div>
+                <div class="module-contents">
+
+                    <div class="struct">
+                        <div class="struct-name">Triangle</div>
+                        <div class="struct-public-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">a</div>
+                                <div class="struct-field-type">Point3&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">b</div>
+                                <div class="struct-field-type">Point3&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">c</div>
+                                <div class="struct-field-type">Point3&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">a_normal</div>
+                                <div class="struct-field-type">Vector3&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">b_normal</div>
+                                <div class="struct-field-type">Vector3&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">c_normal</div>
+                                <div class="struct-field-type">Vector3&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">a_uv</div>
+                                <div class="struct-field-type">Vector2&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">b_uv</div>
+                                <div class="struct-field-type">Vector2&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">c_uv</div>
+                                <div class="struct-field-type">Vector2&lt;f32&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">material_index</div>
+                                <div class="struct-field-type">Option&lt;usize&gt;</div>
+                            </div>
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">bvh_index</div>
+                                <div class="struct-field-type">usize</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">yaml</div>
+                <div class="module-contents">
+
+                    <div class="module">
+                        <div class="module-name">color</div>
+                        <div class="module-contents">
+
+                            <div class="struct">
+                                <div class="struct-name">Yaml</div>
+                                <div class="struct-public-fields">
+
+                                </div>
+                                <div class="struct-private-fields">
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">r</div>
+                                        <div class="struct-field-type">f32</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">g</div>
+                                        <div class="struct-field-type">f32</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">b</div>
+                                        <div class="struct-field-type">f32</div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="module">
+                        <div class="module-name">point</div>
+                        <div class="module-contents">
+
+                            <div class="struct">
+                                <div class="struct-name">Yaml</div>
+                                <div class="struct-public-fields">
+
+                                </div>
+                                <div class="struct-private-fields">
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">x</div>
+                                        <div class="struct-field-type">f32</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">y</div>
+                                        <div class="struct-field-type">f32</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">z</div>
+                                        <div class="struct-field-type">f32</div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="module">
+                        <div class="module-name">vector</div>
+                        <div class="module-contents">
+
+                            <div class="struct">
+                                <div class="struct-name">Yaml</div>
+                                <div class="struct-public-fields">
+
+                                </div>
+                                <div class="struct-private-fields">
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">x</div>
+                                        <div class="struct-field-type">f32</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">y</div>
+                                        <div class="struct-field-type">f32</div>
+                                    </div>
+
+                                    <div class="struct-field">
+                                        <div class="struct-field-name">z</div>
+                                        <div class="struct-field-type">f32</div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="module">
+        <div class="module-name">ui</div>
+        <div class="module-contents">
+
+            <div class="struct">
+                <div class="struct-name">App</div>
+                <div class="struct-public-fields">
+
+                </div>
+                <div class="struct-private-fields">
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">current_tab</div>
+                        <div class="struct-field-type">Tab</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">render</div>
+                        <div class="struct-field-type">Render</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">properties</div>
+                        <div class="struct-field-type">Properties</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">status</div>
+                        <div class="struct-field-type">Status</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">preview</div>
+                        <div class="struct-field-type">Preview</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">render_result</div>
+                        <div class="struct-field-type">RenderResult</div>
+                    </div>
+
+                    <div class="struct-field">
+                        <div class="struct-field-name">yaml_menu</div>
+                        <div class="struct-field-type">YamlMenu</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">preview</div>
+                <div class="module-contents">
+
+                    <div class="struct">
+                        <div class="struct-name">Preview</div>
+                        <div class="struct-public-fields">
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">active_movement</div>
+                                <div class="struct-field-type">bool</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">movement_speed</div>
+                                <div class="struct-field-type">f32</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">look_sensitivity</div>
+                                <div class="struct-field-type">f32</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">pause_delta</div>
+                                <div class="struct-field-type">bool</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">pause_count</div>
+                                <div class="struct-field-type">i32</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="struct">
+                        <div class="struct-name">PreviewResources</div>
+                        <div class="struct-public-fields">
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">bind_group</div>
+                                <div class="struct-field-type">BindGroup</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">pipeline</div>
+                                <div class="struct-field-type">RenderPipeline</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">vertex_buffer</div>
+                                <div class="struct-field-type">Buffer</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">uniform_buffer</div>
+                                <div class="struct-field-type">Buffer</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">lights_buffer</div>
+                                <div class="struct-field-type">Buffer</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">transforms_buffer</div>
+                                <div class="struct-field-type">Buffer</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="struct">
+                        <div class="struct-name">PreviewRenderer</div>
+                        <div class="struct-public-fields">
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">scene</div>
+                                <div class="struct-field-type">Scene</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">aspect_ratio</div>
+                                <div class="struct-field-type">f32</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="struct">
+                        <div class="struct-name">VertexCount</div>
+                        <div class="struct-public-fields">
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">0</div>
+                                <div class="struct-field-type">usize</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="struct">
+                        <div class="struct-name">ShaderUniforms</div>
+                        <div class="struct-public-fields">
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">view</div>
+                                <div class="struct-field-type">[[f32; 4]; 4]</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">lights_count</div>
+                                <div class="struct-field-type">u32</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">_pad</div>
+                                <div class="struct-field-type">[u32; 3]</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">ambient_color</div>
+                                <div class="struct-field-type">[f32; 3]</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">ambient_intensity</div>
+                                <div class="struct-field-type">f32</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="struct">
+                        <div class="struct-name">ShaderLight</div>
+                        <div class="struct-public-fields">
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">position</div>
+                                <div class="struct-field-type">[f32; 3]</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">_pad</div>
+                                <div class="struct-field-type">[f32; 1]</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">color</div>
+                                <div class="struct-field-type">[f32; 3]</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">intensity</div>
+                                <div class="struct-field-type">f32</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">properties</div>
+                <div class="module-contents">
+
+                    <div class="struct">
+                        <div class="struct-name">Properties</div>
+                        <div class="struct-public-fields">
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">skybox_file_dialog</div>
+                                <div class="struct-field-type">Option&lt;FileDialog&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">opened_file</div>
+                                <div class="struct-field-type">Option&lt;PathBuf&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">open_file_dialog</div>
+                                <div class="struct-field-type">Option&lt;FileDialog&gt;</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">render</div>
+                <div class="module-contents">
+
+                    <div class="struct">
+                        <div class="struct-name">Render</div>
+                        <div class="struct-public-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">texture</div>
+                                <div class="struct-field-type">TextureHandle</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">progress</div>
+                                <div class="struct-field-type">Arc&lt;AtomicU16&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">thread</div>
+                                <div class="struct-field-type">Option&lt;std::thread::JoinHandle&lt;()&gt;&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">cancel</div>
+                                <div class="struct-field-type">Arc&lt;AtomicBool&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">image_buffer</div>
+                                <div class="struct-field-type">Arc&lt;Mutex&lt;RgbImage&gt;&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">time</div>
+                                <div class="struct-field-type">Arc&lt;AtomicU32&gt;</div>
+                            </div>
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                        </div>
+                    </div>
+
+                    <div class="struct">
+                        <div class="struct-name">ThreadArgs</div>
+                        <div class="struct-public-fields">
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">ctx</div>
+                                <div class="struct-field-type">egui::Context</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">scene</div>
+                                <div class="struct-field-type">Scene</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">texture</div>
+                                <div class="struct-field-type">TextureHandle</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">image_buffer</div>
+                                <div class="struct-field-type">Arc&lt;Mutex&lt;RgbImage&gt;&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">rsize</div>
+                                <div class="struct-field-type">(u32, u32)</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">rendering_cancel</div>
+                                <div class="struct-field-type">Arc&lt;AtomicBool&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">rendering_progress</div>
+                                <div class="struct-field-type">Arc&lt;AtomicU16&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">rendering_time</div>
+                                <div class="struct-field-type">Arc&lt;AtomicU32&gt;</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">renderresult</div>
+                <div class="module-contents">
+
+                    <div class="struct">
+                        <div class="struct-name">RenderResult</div>
+                        <div class="struct-public-fields">
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">zoom</div>
+                                <div class="struct-field-type">f32</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">position</div>
+                                <div class="struct-field-type">Vec2</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">status</div>
+                <div class="module-contents">
+
+                    <div class="struct">
+                        <div class="struct-name">Status</div>
+                        <div class="struct-public-fields">
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">save_image_dialog</div>
+                                <div class="struct-field-type">Option&lt;FileDialog&gt;</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="module">
+                <div class="module-name">yamlmenu</div>
+                <div class="module-contents">
+
+                    <div class="struct">
+                        <div class="struct-name">YamlMenu</div>
+                        <div class="struct-public-fields">
+
+                        </div>
+                        <div class="struct-private-fields">
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">scene</div>
+                                <div class="struct-field-type">Option&lt;Scene&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">open_dialog</div>
+                                <div class="struct-field-type">Option&lt;FileDialog&gt;</div>
+                            </div>
+
+                            <div class="struct-field">
+                                <div class="struct-field-name">create_dialog</div>
+                                <div class="struct-field-type">Option&lt;FileDialog&gt;</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>
