@@ -1,9 +1,10 @@
+use self::filemanager::FileManager;
 use self::preview::Preview;
 use self::renderresult::RenderResult;
 use self::statusbar::StatusBar;
 use self::yamlmenu::YamlMenu;
 use crate::raytracer::render::Render;
-use crate::scene::{Object, Scene};
+use crate::scene::Scene;
 use crate::ui::properties::Properties;
 use anyhow::Context;
 use eframe::CreationContext;
@@ -13,12 +14,12 @@ use egui::{
     SidePanel, TextStyle, TextureOptions,
 };
 use image::ImageBuffer;
-use log::{info, warn};
-use nalgebra::{Scale3, Translation3, UnitQuaternion};
+use log::info;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread::JoinHandle;
 
+mod filemanager;
 mod preview;
 mod properties;
 mod renderresult;
@@ -107,48 +108,20 @@ impl eframe::App for App {
 
         // lock the scene for the duration of the frame
         let mut scene = self.scene.write();
-        // check if a file was dropped
+        // check if the scene has been dropped
         if self.current_tab == Tab::Preview {
             ctx.input(|i| {
                 if !i.raw.dropped_files.is_empty() {
-                    self.dropped_files = i.raw.dropped_files.clone();
+                    self.dropped_files =
+                        FileManager::check_file_extensions(i.raw.dropped_files.clone());
+                    if let Some(path) = self.dropped_files.first().and_then(|p| p.path.as_ref()) {
+                        FileManager::handle_file(path, &mut scene);
+                    }
+                    self.dropped_files.clear();
                 }
             });
         }
         CentralPanel::default().show(ctx, |ui| {
-            if !self.dropped_files.is_empty() && self.current_tab == Tab::Preview {
-                if let Some(path) = self.dropped_files.first().and_then(|p| p.path.as_ref()) {
-                    if let Some(ext) = path
-                        .extension()
-                        .map(|ext| ext.to_string_lossy().to_lowercase().clone())
-                    {
-                        match ext.as_str() {
-                            "yaml" | "yml" => YamlMenu::load_scene_from_path(&mut scene, path),
-                            "obj" => {
-                                if let Some(scene) = scene.as_mut() {
-                                    match Object::from_obj(
-                                        path,
-                                        Translation3::identity(),
-                                        UnitQuaternion::identity(),
-                                        Scale3::identity(),
-                                    ) {
-                                        Ok(object) => {
-                                            //allow clippy unwrap:
-                                            scene.objects.push(object);
-                                        }
-                                        Err(e) => warn!("Failed to load object: {}", e),
-                                    }
-                                }
-                            }
-                            _ => {
-                                // Handle unsupported file extension
-                            }
-                        }
-                    }
-                }
-
-                self.dropped_files.clear();
-            }
             if self.cursor_icon != CursorIcon::Default {
                 info!("Cursor icon: {:?}", self.cursor_icon);
             }
