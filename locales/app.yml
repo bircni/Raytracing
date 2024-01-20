@@ -1,57 +1,44 @@
 _version: 2
-hello:
-  de: Hallo Welt
-  en: Hello world
-  zh-CN: 你好世界
 
 # YamlMenu
 
 yaml:
   de: YAML
   en: YAML
-  zh-CN: YAML
 
 loaded_scene:
   de: Szene geladen
   en: Scene loaded
-  zh-CN: 场景已加载
 
 no_scene_loaded:
   de: Keine Szene geladen
   en: No scene loaded
-  zh-CN: 未加载场景
 
 load_scene:
   de: Szene laden
   en: Load scene
-  zh-CN: 加载场景
 
 save_scene:
   de: Szene speichern
   en: Save scene
-  zh-CN: 保存场景
 
 new_scene:
   de: Neue Szene
   en: New scene
-  zh-CN: 新建场景
 
 reload_scene:
   de: Szene neu laden
   en: Reload scene
-  zh-CN: 重新加载场景
 
 # Statusbar
 
 preview:
   de: Vorschau
   en: Preview
-  zh-CN: 预览
 
 render:
   de: Rendern
   en: Render
-  zh-CN: 渲染
 
 about:
   de: Über
@@ -191,16 +178,13 @@ hov_obj:
   en: Drop the .obj file here to add it to the scene
 
 hov_yaml:
-  de: .yaml Datei hier ablegen, um eine andere Szene zu laden
-  en: Drop the .yaml file here to load another scene
+  de: .yaml Datei hier ablegen, um eine Szene zu laden
+  en: Drop the .yaml file here to load a scene
 
 hov_unknown:
   de: Datei wird nicht unterstützt
   en: File type not supported
 
-hov_no_scene:
-  de: .yaml Datei hier ablegen, um eine Szene zu laden
-  en: Drop the .yaml file here to load a scene
 
 # preview/mod
 
@@ -208,3 +192,22 @@ change_camera_pos:
   de: Klicken um die Kameraposition zu ändern
   en: Click to change camera position
 
+wasd:
+  de: WASD um die Kamera zu bewegen
+  en: WASD to move the camera
+
+qe:
+  de: Q/E um die Bewegungsgeschwindigkeit zu ändern
+  en: Q/E to change movement speed
+
+yc:
+  de: Y/C um die Sensitivität zu ändern
+  en: Y/C to change sensitivity
+
+f:
+  de: F um die Kamera zu (0,0,0) zu bewegen
+  en: F to move the camera to (0,0,0)
+
+esc:
+  de: ESC um die Kamera zu verlassen
+  en: ESC to exit camera

@@ -1,4 +1,3 @@
-use self::filemanager::FileManager;
 use self::preview::Preview;
 use self::renderresult::RenderResult;
 use self::statusbar::StatusBar;
@@ -10,17 +9,13 @@ use anyhow::Context;
 use eframe::CreationContext;
 use egui::mutex::{Mutex, RwLock};
 use egui::{
-    vec2, Align, CentralPanel, ColorImage, CursorIcon, DroppedFile, ImageData, Layout, RichText,
-    ScrollArea, SidePanel, TextStyle, TextureOptions,
+    vec2, CentralPanel, ColorImage, ImageData, ScrollArea, SidePanel, TextStyle, TextureOptions,
 };
 use image::ImageBuffer;
-use log::info;
-use rust_i18n::t;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread::JoinHandle;
 
-mod filemanager;
 mod preview;
 mod properties;
 mod renderresult;
@@ -31,7 +26,6 @@ mod yamlmenu;
 /// This holds all the UI elements and application state
 pub struct App {
     current_tab: Tab,
-    cursor_icon: egui::CursorIcon,
     render: Render,
     properties: Properties,
     statusbar: StatusBar,
@@ -39,7 +33,6 @@ pub struct App {
     render_result: RenderResult,
     yaml_menu: YamlMenu,
     scene: Arc<RwLock<Option<Scene>>>,
-    dropped_files: Vec<DroppedFile>,
 }
 
 #[derive(PartialEq)]
@@ -81,7 +74,6 @@ impl App {
 
         Ok(Self {
             current_tab: Tab::Preview,
-            cursor_icon: CursorIcon::Default,
             render: Render::new(render_texture, image_buffer),
             properties: Properties::new(),
             statusbar: StatusBar::new(),
@@ -89,7 +81,6 @@ impl App {
             render_result: RenderResult::new(),
             yaml_menu: YamlMenu::new(),
             scene,
-            dropped_files: vec![],
         })
     }
 }
@@ -109,25 +100,7 @@ impl eframe::App for App {
 
         // lock the scene for the duration of the frame
         let mut scene = self.scene.write();
-        // check if the scene has been dropped
-        if self.current_tab == Tab::Preview {
-            ctx.input(|i| {
-                if !i.raw.dropped_files.is_empty() {
-                    self.dropped_files =
-                        FileManager::check_file_extensions(i.raw.dropped_files.clone());
-                    if let Some(path) = self.dropped_files.first().and_then(|p| p.path.as_ref()) {
-                        FileManager::handle_file(path, &mut scene);
-                    }
-                    self.dropped_files.clear();
-                }
-            });
-            FileManager::hovered_file(ctx, &scene.as_mut());
-        }
         CentralPanel::default().show(ctx, |ui| {
-            if self.cursor_icon != CursorIcon::Default {
-                info!("Cursor icon: {:?}", self.cursor_icon);
-            }
-            ui.output_mut(|o| o.cursor_icon = self.cursor_icon);
             self.statusbar
                 .show(ui, scene.as_mut(), &mut self.render, &mut self.current_tab);
 
@@ -141,7 +114,7 @@ impl eframe::App for App {
                         .show_separator_line(true)
                         .show_inside(ui, |ui| {
                             ScrollArea::new([false, true]).show(ui, |ui| {
-                                self.yaml_menu.show(&mut scene, ui, &mut self.cursor_icon);
+                                self.yaml_menu.show(&mut scene, ui);
 
                                 ui.separator();
 
@@ -151,18 +124,19 @@ impl eframe::App for App {
                             });
                         });
 
-                    if let Some(scene) = scene.as_mut() {
-                        self.preview.show(ui, scene);
-                    } else {
-                        ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                            ui.horizontal(|ui| {
-                                ui.vertical_centered(|ui| {
-                                    ui.heading(t!("no_scene_loaded"));
-                                    ui.label(RichText::new(t!("drop_yaml")));
-                                });
-                            });
-                        });
-                    }
+                    //if let Some(scene) = scene.as_mut() {
+                    //    self.preview.show(ui, scene);
+                    //} else {
+                    //    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                    //        ui.horizontal(|ui| {
+                    //            ui.vertical_centered(|ui| {
+                    //                ui.heading(t!("no_scene_loaded"));
+                    //                ui.label(RichText::new(t!("drop_yaml")));
+                    //            });
+                    //        });
+                    //    });
+                    //}
+                    self.preview.show(ui, &mut scene);
                 }
                 Tab::RenderResult => {
                     if let Some(scene) = scene.as_ref() {

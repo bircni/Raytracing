@@ -14,7 +14,7 @@ use anyhow::Context;
 use eframe::Renderer;
 use egui::ViewportBuilder;
 use log::{error, info, LevelFilter};
-use rust_i18n::{i18n, t};
+use rust_i18n::i18n;
 use scene::Scene;
 use simplelog::{ColorChoice, ConfigBuilder, TerminalMode};
 use sys_locale::get_locale;

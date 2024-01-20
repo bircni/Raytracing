@@ -104,9 +104,9 @@ impl StatusBar {
             info!("Exporting image");
             self.save_render_dialog
                 .get_or_insert_with(|| {
-                    //TODO auflösung
+                    let (x, y) = render.image.lock().dimensions();
                     FileDialog::save_file(None)
-                        .default_filename("render.png")
+                        .default_filename(format!("render_{x}x{y}.png"))
                         .filename_filter(Box::new(|name| {
                             [".png", ".jpg", ".jpeg"]
                                 .into_iter()
