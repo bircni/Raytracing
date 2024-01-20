@@ -35,26 +35,13 @@ impl YamlMenu {
         if let Some(d) = self.open_yaml_dialog.as_mut() {
             *cursor_icon = CursorIcon::Progress;
             if d.show(ui.ctx()).selected() {
-                match d.path() {
-                    Some(p) => {
-                        info!("Loading scene from {}", p.display());
-                        //ui.output_mut(|o| o.cursor_icon = CursorIcon::Wait);
-                        Scene::load(p)
-                            .map_err(|e| {
-                                warn!("{}", e);
-                            })
-                            .map(|s| {
-                                scene.replace(s);
-                            })
-                            .ok();
-                    }
-                    None => {
-                        warn!("Open yaml dialog selected but returned no path");
-                    }
+                if let Some(p) = d.path() {
+                    Self::load_scene_from_path(scene, p);
+                } else {
+                    warn!("Open yaml dialog selected but returned no path");
                 }
 
                 self.open_yaml_dialog = None;
-                info!("Cleared");
             }
         } else {
             *cursor_icon = CursorIcon::Default;

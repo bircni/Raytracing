@@ -10,8 +10,8 @@ use anyhow::Context;
 use eframe::CreationContext;
 use egui::mutex::{Mutex, RwLock};
 use egui::{
-    vec2, Align, CentralPanel, ColorImage, CursorIcon, ImageData, Layout, RichText, ScrollArea,
-    SidePanel, TextStyle, TextureOptions,
+    vec2, Align, CentralPanel, ColorImage, CursorIcon, DroppedFile, ImageData, Layout, RichText,
+    ScrollArea, SidePanel, TextStyle, TextureOptions,
 };
 use image::ImageBuffer;
 use log::info;
@@ -38,7 +38,7 @@ pub struct App {
     render_result: RenderResult,
     yaml_menu: YamlMenu,
     scene: Arc<RwLock<Option<Scene>>>,
-    dropped_files: Vec<egui::DroppedFile>,
+    dropped_files: Vec<DroppedFile>,
 }
 
 #[derive(PartialEq)]
@@ -120,6 +120,7 @@ impl eframe::App for App {
                     self.dropped_files.clear();
                 }
             });
+            FileManager::hovered_file(ctx, &scene.as_mut());
         }
         CentralPanel::default().show(ctx, |ui| {
             if self.cursor_icon != CursorIcon::Default {
