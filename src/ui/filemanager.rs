@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use egui::{Align2, Color32, Context, DroppedFile, Id, InputState, LayerId, Order, TextStyle};
 use log::warn;
 use nalgebra::{Scale3, Translation3, UnitQuaternion};
+use rust_i18n::t;
 
 use crate::scene::{Object, Scene};
 
@@ -71,16 +72,16 @@ impl FileManager {
                     match scene {
                         Some(_scene) => {
                             if extension.1 == Some("obj".to_string()) {
-                                "Drop the .obj file here to add it to the scene"
+                                t!("hov_obj")
                             } else if extension.1 == Some("yaml".to_string())
                                 || extension.1 == Some("yml".to_string())
                             {
-                                "Drop the .yaml file here to load another scene"
+                                t!("hov_yaml")
                             } else {
-                                "This file type is not supported"
+                                t!("hov_unknown")
                             }
                         }
-                        None => "Drop a .yaml file here to load a new scene",
+                        None => t!("hov_no_scene"),
                     },
                     TextStyle::Heading.resolve(&ctx.style()),
                     Color32::WHITE,

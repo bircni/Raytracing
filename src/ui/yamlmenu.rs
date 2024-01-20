@@ -3,7 +3,8 @@ use anyhow::Context;
 use egui::{hex_color, include_image, Align, CursorIcon, ImageButton, Layout, Ui};
 use egui_file::FileDialog;
 use log::{info, warn};
-use std::path::Path;
+use rust_i18n::t;
+use std::{fs, path::Path};
 
 pub struct YamlMenu {
     pub open_yaml_dialog: Option<FileDialog>,
@@ -73,14 +74,14 @@ impl YamlMenu {
         }
 
         ui.horizontal(|ui| {
-            ui.heading("YAML");
+            ui.heading(t!("yaml"));
             self.buttons(scene, ui);
         });
 
         ui.group(|ui| {
             ui.vertical_centered(|ui| match scene {
-                Some(s) => ui.label(format!("Loaded scene: {}", s.path.display())),
-                None => ui.label("No scene loaded"),
+                Some(s) => ui.label(format!("{}: {}", t!("loaded_scene"), s.path.display())),
+                None => ui.label(t!("no_scene_loaded")),
             });
         });
     }
@@ -135,7 +136,7 @@ impl YamlMenu {
                 ImageButton::new(include_image!("../../res/icons/folder-open-solid.svg"))
                     .tint(tint_color),
             )
-            .on_hover_text("Load Scene")
+            .on_hover_text(t!("load_scene"))
             .clicked()
             .then(|| self.load_scene());
 
@@ -146,7 +147,7 @@ impl YamlMenu {
                     ImageButton::new(include_image!("../../res/icons/floppy-disk-solid.svg"))
                         .tint(tint_color),
                 )
-                .on_hover_text("Save Scene")
+                .on_hover_text(t!("save_scene"))
                 .clicked()
                 .then(|| Self::save_scene(scene));
             });
@@ -156,7 +157,7 @@ impl YamlMenu {
                 [20.0, 20.0],
                 ImageButton::new(include_image!("../../res/icons/plus-solid.svg")).tint(tint_color),
             )
-            .on_hover_text("New Scene")
+            .on_hover_text(t!("new_scene"))
             .clicked()
             .then(|| self.create_scene());
 
@@ -169,7 +170,7 @@ impl YamlMenu {
                     ))
                     .tint(tint_color),
                 )
-                .on_hover_text("Reload Scene")
+                .on_hover_text(t!("reload_scene"))
                 .clicked()
                 .then(|| {
                     if let Some(path) = scene.as_ref().map(|s| s.path.clone()) {
@@ -191,7 +192,7 @@ impl YamlMenu {
                 serde_yaml::to_string(scene)
                     .context("Failed to serialize scene")
                     .and_then(|str| {
-                        std::fs::write(scene.path.as_path(), str).context("Failed to save config")
+                        fs::write(scene.path.as_path(), str).context("Failed to save config")
                     })
                     .unwrap_or_else(|e| {
                         warn!("{}", e);

@@ -15,6 +15,7 @@ use egui::{
 };
 use image::ImageBuffer;
 use log::info;
+use rust_i18n::t;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread::JoinHandle;
@@ -156,8 +157,8 @@ impl eframe::App for App {
                         ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
                             ui.horizontal(|ui| {
                                 ui.vertical_centered(|ui| {
-                                    ui.heading("No scene loaded");
-                                    ui.label(RichText::new("Drop a YAML file here to load it"));
+                                    ui.heading(t!("no_scene_loaded"));
+                                    ui.label(RichText::new(t!("drop_yaml")));
                                 });
                             });
                         });

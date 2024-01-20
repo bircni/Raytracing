@@ -8,18 +8,28 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_sign_loss)]
 
+extern crate rust_i18n;
+
 use anyhow::Context;
 use eframe::Renderer;
 use egui::ViewportBuilder;
-use log::{error, LevelFilter};
+use log::{error, info, LevelFilter};
+use rust_i18n::{i18n, t};
 use scene::Scene;
 use simplelog::{ColorChoice, ConfigBuilder, TerminalMode};
+use sys_locale::get_locale;
 
 mod raytracer;
 mod scene;
 mod ui;
+i18n!("locales", fallback = "en");
 
 fn main() -> anyhow::Result<()> {
+    rust_i18n::set_locale(
+        get_locale()
+            .unwrap_or_else(|| String::from("en-US"))
+            .as_str(),
+    );
     simplelog::TermLogger::init(
         #[cfg(debug_assertions)]
         LevelFilter::Trace,
@@ -33,7 +43,7 @@ fn main() -> anyhow::Result<()> {
         ColorChoice::Auto,
     )
     .context("Failed to initialize logger")?;
-
+    info!("{:?}", rust_i18n::available_locales!());
     let viewport = ViewportBuilder::default()
         .with_title("Trayracer")
         .with_app_id("raytracer")

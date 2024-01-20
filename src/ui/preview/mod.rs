@@ -7,6 +7,7 @@ use egui::{
 use egui_wgpu::Callback;
 use log::warn;
 use nalgebra::OPoint;
+use rust_i18n::t;
 use std::sync::Arc;
 
 pub mod gpu;
@@ -84,7 +85,7 @@ impl Preview {
 
                     if response.hover_pos().is_some() && !self.active {
                         egui::show_tooltip(ui.ctx(), egui::Id::new("preview_tooltip"), |ui| {
-                            ui.label("Click to change camera position");
+                            ui.label(t!("change_camera_pos"));
                         });
                     }
 
@@ -98,6 +99,7 @@ impl Preview {
                             pos2(response.rect.left(), response.rect.top()),
                             Align2::LEFT_TOP,
                             Color32::WHITE,
+                            //TODO: translate
                             format!(
                                 r#"WASD to move camera
 QE to change movement speed {:.2}

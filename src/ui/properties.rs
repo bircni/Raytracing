@@ -11,7 +11,8 @@ use egui::{
 use egui_file::FileDialog;
 use log::warn;
 use nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
-use std::path::Path;
+use rust_i18n::t;
+use std::{f32::consts, path::Path};
 
 fn xyz_drag_value(ui: &mut Ui, value: &mut XYZ<f32>) {
     ui.horizontal(|ui| {
@@ -38,7 +39,7 @@ impl Properties {
 
     pub fn show(&mut self, scene: &mut Scene, ui: &mut Ui, render: &mut Render) {
         ui.horizontal(|ui| {
-            ui.heading("Properties");
+            ui.heading(t!("properties"));
         });
 
         Self::camera_settings(scene, ui);
@@ -59,24 +60,24 @@ impl Properties {
     pub fn camera_settings(scene: &mut Scene, ui: &mut egui::Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
-                ui.label(RichText::new("Camera").size(16.0));
+                ui.label(RichText::new(t!("camera")).size(16.0));
             });
 
             ui.separator();
 
             ui.vertical(|ui| {
-                ui.label("Position:");
+                ui.label(format!("{}:", t!("position")));
 
                 xyz_drag_value(ui, &mut scene.camera.position);
 
-                ui.label("Look at:");
+                ui.label(format!("{}:", t!("look_at")));
 
                 xyz_drag_value(ui, &mut scene.camera.look_at);
 
-                ui.label("Field of View:");
+                ui.label(format!("{}:", t!("fov")));
 
                 ui.add(
-                    Slider::new(&mut scene.camera.fov, 0.0..=std::f32::consts::PI)
+                    Slider::new(&mut scene.camera.fov, 0.0..=consts::PI)
                         .step_by(0.01)
                         .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
                         .clamp_to_range(true),
@@ -88,7 +89,7 @@ impl Properties {
     fn scene_settings(&mut self, scene: &mut Scene, ui: &mut Ui, render: &mut Render) {
         ui.vertical(|ui| {
             ui.group(|ui| {
-                CollapsingHeader::new(RichText::new("Scene Settings").size(16.0))
+                CollapsingHeader::new(RichText::new(t!("scene_settings")).size(16.0))
                     .default_open(true)
                     .show_unindented(ui, |ui| {
                         ui.separator();
@@ -97,13 +98,13 @@ impl Properties {
 
                         self.skybox_options(ui, scene);
 
-                        ui.label("Ambient Color:");
+                        ui.label(format!("{}:", t!("ambient_color")));
                         color_picker::color_edit_button_rgb(
                             ui,
                             scene.settings.ambient_color.as_mut(),
                         );
 
-                        ui.label("Ambient Intensitiy:");
+                        ui.label(format!("{}:", t!("ambient_intensity")));
                         ui.add(
                             Slider::new(&mut scene.settings.ambient_intensity, 0.0..=1.0)
                                 .clamp_to_range(true),
@@ -114,7 +115,7 @@ impl Properties {
     }
 
     fn render_options(ui: &mut Ui, render: &mut Render, scene: &mut Scene) {
-        ui.label("Render Size:");
+        ui.label(format!("{}:", t!("render_size")));
         ui.vertical(|ui| {
             ui.add_enabled_ui(render.thread.is_none(), |ui| {
                 ui.vertical(|ui| {
@@ -153,7 +154,7 @@ impl Properties {
     }
 
     fn skybox_options(&mut self, ui: &mut Ui, scene: &mut Scene) {
-        ui.label("Background:");
+        ui.label(format!("{}:", t!("background")));
 
         if let Some(dialog) = &mut self.skybox_dialog {
             if dialog.show(ui.ctx()).selected() {
@@ -183,15 +184,18 @@ impl Properties {
 
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                ui.radio(matches!(scene.settings.skybox, Skybox::Color(_)), "Color")
-                    .clicked()
-                    .then(|| {
-                        scene.settings.skybox = Skybox::Color(Color::default());
-                    });
+                ui.radio(
+                    matches!(scene.settings.skybox, Skybox::Color(_)),
+                    t!("color"),
+                )
+                .clicked()
+                .then(|| {
+                    scene.settings.skybox = Skybox::Color(Color::default());
+                });
 
                 ui.radio(
                     matches!(scene.settings.skybox, Skybox::Image { .. }),
-                    "Skybox",
+                    t!("skybox"),
                 )
                 .clicked()
                 .then(|| self.load_skybox_img());
@@ -199,7 +203,7 @@ impl Properties {
 
             match &mut scene.settings.skybox {
                 Skybox::Image { path, .. } => {
-                    ui.button("Reload skybox")
+                    ui.button(t!("reload_skybox"))
                         .clicked()
                         .then(|| self.load_skybox_img());
                     ui.label(path.display().to_string());
@@ -227,7 +231,7 @@ impl Properties {
         ui.vertical(|ui| {
             ui.group(|ui| {
                 CollapsingHeader::new(
-                    RichText::new(format!("Lights ({})", scene.lights.len())).size(16.0),
+                    RichText::new(format!("{} ({})", t!("lights"), scene.lights.len())).size(16.0),
                 )
                 .show_unindented(ui, |ui| {
                     scene
@@ -241,7 +245,7 @@ impl Properties {
 
                             ui.horizontal(|ui| {
                                 ui.label(
-                                    RichText::new(format!("Light {n}"))
+                                    RichText::new(format!("{} {n}", t!("light")))
                                         .size(14.0)
                                         .family(FontFamily::Monospace),
                                 );
@@ -258,17 +262,17 @@ impl Properties {
                                 });
                             });
 
-                            ui.label("Position:");
+                            ui.label(format!("{}:", t!("position")));
 
                             xyz_drag_value(ui, &mut light.position);
 
-                            ui.label("Intensity:");
+                            ui.label(format!("{}:", t!("intensity")));
 
                             ui.add(
                                 Slider::new(&mut light.intensity, 0.0..=100.0).clamp_to_range(true),
                             );
 
-                            ui.label("Color:");
+                            ui.label(format!("{}:", t!("color")));
 
                             color_picker::color_edit_button_rgb(ui, light.color.as_mut());
 
@@ -282,7 +286,7 @@ impl Properties {
 
                     ui.separator();
                     ui.vertical_centered(|ui| {
-                        ui.add(Button::new(RichText::new("+ Add Light")).frame(false))
+                        ui.add(Button::new(RichText::new(t!("add_light"))).frame(false))
                             .clicked()
                             .then(|| {
                                 scene.lights.push(Light {
@@ -301,7 +305,8 @@ impl Properties {
         ui.vertical(|ui| {
             ui.group(|ui| {
                 CollapsingHeader::new(
-                    RichText::new(format!("Objects ({})", scene.objects.len())).size(16.0),
+                    RichText::new(format!("{} ({})", t!("objects"), scene.objects.len()))
+                        .size(16.0),
                 )
                 .show_unindented(ui, |ui| {
                     let mut objects_to_remove = Vec::new();
@@ -331,11 +336,11 @@ impl Properties {
                             });
                         });
 
-                        ui.label("Position");
+                        ui.label(format!("{}:", t!("position")));
 
                         xyz_drag_value(ui, &mut o.translation);
 
-                        ui.label("Rotation");
+                        ui.label(format!("{}:", t!("rotation")));
 
                         ui.horizontal(|ui| {
                             let (mut x, mut y, mut z) = o.rotation.euler_angles();
@@ -359,7 +364,7 @@ impl Properties {
                                 })
                         });
 
-                        ui.label("Scale");
+                        ui.label(format!("{}:", t!("scale")));
 
                         xyz_drag_value(ui, &mut o.scale);
                     }
@@ -371,7 +376,7 @@ impl Properties {
                     ui.separator();
                     ui.vertical_centered(|ui| {
                         if ui
-                            .add(Button::new(RichText::new("+ Add Object")).frame(false))
+                            .add(Button::new(RichText::new(t!("add_object"))).frame(false))
                             .clicked()
                         {
                             let mut dialog =
