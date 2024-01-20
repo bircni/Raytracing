@@ -11,9 +11,9 @@ use log::warn;
 use nalgebra::{
     Affine3, Isometry3, Point3, Scale3, Translation3, UnitQuaternion, Vector2, Vector3,
 };
-use obj::SimplePolygon;
+use obj::{ObjMaterial, SimplePolygon};
 use ordered_float::OrderedFloat;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct Object {
@@ -28,7 +28,7 @@ pub struct Object {
     bvh: Bvh<f32, 3>,
 }
 
-fn load_texture<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<RgbImage> {
+fn load_texture<P: AsRef<Path>>(path: P) -> anyhow::Result<RgbImage> {
     Ok(image::open(path.as_ref())
         .context(format!(
             "Failed to load image from path: {:?}",
@@ -38,7 +38,7 @@ fn load_texture<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<RgbImage> 
 }
 
 // extract filename from path and return as String
-fn filename<P: AsRef<std::path::Path>>(path: P) -> String {
+fn filename<P: AsRef<Path>>(path: P) -> String {
     path.as_ref()
         .file_name()
         .map_or_else(String::new, |s| s.to_string_lossy().to_string())
@@ -54,7 +54,7 @@ fn filename<P: AsRef<std::path::Path>>(path: P) -> String {
 }
 
 impl Object {
-    pub fn from_obj<P: AsRef<std::path::Path>>(
+    pub fn from_obj<P: AsRef<Path>>(
         path: P,
         translation: Translation3<f32>,
         rotation: UnitQuaternion<f32>,
@@ -114,10 +114,10 @@ impl Object {
                     .material
                     .as_ref()
                     .map(|m| match m {
-                        obj::ObjMaterial::Ref(str) => {
+                        ObjMaterial::Ref(str) => {
                             panic!("Material reference not supported: {str}")
                         }
-                        obj::ObjMaterial::Mtl(m) => m,
+                        ObjMaterial::Mtl(m) => m,
                     })
                     .and_then(|m| {
                         materials

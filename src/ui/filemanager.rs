@@ -43,12 +43,17 @@ impl FileManager {
             .collect()
     }
 
-    pub fn check_extension(path: &Option<PathBuf>, target_exts: &[&str]) -> (bool, Option<String>) {
+    fn check_extension(path: &Option<PathBuf>, target_exts: &[&str]) -> (bool, Option<String>) {
         path.as_ref()
             .and_then(|ext| ext.extension())
             .map(|path| path.to_string_lossy().to_lowercase())
             .map_or((false, None), |ext| {
-                (target_exts.iter().any(|&target| ext == target), Some(ext))
+                (
+                    target_exts
+                        .iter()
+                        .any(|&target| ext.eq_ignore_ascii_case(target)),
+                    Some(ext),
+                )
             })
     }
 
@@ -58,28 +63,28 @@ impl FileManager {
                 ctx.layer_painter(LayerId::new(Order::Foreground, Id::new("file_drop_target")));
             if let Some(hovered) = ctx.input(|i| i.raw.hovered_files.clone()).first() {
                 let extension = Self::check_extension(&hovered.path, &["yaml", "yml", "obj"]);
-                //if extension.0 {
                 let screen_rect = ctx.input(InputState::screen_rect);
                 painter.rect_filled(screen_rect, 0.0, Color32::from_black_alpha(192));
                 painter.text(
                     screen_rect.center(),
                     Align2::CENTER_CENTER,
-                    if scene.is_some() && extension.1 == Some("obj".to_string()) {
-                        "Drop the .obj file here to add it to the scene"
-                    } else if scene.is_some()
-                        && (extension.1 == Some("yaml".to_string())
-                            || extension.1 == Some("yml".to_string()))
-                    {
-                        "Drop a YAML file here to load another scene"
-                    } else if scene.is_none() && extension.0 {
-                        "Drop a YAML file here to load a new scene"
-                    } else {
-                        "This file type is not supported"
+                    match scene {
+                        Some(_scene) => {
+                            if extension.1 == Some("obj".to_string()) {
+                                "Drop the .obj file here to add it to the scene"
+                            } else if extension.1 == Some("yaml".to_string())
+                                || extension.1 == Some("yml".to_string())
+                            {
+                                "Drop the .yaml file here to load another scene"
+                            } else {
+                                "This file type is not supported"
+                            }
+                        }
+                        None => "Drop a .yaml file here to load a new scene",
                     },
                     TextStyle::Heading.resolve(&ctx.style()),
                     Color32::WHITE,
                 );
-                //}
             }
         }
     }

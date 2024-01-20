@@ -376,7 +376,8 @@ impl Properties {
                         {
                             let mut dialog =
                                 FileDialog::open_file(None).show_files_filter(Box::new(|path| {
-                                    path.extension().is_some_and(|ext| ext == "obj")
+                                    path.extension()
+                                        .is_some_and(|ext| ext.eq_ignore_ascii_case("obj"))
                                 }));
                             dialog.open();
                             self.object_dialog = Some(dialog);
