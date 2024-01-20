@@ -1,5 +1,5 @@
-use super::render::Render;
 use crate::{
+    raytracer::render::Render,
     scene::{Color, Light, Object, Skybox},
     Scene,
 };

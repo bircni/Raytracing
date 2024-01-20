@@ -1,16 +1,16 @@
 use self::preview::Preview;
-use self::render::Render;
 use self::renderresult::RenderResult;
 use self::statusbar::StatusBar;
 use self::yamlmenu::YamlMenu;
+use crate::raytracer::render::Render;
 use crate::scene::Scene;
 use crate::ui::properties::Properties;
 use anyhow::Context;
 use eframe::CreationContext;
 use egui::mutex::{Mutex, RwLock};
 use egui::{
-    hex_color, include_image, vec2, Align, CentralPanel, ColorImage, ImageButton, ImageData, Label,
-    Layout, ScrollArea, SidePanel, TextStyle, TextureOptions, Ui, Widget,
+    hex_color, include_image, vec2, Align, CentralPanel, ColorImage, ImageButton, ImageData,
+    Layout, ScrollArea, SidePanel, TextStyle, TextureOptions,
 };
 use image::ImageBuffer;
 use std::sync::atomic::Ordering;
@@ -19,7 +19,6 @@ use std::thread::JoinHandle;
 
 mod preview;
 mod properties;
-mod render;
 mod renderresult;
 mod statusbar;
 mod yamlmenu;

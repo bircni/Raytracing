@@ -1,5 +1,4 @@
-use super::render::Render;
-use crate::scene::Scene;
+use crate::{raytracer::render::Render, scene::Scene};
 use egui::{pos2, Color32, CursorIcon, Frame, Rect, Rounding, Sense, Stroke, Ui, Vec2};
 
 pub struct RenderResult {

@@ -3,6 +3,8 @@ use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
 
+pub mod render;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ray {
     pub origin: Point3<f32>,

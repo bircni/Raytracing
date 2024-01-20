@@ -7,9 +7,10 @@ use egui::{
 use egui_file::FileDialog;
 use log::{info, warn};
 
+use crate::raytracer::render::Render;
 use crate::scene::Scene;
 
-use super::{render::Render, Tab};
+use super::Tab;
 
 pub struct StatusBar {
     save_render_dialog: Option<FileDialog>,
