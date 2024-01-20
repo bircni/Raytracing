@@ -1,6 +1,6 @@
 use crate::scene::{Camera, Scene, Settings};
 use anyhow::Context;
-use egui::{hex_color, include_image, Align, ImageButton, Layout, Ui};
+use egui::{hex_color, include_image, Align, ImageButton, Layout, RichText, Ui};
 use egui_file::FileDialog;
 use log::{info, warn};
 use rust_i18n::t;
@@ -73,7 +73,10 @@ impl YamlMenu {
 
         ui.group(|ui| {
             ui.vertical_centered(|ui| match scene {
-                Some(s) => ui.label(format!("{}: {}", t!("loaded_scene"), s.path.display())),
+                Some(s) => {
+                    ui.label(format!("{}:", t!("loaded_scene")));
+                    ui.label(RichText::new(format!("{}", s.path.display())))
+                }
                 None => ui.label(t!("no_scene_loaded")),
             });
         });

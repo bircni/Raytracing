@@ -43,7 +43,10 @@ fn main() -> anyhow::Result<()> {
         ColorChoice::Auto,
     )
     .context("Failed to initialize logger")?;
-    info!("{:?}", rust_i18n::available_locales!());
+    info!(
+        "available translations: {:?}",
+        rust_i18n::available_locales!()
+    );
     let viewport = ViewportBuilder::default()
         .with_title("Trayracer")
         .with_app_id("raytracer")
