@@ -17,7 +17,8 @@ use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct Object {
-    name: String,
+    pub name: String,
+    material_name: String,
     path: PathBuf,
     pub triangles: Vec<Triangle>,
     pub materials: Vec<Material>,
@@ -34,6 +35,22 @@ fn load_texture<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<RgbImage> 
             path.as_ref()
         ))?
         .into_rgb8())
+}
+
+// extract filename from path and return as String
+fn filename<P: AsRef<std::path::Path>>(path: P) -> String {
+    path.as_ref()
+        .file_name()
+        .map_or_else(String::new, |s| s.to_string_lossy().to_string())
+        .split('.')
+        .next()
+        .unwrap_or("")
+        .to_string()
+        // first char to uppercase
+        .chars()
+        .enumerate()
+        .map(|(i, c)| if i == 0 { c.to_ascii_uppercase() } else { c })
+        .collect()
 }
 
 impl Object {
@@ -135,7 +152,8 @@ impl Object {
         let bvh = Bvh::build(triangles.as_mut_slice());
 
         Ok(Object {
-            name: obj
+            name: filename(&path),
+            material_name: obj
                 .data
                 .objects
                 .iter()
@@ -188,7 +206,7 @@ impl Object {
                 let normal = self.transform().transform_vector(&normal);
 
                 Hit {
-                    name: self.name.as_str(),
+                    name: self.material_name.as_str(),
                     point,
                     normal,
                     material: t.material_index.map(|i| &self.materials[i]),

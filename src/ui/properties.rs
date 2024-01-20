@@ -311,7 +311,7 @@ impl Properties {
 
                         ui.horizontal(|ui| {
                             ui.label(
-                                RichText::new(format!("Object {} ({} ▲)", n, o.triangles.len()))
+                                RichText::new(format!("{} ({} ▲)", o.name, o.triangles.len()))
                                     .size(14.0)
                                     .family(FontFamily::Monospace),
                             );
