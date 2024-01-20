@@ -96,7 +96,7 @@ impl StatusBar {
         if ui
             .add_enabled(
                 render.progress.load(Ordering::Relaxed) == u16::MAX,
-                Button::new("Export"),
+                Button::new(RichText::new("Export").size(14.0)),
             )
             .clicked()
         {
@@ -143,12 +143,14 @@ impl StatusBar {
             });
         } else {
             ui.add_enabled_ui(render.thread.is_none() && scene.is_some(), |ui| {
-                ui.button("Render").clicked().then(|| {
-                    if let Some(scene) = scene {
-                        render.render(ui.ctx().clone(), scene);
-                        *current_tab = Tab::RenderResult;
-                    }
-                })
+                ui.button(RichText::new("Render").size(14.0))
+                    .clicked()
+                    .then(|| {
+                        if let Some(scene) = scene {
+                            render.render(ui.ctx().clone(), scene);
+                            *current_tab = Tab::RenderResult;
+                        }
+                    })
             });
         }
     }

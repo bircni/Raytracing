@@ -1,12 +1,12 @@
 use crate::scene::{Camera, Scene, Settings};
 use anyhow::Context;
-use egui::{hex_color, include_image, Align, ImageButton, Layout, Ui};
+use egui::{hex_color, include_image, Align, CursorIcon, ImageButton, Layout, Ui};
 use egui_file::FileDialog;
 use log::{info, warn};
 use std::path::Path;
 
 pub struct YamlMenu {
-    open_yaml_dialog: Option<FileDialog>,
+    pub open_yaml_dialog: Option<FileDialog>,
     create_yaml_dialog: Option<FileDialog>,
 }
 
@@ -18,13 +18,27 @@ impl YamlMenu {
         }
     }
 
-    pub fn show(&mut self, scene: &mut Option<Scene>, ui: &mut Ui) {
+    pub fn load_scene_from_path(scene: &mut Option<Scene>, path: &Path) {
+        info!("Loading scene from {}", path.display());
+        Scene::load(path)
+            .map_err(|e| {
+                warn!("{}", e);
+            })
+            .map(|s| {
+                scene.replace(s);
+            })
+            .ok();
+    }
+
+    pub fn show(&mut self, scene: &mut Option<Scene>, ui: &mut Ui, cursor_icon: &mut CursorIcon) {
         // show open yaml dialog if present
         if let Some(d) = self.open_yaml_dialog.as_mut() {
+            *cursor_icon = CursorIcon::Progress;
             if d.show(ui.ctx()).selected() {
                 match d.path() {
                     Some(p) => {
                         info!("Loading scene from {}", p.display());
+                        //ui.output_mut(|o| o.cursor_icon = CursorIcon::Wait);
                         Scene::load(p)
                             .map_err(|e| {
                                 warn!("{}", e);
@@ -40,7 +54,10 @@ impl YamlMenu {
                 }
 
                 self.open_yaml_dialog = None;
+                info!("Cleared");
             }
+        } else {
+            *cursor_icon = CursorIcon::Default;
         }
 
         // show create yaml dialog if present

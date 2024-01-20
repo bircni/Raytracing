@@ -3,16 +3,18 @@ use self::renderresult::RenderResult;
 use self::statusbar::StatusBar;
 use self::yamlmenu::YamlMenu;
 use crate::raytracer::render::Render;
-use crate::scene::Scene;
+use crate::scene::{Object, Scene};
 use crate::ui::properties::Properties;
 use anyhow::Context;
 use eframe::CreationContext;
 use egui::mutex::{Mutex, RwLock};
 use egui::{
-    hex_color, include_image, vec2, Align, CentralPanel, ColorImage, ImageButton, ImageData,
-    Layout, ScrollArea, SidePanel, TextStyle, TextureOptions,
+    vec2, Align, CentralPanel, ColorImage, CursorIcon, ImageData, Layout, RichText, ScrollArea,
+    SidePanel, TextStyle, TextureOptions,
 };
 use image::ImageBuffer;
+use log::{info, warn};
+use nalgebra::{Scale3, Translation3, UnitQuaternion};
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread::JoinHandle;
@@ -27,6 +29,7 @@ mod yamlmenu;
 /// This holds all the UI elements and application state
 pub struct App {
     current_tab: Tab,
+    cursor_icon: egui::CursorIcon,
     render: Render,
     properties: Properties,
     statusbar: StatusBar,
@@ -34,6 +37,7 @@ pub struct App {
     render_result: RenderResult,
     yaml_menu: YamlMenu,
     scene: Arc<RwLock<Option<Scene>>>,
+    dropped_files: Vec<egui::DroppedFile>,
 }
 
 #[derive(PartialEq)]
@@ -54,21 +58,20 @@ impl App {
         );
 
         // create initial render texture (GPU exclusive) and image buffer (CPU exclusive)
-        let (render_texture, image_buffer) = {
-            let texture = cc.egui_ctx.load_texture(
-                "render",
-                ImageData::Color(Arc::new(ColorImage::example())),
-                TextureOptions::default(),
-            );
-            let image_buffer = Arc::new(Mutex::new(ImageBuffer::new(0, 0)));
-            (texture, image_buffer)
-        };
+        let render_texture = cc.egui_ctx.load_texture(
+            "render",
+            ImageData::Color(Arc::new(ColorImage::example())),
+            TextureOptions::default(),
+        );
+        let image_buffer = Arc::new(Mutex::new(ImageBuffer::new(0, 0)));
 
         cc.egui_ctx.style_mut(|s| {
             s.text_styles.insert(
                 TextStyle::Name("subheading".into()),
                 TextStyle::Monospace.resolve(s),
             );
+            s.text_styles
+                .insert(TextStyle::Body, TextStyle::Monospace.resolve(s));
             s.spacing.item_spacing = vec2(10.0, std::f32::consts::PI * 1.76643);
         });
 
@@ -76,6 +79,7 @@ impl App {
 
         Ok(Self {
             current_tab: Tab::Preview,
+            cursor_icon: CursorIcon::Default,
             render: Render::new(render_texture, image_buffer),
             properties: Properties::new(),
             statusbar: StatusBar::new(),
@@ -83,6 +87,7 @@ impl App {
             render_result: RenderResult::new(),
             yaml_menu: YamlMenu::new(),
             scene,
+            dropped_files: vec![],
         })
     }
 }
@@ -102,8 +107,52 @@ impl eframe::App for App {
 
         // lock the scene for the duration of the frame
         let mut scene = self.scene.write();
-
+        // check if a file was dropped
+        if self.current_tab == Tab::Preview {
+            ctx.input(|i| {
+                if !i.raw.dropped_files.is_empty() {
+                    self.dropped_files = i.raw.dropped_files.clone();
+                }
+            });
+        }
         CentralPanel::default().show(ctx, |ui| {
+            if !self.dropped_files.is_empty() && self.current_tab == Tab::Preview {
+                if let Some(path) = self.dropped_files.first().and_then(|p| p.path.as_ref()) {
+                    if let Some(ext) = path
+                        .extension()
+                        .map(|ext| ext.to_string_lossy().to_lowercase().clone())
+                    {
+                        match ext.as_str() {
+                            "yaml" | "yml" => YamlMenu::load_scene_from_path(&mut scene, path),
+                            "obj" => {
+                                if let Some(scene) = scene.as_mut() {
+                                    match Object::from_obj(
+                                        path,
+                                        Translation3::identity(),
+                                        UnitQuaternion::identity(),
+                                        Scale3::identity(),
+                                    ) {
+                                        Ok(object) => {
+                                            //allow clippy unwrap:
+                                            scene.objects.push(object);
+                                        }
+                                        Err(e) => warn!("Failed to load object: {}", e),
+                                    }
+                                }
+                            }
+                            _ => {
+                                // Handle unsupported file extension
+                            }
+                        }
+                    }
+                }
+
+                self.dropped_files.clear();
+            }
+            if self.cursor_icon != CursorIcon::Default {
+                info!("Cursor icon: {:?}", self.cursor_icon);
+            }
+            ui.output_mut(|o| o.cursor_icon = self.cursor_icon);
             self.statusbar
                 .show(ui, scene.as_mut(), &mut self.render, &mut self.current_tab);
 
@@ -117,7 +166,7 @@ impl eframe::App for App {
                         .show_separator_line(true)
                         .show_inside(ui, |ui| {
                             ScrollArea::new([false, true]).show(ui, |ui| {
-                                self.yaml_menu.show(&mut scene, ui);
+                                self.yaml_menu.show(&mut scene, ui, &mut self.cursor_icon);
 
                                 ui.separator();
 
@@ -131,34 +180,10 @@ impl eframe::App for App {
                         self.preview.show(ui, scene);
                     } else {
                         ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                            let tint_color = if ui.visuals().dark_mode {
-                                hex_color!("#ffffff")
-                            } else {
-                                hex_color!("#000000")
-                            };
                             ui.horizontal(|ui| {
                                 ui.vertical_centered(|ui| {
-                                    ui.add_sized(
-                                        [20.0, 20.0],
-                                        ImageButton::new(include_image!(
-                                            "../../res/icons/plus-solid.svg"
-                                        ))
-                                        .tint(tint_color),
-                                    )
-                                    .on_hover_text("New Scene")
-                                    .clicked()
-                                    .then(|| self.yaml_menu.create_scene());
-                                    ui.add_sized(
-                                        [20.0, 20.0],
-                                        ImageButton::new(include_image!(
-                                            "../../res/icons/folder-open-solid.svg"
-                                        ))
-                                        .tint(tint_color),
-                                    )
-                                    .on_hover_text("Load Scene")
-                                    .clicked()
-                                    .then(|| self.yaml_menu.load_scene());
                                     ui.heading("No scene loaded");
+                                    ui.label(RichText::new("Drop a YAML file here to load it"));
                                 });
                             });
                         });
