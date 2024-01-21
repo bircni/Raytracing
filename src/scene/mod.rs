@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use log::warn;
+use nalgebra::Vector3;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::{de::DeserializeSeed, Deserialize, Serialize};
 
 pub use self::{
@@ -18,7 +20,9 @@ mod skybox;
 mod triangle;
 mod yaml;
 
-#[derive(Debug, Clone, Serialize)]
+pub type Color = Vector3<f32>;
+
+#[derive(Debug, Serialize)]
 pub struct Scene {
     #[serde(skip)]
     pub path: PathBuf,
@@ -31,9 +35,29 @@ pub struct Scene {
     pub settings: Settings,
 }
 
+impl Clone for Scene {
+    fn clone(&self) -> Self {
+        // Cloning a scene is necessary in some cases, but
+        // it may be a very expensive operation, so we issue
+        // a warning when in debug mode
+        #[cfg(debug_assertions)]
+        warn!("Cloning scene");
+
+        Self {
+            path: self.path.clone(),
+            objects: self.objects.clone(),
+            lights: self.lights.clone(),
+            camera: self.camera.clone(),
+            settings: self.settings.clone(),
+        }
+    }
+}
+
 struct WithRelativePath<P: AsRef<std::path::Path>>(P);
 
-impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRelativePath<P> {
+impl<'de, P: AsRef<std::path::Path> + std::marker::Sync> serde::de::DeserializeSeed<'de>
+    for WithRelativePath<P>
+{
     type Value = Scene;
 
     fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
@@ -49,7 +73,7 @@ impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRel
             .ok_or_else(|| {
                 serde::de::Error::invalid_type(serde::de::Unexpected::Map, &"a sequence")
             })?
-            .iter()
+            .par_iter()
             .map(|v| object::WithRelativePath(self.0.as_ref()).deserialize(v))
             .collect::<Result<Vec<Object>, serde_yaml::Error>>()
             .map_err(serde::de::Error::custom)?;
@@ -71,6 +95,7 @@ impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRel
             .ok_or_else(|| serde::de::Error::missing_field("camera"))?;
         let camera = Camera::deserialize(camera).map_err(serde::de::Error::custom)?;
 
+        // dont fail if extraArgs is missing but warn
         let settings = map
             .get("extraArgs")
             .map(Settings::deserialize)

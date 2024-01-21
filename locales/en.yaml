@@ -1,0 +1,161 @@
+_version: 2
+
+yaml:
+  en: YAML
+
+loaded_scene:
+  en: Scene loaded
+
+no_scene_loaded:
+  en: No scene loaded
+
+load_scene:
+  en: Load scene
+
+save_scene:
+  en: Save scene
+
+new_scene:
+  en: New scene
+
+reload_scene:
+  en: Reload scene
+
+# Statusbar
+
+preview:
+  en: Preview
+
+render:
+  en: Render
+
+about:
+  en: About
+
+version:
+  en: Version
+
+github:
+  en: Github
+
+built_with:
+  en: Built with egui
+
+copyright:
+  en: © 2024 Team TrayRacer
+
+export:
+  en: Export
+
+cancel:
+  en: Cancel
+
+done:
+  en: Done in
+
+render_progress:
+  en: Rendering progress
+
+# RenderResult
+
+# Properties
+
+properties:
+  en: Properties
+
+camera:
+  en: Camera
+
+position:
+  en: Position
+
+look_at:
+  en: Look at
+
+fov:
+  en: Field of view
+
+scene_settings:
+  en: Scene Settings
+
+ambient_color:
+  en: Ambient Color
+
+ambient_intensity:
+  en: Ambient Intensity
+
+render_size:
+  en: Render Size
+
+background:
+  en: Background
+
+color:
+  en: Color
+
+skybox:
+  en: Skybox
+
+reload_skybox:
+  en: Reload Skybox
+
+lights:
+  en: Lights
+
+light:
+  en: Light
+
+intensity:
+  en: Intensity
+
+add_light:
+  en: + Add light
+
+objects:
+  en: Objects
+
+rotation:
+  en: Rotation
+
+scale:
+  en: Scale
+
+add_object:
+  en: + Add object
+
+# ui/mod
+
+drop_yaml:
+  en: Drop a YAML file here to load it
+
+# FileManager
+## Hovered Options
+
+hov_obj:
+  en: Drop the .obj file here to add it to the scene
+
+hov_yaml:
+  en: Drop the .yaml file here to load a scene
+
+hov_unknown:
+  en: File type not supported
+
+# preview/mod
+
+change_camera_pos:
+  en: Click to change camera position
+
+wasd:
+  en: WASD to move the camera
+
+qe:
+  en: Q/E to change movement speed
+
+yc:
+  en: Y/C to change sensitivity
+
+f:
+  en: F to move the camera to (0,0,0)
+
+esc:
+  en: ESC to exit camera

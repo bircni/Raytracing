@@ -1,0 +1,161 @@
+_version: 2
+
+yaml:
+  de: YAML
+
+loaded_scene:
+  de: Szene geladen
+
+no_scene_loaded:
+  de: Keine Szene geladen
+
+load_scene:
+  de: Szene laden
+
+save_scene:
+  de: Szene speichern
+
+new_scene:
+  de: Neue Szene
+
+reload_scene:
+  de: Szene neu laden
+
+# Statusbar
+
+preview:
+  de: Vorschau
+
+render:
+  de: Rendern
+
+about:
+  de: Über
+
+version:
+  de: Version
+
+github:
+  de: Github
+
+built_with:
+  de: Erstellt mit egui
+
+copyright:
+  de: © 2024 Team TrayRacer
+
+export:
+  de: Exportieren
+
+cancel:
+  de: Abbrechen
+
+done:
+  de: Fertig in
+
+render_progress:
+  de: Rendering Fortschritt
+
+# RenderResult
+
+# Properties
+
+properties:
+  de: Eigenschaften
+
+camera:
+  de: Kamera
+
+position:
+  de: Position
+
+look_at:
+  de: Blickrichtung
+
+fov:
+  de: Sichtfeld
+
+scene_settings:
+  de: Szenen Einstellungen
+
+ambient_color:
+  de: Umgebungslicht
+
+ambient_intensity:
+  de: Intensität
+
+render_size:
+  de: Auflösung
+
+background:
+  de: Hintergrund
+
+color:
+  de: Farbe
+
+skybox:
+  de: Skybox
+
+reload_skybox:
+  de: Skybox neu laden
+
+lights:
+  de: Lichter
+
+light:
+  de: Licht
+
+intensity:
+  de: Intensität
+
+add_light:
+  de: + Licht hinzufügen
+
+objects:
+  de: Objekte
+
+rotation:
+  de: Rotation
+
+scale:
+  de: Skalierung
+
+add_object:
+  de: + Objekt hinzufügen
+
+# ui/mod
+
+drop_yaml:
+  de: YAML Datei hier ablegen, um sie zu laden
+
+# FileManager
+## Hovered Options
+
+hov_obj:
+  de: .obj Datei hier ablegen, um sie zur Szene hinzufügen
+
+hov_yaml:
+  de: .yaml Datei hier ablegen, um eine Szene zu laden
+
+hov_unknown:
+  de: Datei wird nicht unterstützt
+
+# preview/mod
+
+change_camera_pos:
+  de: Klicken um die Kameraposition zu ändern
+
+wasd:
+  de: WASD um die Kamera zu bewegen
+
+qe:
+  de: Q/E um die Bewegungsgeschwindigkeit zu ändern
+
+yc:
+  de: Y/C um die Sensitivität zu ändern
+
+f:
+  de: F um die Kamera zu (0,0,0) zu bewegen
+
+esc:
+  de: ESC um die Kamera zu verlassen

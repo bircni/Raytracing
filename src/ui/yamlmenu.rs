@@ -1,190 +1,202 @@
-use std::path::Path;
-
+use crate::scene::{Camera, Scene, Settings};
 use anyhow::Context;
-use egui::{hex_color, include_image, Align, ImageButton, Layout, Ui};
+use egui::{hex_color, include_image, Align, ImageButton, Layout, RichText, Ui};
 use egui_file::FileDialog;
 use log::{info, warn};
-
-use crate::scene::{Camera, Scene, Settings};
+use rust_i18n::t;
+use std::{fs, path::Path};
 
 pub struct YamlMenu {
-    scene: Option<Scene>,
-    open_dialog: Option<FileDialog>,
-    create_dialog: Option<FileDialog>,
+    pub open_yaml_dialog: Option<FileDialog>,
+    create_yaml_dialog: Option<FileDialog>,
 }
 
 impl YamlMenu {
     pub fn new() -> Self {
         Self {
-            scene: None,
-            open_dialog: None,
-            create_dialog: None,
+            open_yaml_dialog: None,
+            create_yaml_dialog: None,
         }
     }
 
-    pub fn scene(&self) -> Option<&Scene> {
-        self.scene.as_ref()
-    }
-
-    pub fn scene_mut(&mut self) -> Option<&mut Scene> {
-        self.scene.as_mut()
-    }
-
-    #[allow(clippy::too_many_lines)]
-    pub fn show(&mut self, ui: &mut Ui) {
-        if let Some(dialog) = self.open_dialog.as_mut() {
-            if dialog.show(ui.ctx()).selected() {
-                if let Some(path) = dialog.path() {
-                    info!("Loading scene from {}", path.display());
-                    Scene::load(path)
+    pub fn show(&mut self, scene: &mut Option<Scene>, ui: &mut Ui) {
+        // show open yaml dialog if present
+        if let Some(d) = self.open_yaml_dialog.as_mut() {
+            if d.show(ui.ctx()).selected() {
+                if let Some(p) = d.path() {
+                    info!("Loading scene from {}", p.display());
+                    Scene::load(p)
                         .map_err(|e| {
                             warn!("{}", e);
                         })
-                        .map(|scene| {
-                            self.scene = Some(scene);
+                        .map(|s| {
+                            scene.replace(s);
                         })
                         .ok();
+                } else {
+                    warn!("Open yaml dialog selected but returned no path");
                 }
 
-                self.open_dialog = None;
+                self.open_yaml_dialog = None;
             }
         }
 
-        if let Some(dialog) = self.create_dialog.as_mut() {
-            if dialog.show(ui.ctx()).selected() {
-                if let Some(path) = dialog.path() {
-                    info!("New scene at {}", path.display());
-                    self.scene = Some(Scene {
-                        path: path.to_path_buf(),
-                        objects: vec![],
-                        lights: vec![],
-                        camera: Camera::default(),
-                        settings: Settings::default(),
-                    });
+        // show create yaml dialog if present
+        if let Some(d) = self.create_yaml_dialog.as_mut() {
+            if d.show(ui.ctx()).selected() {
+                match d.path() {
+                    Some(p) => {
+                        info!("Created new scene at {}", p.display());
+                        scene.replace(Scene {
+                            path: p.to_path_buf(),
+                            objects: vec![],
+                            lights: vec![],
+                            camera: Camera::default(),
+                            settings: Settings::default(),
+                        });
 
-                    self.save_scene();
+                        Self::save_scene(scene);
+                    }
+                    None => {
+                        warn!("Create yaml dialog selected but returned no path");
+                    }
                 }
 
-                self.create_dialog = None;
+                self.create_yaml_dialog = None;
             }
         }
 
         ui.horizontal(|ui| {
-            ui.heading("YAML");
-
-            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                let tint_color = if ui.visuals().dark_mode {
-                    hex_color!("#ffffff")
-                } else {
-                    hex_color!("#000000")
-                };
-
-                ui.add_sized(
-                    [20.0, 20.0],
-                    ImageButton::new(include_image!("../../res/icons/folder-open-solid.svg"))
-                        .tint(tint_color),
-                )
-                .on_hover_text("Load Scene")
-                .clicked()
-                .then(|| {
-                    if !self
-                        .open_dialog
-                        .as_ref()
-                        .is_some_and(egui_file::FileDialog::visible)
-                    {
-                        let mut dialog =
-                            FileDialog::open_file(None).filename_filter(Box::new(|p| {
-                                Path::new(p)
-                                    .extension()
-                                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
-                            }));
-
-                        dialog.open();
-                        self.open_dialog = Some(dialog);
-                    }
-                });
-
-                ui.add_enabled_ui(self.scene.is_some(), |ui| {
-                    ui.add_sized(
-                        [20.0, 20.0],
-                        ImageButton::new(include_image!("../../res/icons/floppy-disk-solid.svg"))
-                            .tint(tint_color),
-                    )
-                    .on_hover_text("Save Scene")
-                    .clicked()
-                    .then(|| self.save_scene());
-                });
-
-                ui.add_sized(
-                    [20.0, 20.0],
-                    ImageButton::new(include_image!("../../res/icons/plus-solid.svg"))
-                        .tint(tint_color),
-                )
-                .on_hover_text("New Scene")
-                .clicked()
-                .then(|| {
-                    if !self
-                        .create_dialog
-                        .as_ref()
-                        .is_some_and(egui_file::FileDialog::visible)
-                    {
-                        let mut dialog =
-                            FileDialog::save_file(None).filename_filter(Box::new(|p| {
-                                Path::new(p)
-                                    .extension()
-                                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
-                            }));
-
-                        dialog.open();
-                        self.create_dialog = Some(dialog);
-                    }
-                });
-
-                ui.add_enabled_ui(self.scene.is_some(), |ui| {
-                    ui.add_sized(
-                        [20.0, 20.0],
-                        ImageButton::new(include_image!(
-                            "../../res/icons/arrow-rotate-left-solid.svg"
-                        ))
-                        .tint(tint_color),
-                    )
-                    .on_hover_text("Reload Scene")
-                    .clicked()
-                    .then(|| {
-                        if let Some(scene) = self.scene.as_mut() {
-                            self.scene = Scene::load(scene.path.as_path())
-                                .map_err(|e| {
-                                    warn!("{}", e);
-                                })
-                                .ok();
-                        }
-                    });
-                });
-            });
+            ui.heading(t!("yaml"));
+            self.buttons(scene, ui);
         });
 
         ui.group(|ui| {
-            ui.vertical_centered(|ui| {
-                ui.label("Loaded scene:");
-                ui.label(
-                    self.scene
-                        .as_ref()
-                        .map_or("None".to_string(), |s| s.path.display().to_string()),
-                );
+            ui.vertical_centered(|ui| match scene {
+                Some(s) => {
+                    ui.label(format!("{}:", t!("loaded_scene")));
+                    ui.label(RichText::new(format!("{}", s.path.display())))
+                }
+                None => ui.label(t!("no_scene_loaded")),
             });
         });
     }
 
-    pub fn save_scene(&self) {
-        if let Some(scene) = self.scene.as_ref() {
-            serde_yaml::to_string(scene)
-                .context("Failed to serialize scene")
-                .and_then(|str| {
-                    std::fs::write(scene.path.as_path(), str).context("Failed to save config")
-                })
-                .unwrap_or_else(|e| {
-                    warn!("{}", e);
+    pub fn load_scene(&mut self) {
+        if !self
+            .open_yaml_dialog
+            .as_ref()
+            .is_some_and(egui_file::FileDialog::visible)
+        {
+            let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
+                Path::new(p)
+                    .extension()
+                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
+            }));
+
+            dialog.open();
+
+            self.open_yaml_dialog = Some(dialog);
+        }
+    }
+
+    pub fn create_scene(&mut self) {
+        if !self
+            .create_yaml_dialog
+            .as_ref()
+            .is_some_and(egui_file::FileDialog::visible)
+        {
+            let mut dialog = FileDialog::save_file(None).filename_filter(Box::new(|p| {
+                Path::new(p)
+                    .extension()
+                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
+            }));
+
+            dialog.open();
+            self.create_yaml_dialog = Some(dialog);
+        }
+    }
+
+    fn buttons(&mut self, scene: &mut Option<Scene>, ui: &mut Ui) {
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+            // TODO: make this implicit somehow
+            let tint_color = if ui.visuals().dark_mode {
+                hex_color!("#ffffff")
+            } else {
+                hex_color!("#000000")
+            };
+
+            // load button
+            ui.add_sized(
+                [20.0, 20.0],
+                ImageButton::new(include_image!("../../res/icons/folder-open-solid.svg"))
+                    .tint(tint_color),
+            )
+            .on_hover_text(t!("load_scene"))
+            .clicked()
+            .then(|| self.load_scene());
+
+            // save button
+            ui.add_enabled_ui(scene.is_some(), |ui| {
+                ui.add_sized(
+                    [20.0, 20.0],
+                    ImageButton::new(include_image!("../../res/icons/floppy-disk-solid.svg"))
+                        .tint(tint_color),
+                )
+                .on_hover_text(t!("save_scene"))
+                .clicked()
+                .then(|| Self::save_scene(scene));
+            });
+
+            // new button
+            ui.add_sized(
+                [20.0, 20.0],
+                ImageButton::new(include_image!("../../res/icons/plus-solid.svg")).tint(tint_color),
+            )
+            .on_hover_text(t!("new_scene"))
+            .clicked()
+            .then(|| self.create_scene());
+
+            // reload button
+            ui.add_enabled_ui(scene.is_some(), |ui| {
+                ui.add_sized(
+                    [20.0, 20.0],
+                    ImageButton::new(include_image!(
+                        "../../res/icons/arrow-rotate-left-solid.svg"
+                    ))
+                    .tint(tint_color),
+                )
+                .on_hover_text(t!("reload_scene"))
+                .clicked()
+                .then(|| {
+                    if let Some(path) = scene.as_ref().map(|s| s.path.clone()) {
+                        match Scene::load(path.as_path()) {
+                            Ok(s) => {
+                                scene.replace(s);
+                            }
+                            Err(e) => warn!("{}", e),
+                        }
+                    }
                 });
+            });
+        });
+    }
+
+    fn save_scene(scene: &Option<Scene>) {
+        match scene {
+            Some(scene) => {
+                serde_yaml::to_string(scene)
+                    .context("Failed to serialize scene")
+                    .and_then(|str| {
+                        fs::write(scene.path.as_path(), str).context("Failed to save config")
+                    })
+                    .unwrap_or_else(|e| {
+                        warn!("{}", e);
+                    });
+            }
+            None => {
+                warn!("save_scene called with no scene loaded");
+            }
         }
     }
 }

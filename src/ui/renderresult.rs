@@ -1,10 +1,8 @@
+use crate::{raytracer::render::Render, scene::Scene};
 use egui::{pos2, Color32, CursorIcon, Frame, Rect, Rounding, Sense, Stroke, Ui, Vec2};
 
-use crate::scene::Scene;
-
-use super::render::Render;
-
 pub struct RenderResult {
+    // zoom factor where 0 is no zoom
     zoom: f32,
     position: Vec2,
 }

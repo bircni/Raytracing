@@ -1,7 +1,6 @@
+use crate::raytracer::Ray;
 use bvh::{aabb::Bounded, bounding_hierarchy::BHShape};
 use nalgebra::{Point3, Vector2, Vector3};
-
-use crate::raytracer::Ray;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Triangle {
