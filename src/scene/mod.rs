@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use anyhow::Context;
 use log::warn;
 use nalgebra::Vector3;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::{de::DeserializeSeed, Deserialize, Serialize};
 
 pub use self::{
@@ -54,7 +55,9 @@ impl Clone for Scene {
 
 struct WithRelativePath<P: AsRef<std::path::Path>>(P);
 
-impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRelativePath<P> {
+impl<'de, P: AsRef<std::path::Path> + std::marker::Sync> serde::de::DeserializeSeed<'de>
+    for WithRelativePath<P>
+{
     type Value = Scene;
 
     fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
@@ -70,7 +73,7 @@ impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRel
             .ok_or_else(|| {
                 serde::de::Error::invalid_type(serde::de::Unexpected::Map, &"a sequence")
             })?
-            .iter()
+            .par_iter()
             .map(|v| object::WithRelativePath(self.0.as_ref()).deserialize(v))
             .collect::<Result<Vec<Object>, serde_yaml::Error>>()
             .map_err(serde::de::Error::custom)?;

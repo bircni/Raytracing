@@ -1,13 +1,15 @@
 use self::gpu::WgpuPainter;
-use crate::scene::{Scene, Skybox};
+use crate::scene::{Object, Scene, Skybox};
 use egui::{
-    mutex::RwLock, pos2, Align2, Color32, CursorGrab, Event, Frame, Key, Pos2, Sense, Shape, Ui,
-    Vec2, ViewportCommand,
+    mutex::RwLock, pos2, Align, Align2, Color32, Context, CursorGrab, DroppedFile, Event, Frame,
+    Id, Key, LayerId, Layout, Order, Pos2, Rect, RichText, Sense, Shape, TextStyle, Ui, Vec2,
+    ViewportCommand,
 };
 use egui_wgpu::Callback;
 use log::warn;
-use nalgebra::OPoint;
-use std::sync::Arc;
+use nalgebra::{OPoint, Scale3, Translation3, UnitQuaternion};
+use rust_i18n::t;
+use std::{path::PathBuf, sync::Arc};
 
 pub mod gpu;
 
@@ -18,6 +20,7 @@ pub struct Preview {
     speed: f32,
     sensitivity: f32,
     gpu: WgpuPainter,
+    dropped_files: Vec<DroppedFile>,
 }
 
 impl Preview {
@@ -27,6 +30,7 @@ impl Preview {
             speed: 0.1,
             sensitivity: 0.001,
             gpu: gpu::WgpuPainter::new(scene),
+            dropped_files: Vec::new(),
         }
     }
 
@@ -46,7 +50,28 @@ impl Preview {
             .send_viewport_cmd(ViewportCommand::CursorVisible(!active));
     }
 
-    pub fn show(&mut self, ui: &mut Ui, scene: &mut Scene) {
+    pub fn show(&mut self, ui: &mut Ui, scene: &mut Option<Scene>) {
+        Self::show_hover_overlay(ui.ctx(), scene, ui.available_rect_before_wrap());
+        ui.ctx().input(|i| {
+            if !i.raw.dropped_files.is_empty() {
+                self.dropped_files = i.raw.dropped_files.clone();
+                if let Some(path) = self.dropped_files.first().and_then(|p| p.path.as_ref()) {
+                    Self::handle_file(path, scene);
+                }
+                self.dropped_files.clear();
+            }
+        });
+        let Some(scene) = scene else {
+            ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                ui.horizontal(|ui| {
+                    ui.vertical_centered(|ui| {
+                        ui.heading(t!("no_scene_loaded"));
+                        ui.label(RichText::new(t!("drop_yaml")));
+                    });
+                });
+            });
+            return;
+        };
         ui.vertical(|ui| {
             let available_size = ui.available_size();
             let aspect_ratio = scene.camera.resolution.0 as f32 / scene.camera.resolution.1 as f32;
@@ -84,7 +109,7 @@ impl Preview {
 
                     if response.hover_pos().is_some() && !self.active {
                         egui::show_tooltip(ui.ctx(), egui::Id::new("preview_tooltip"), |ui| {
-                            ui.label("Click to change camera position");
+                            ui.label(t!("change_camera_pos"));
                         });
                     }
 
@@ -99,12 +124,14 @@ impl Preview {
                             Align2::LEFT_TOP,
                             Color32::WHITE,
                             format!(
-                                r#"WASD to move camera
-QE to change movement speed {:.2}
-YC to change look sensitivity {:.2}
-F to reset look_to point facing (0, 0, 0)
-ESC to exit movement mode"#,
-                                self.speed, self.sensitivity
+                                "{}\n{} {:.2}\n{} {:.2}\n{}\n{}",
+                                t!("wasd"),
+                                t!("qe"),
+                                self.speed,
+                                t!("yc"),
+                                self.sensitivity,
+                                t!("f"),
+                                t!("esc")
                             ),
                         );
 
@@ -117,6 +144,62 @@ ESC to exit movement mode"#,
                     }
                 })
         });
+    }
+
+    fn handle_file(path: &PathBuf, scene: &mut Option<Scene>) {
+        match path.extension().and_then(|ext| ext.to_str()) {
+            Some("yaml" | "yml") => {
+                Scene::load(path).map_or_else(
+                    |e| {
+                        warn!("Failed to load scene: {}", e);
+                    },
+                    |s| {
+                        scene.replace(s);
+                    },
+                );
+            }
+            Some("obj") => {
+                if let Some(scene) = scene.as_mut() {
+                    match Object::from_obj(
+                        path,
+                        Translation3::identity(),
+                        UnitQuaternion::identity(),
+                        Scale3::identity(),
+                    ) {
+                        Ok(object) => scene.objects.push(object),
+                        Err(e) => warn!("Failed to load object: {}", e),
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    pub fn show_hover_overlay(ctx: &Context, scene: &Option<Scene>, rect: Rect) {
+        //TODO: show only when hovering over preview
+        if !ctx.input(|i| i.raw.hovered_files.is_empty()) {
+            let painter =
+                ctx.layer_painter(LayerId::new(Order::Foreground, Id::new("file_drop_target")));
+            if let Some(hovered) = ctx.input(|i| i.raw.hovered_files.clone()).first() {
+                let extension = hovered
+                    .path
+                    .as_ref()
+                    .and_then(|p| p.extension())
+                    .and_then(|ext| ext.to_str());
+                painter.rect_filled(rect, 0.0, Color32::from_black_alpha(192));
+                painter.text(
+                    rect.center(),
+                    Align2::CENTER_CENTER,
+                    match extension {
+                        Some("yaml" | "yml") => t!("hov_yaml"),
+                        Some("obj") if scene.is_some() => t!("hov_obj"),
+                        _ => t!("hov_unknown"),
+                    },
+                    TextStyle::Heading.resolve(&ctx.style()),
+                    Color32::WHITE,
+                );
+            }
+        }
     }
 
     fn move_camera(&mut self, ui: &mut Ui, response: &egui::Response, scene: &mut Scene) {

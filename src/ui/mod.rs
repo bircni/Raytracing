@@ -1,16 +1,15 @@
 use self::preview::Preview;
-use self::render::Render;
 use self::renderresult::RenderResult;
 use self::statusbar::StatusBar;
 use self::yamlmenu::YamlMenu;
+use crate::raytracer::render::Render;
 use crate::scene::Scene;
 use crate::ui::properties::Properties;
 use anyhow::Context;
 use eframe::CreationContext;
 use egui::mutex::{Mutex, RwLock};
 use egui::{
-    vec2, Align, CentralPanel, ColorImage, Direction, ImageData, Layout, ScrollArea, SidePanel,
-    TextStyle, TextureOptions,
+    vec2, CentralPanel, ColorImage, ImageData, ScrollArea, SidePanel, TextStyle, TextureOptions,
 };
 use image::ImageBuffer;
 use std::sync::atomic::Ordering;
@@ -19,7 +18,6 @@ use std::thread::JoinHandle;
 
 mod preview;
 mod properties;
-mod render;
 mod renderresult;
 mod statusbar;
 mod yamlmenu;
@@ -55,21 +53,20 @@ impl App {
         );
 
         // create initial render texture (GPU exclusive) and image buffer (CPU exclusive)
-        let (render_texture, image_buffer) = {
-            let texture = cc.egui_ctx.load_texture(
-                "render",
-                ImageData::Color(Arc::new(ColorImage::example())),
-                TextureOptions::default(),
-            );
-            let image_buffer = Arc::new(Mutex::new(ImageBuffer::new(0, 0)));
-            (texture, image_buffer)
-        };
+        let render_texture = cc.egui_ctx.load_texture(
+            "render",
+            ImageData::Color(Arc::new(ColorImage::example())),
+            TextureOptions::default(),
+        );
+        let image_buffer = Arc::new(Mutex::new(ImageBuffer::new(0, 0)));
 
         cc.egui_ctx.style_mut(|s| {
             s.text_styles.insert(
                 TextStyle::Name("subheading".into()),
                 TextStyle::Monospace.resolve(s),
             );
+            s.text_styles
+                .insert(TextStyle::Body, TextStyle::Monospace.resolve(s));
             s.spacing.item_spacing = vec2(10.0, std::f32::consts::PI * 1.76643);
         });
 
@@ -103,7 +100,6 @@ impl eframe::App for App {
 
         // lock the scene for the duration of the frame
         let mut scene = self.scene.write();
-
         CentralPanel::default().show(ctx, |ui| {
             self.statusbar
                 .show(ui, scene.as_mut(), &mut self.render, &mut self.current_tab);
@@ -128,18 +124,19 @@ impl eframe::App for App {
                             });
                         });
 
-                    match scene.as_mut() {
-                        Some(scene) => self.preview.show(ui, scene),
-                        None => {
-                            ui.with_layout(
-                                Layout::centered_and_justified(Direction::LeftToRight)
-                                    .with_main_align(Align::Center),
-                                |ui| {
-                                    ui.heading("No scene loaded");
-                                },
-                            );
-                        }
-                    }
+                    //if let Some(scene) = scene.as_mut() {
+                    //    self.preview.show(ui, scene);
+                    //} else {
+                    //    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                    //        ui.horizontal(|ui| {
+                    //            ui.vertical_centered(|ui| {
+                    //                ui.heading(t!("no_scene_loaded"));
+                    //                ui.label(RichText::new(t!("drop_yaml")));
+                    //            });
+                    //        });
+                    //    });
+                    //}
+                    self.preview.show(ui, &mut scene);
                 }
                 Tab::RenderResult => {
                     if let Some(scene) = scene.as_ref() {

@@ -6,10 +6,12 @@ use egui::{
 };
 use egui_file::FileDialog;
 use log::{info, warn};
+use rust_i18n::t;
 
+use crate::raytracer::render::Render;
 use crate::scene::Scene;
 
-use super::{render::Render, Tab};
+use super::Tab;
 
 pub struct StatusBar {
     save_render_dialog: Option<FileDialog>,
@@ -33,13 +35,13 @@ impl StatusBar {
         current_tab: &mut Tab,
     ) {
         ui.horizontal(|ui| {
-            ui.selectable_label(*current_tab == Tab::Preview, "Preview")
+            ui.selectable_label(*current_tab == Tab::Preview, t!("preview"))
                 .clicked()
                 .then(|| {
                     *current_tab = Tab::Preview;
                 });
 
-            ui.selectable_label(*current_tab == Tab::RenderResult, "Render")
+            ui.selectable_label(*current_tab == Tab::RenderResult, t!("render"))
                 .clicked()
                 .then(|| {
                     *current_tab = Tab::RenderResult;
@@ -64,7 +66,7 @@ impl StatusBar {
     }
 
     fn about_window(&mut self, ui: &mut Ui) {
-        Window::new("About")
+        Window::new(t!("about"))
             .resizable(false)
             .collapsible(false)
             .open(&mut self.show_about)
@@ -79,14 +81,14 @@ impl StatusBar {
                             .rounding(10.0),
                     );
 
-                    ui.label(format!("Version: {}", env!("CARGO_PKG_VERSION")));
+                    ui.label(format!("{}: {}", t!("version"), env!("CARGO_PKG_VERSION")));
                     ui.hyperlink_to(
-                        format!("{GITHUB} GitHub"),
+                        format!("{GITHUB} {}", t!("github")),
                         "https://github.com/bircni/Raytracing",
                     );
 
-                    ui.hyperlink_to("Built with egui", "https://docs.rs/egui/");
-                    ui.label("© 2024 Team TrayRacer");
+                    ui.hyperlink_to(t!("built_with"), "https://docs.rs/egui/");
+                    ui.label(t!("copyright"));
                 });
             });
     }
@@ -95,15 +97,16 @@ impl StatusBar {
         if ui
             .add_enabled(
                 render.progress.load(Ordering::Relaxed) == u16::MAX,
-                Button::new("Export"),
+                Button::new(RichText::new(t!("export")).size(14.0)),
             )
             .clicked()
         {
             info!("Exporting image");
             self.save_render_dialog
                 .get_or_insert_with(|| {
+                    let (x, y) = render.image.lock().dimensions();
                     FileDialog::save_file(None)
-                        .default_filename("render.png")
+                        .default_filename(format!("render_{x}x{y}.png"))
                         .filename_filter(Box::new(|name| {
                             [".png", ".jpg", ".jpeg"]
                                 .into_iter()
@@ -137,17 +140,19 @@ impl StatusBar {
         current_tab: &mut Tab,
     ) {
         if render.thread.is_some() {
-            ui.button("Cancel").clicked().then(|| {
+            ui.button(t!("cancel")).clicked().then(|| {
                 render.cancel.store(true, Ordering::Relaxed);
             });
         } else {
             ui.add_enabled_ui(render.thread.is_none() && scene.is_some(), |ui| {
-                ui.button("Render").clicked().then(|| {
-                    if let Some(scene) = scene {
-                        render.render(ui.ctx().clone(), scene);
-                        *current_tab = Tab::RenderResult;
-                    }
-                })
+                ui.button(RichText::new(t!("render")).size(14.0))
+                    .clicked()
+                    .then(|| {
+                        if let Some(scene) = scene {
+                            render.render(ui.ctx().clone(), scene);
+                            *current_tab = Tab::RenderResult;
+                        }
+                    })
             });
         }
     }
@@ -162,7 +167,8 @@ impl StatusBar {
                         #[allow(clippy::float_cmp)]
                         if progress == 1.0 {
                             format!(
-                                "Done in: {:.2} s",
+                                "{}: {:.2} s",
+                                t!("done"),
                                 render.time.load(Ordering::Relaxed) as f32 / 1000.0
                             )
                         } else if progress > 0.0 {
@@ -176,6 +182,6 @@ impl StatusBar {
                 .fill(Color32::BLUE),
         );
 
-        ui.label("Rendering progress");
+        ui.label(t!("render_progress"));
     }
 }

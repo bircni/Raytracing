@@ -1,12 +1,13 @@
 use crate::scene::{Camera, Scene, Settings};
 use anyhow::Context;
-use egui::{hex_color, include_image, Align, ImageButton, Layout, Ui};
+use egui::{hex_color, include_image, Align, ImageButton, Layout, RichText, Ui};
 use egui_file::FileDialog;
 use log::{info, warn};
-use std::path::Path;
+use rust_i18n::t;
+use std::{fs, path::Path};
 
 pub struct YamlMenu {
-    open_yaml_dialog: Option<FileDialog>,
+    pub open_yaml_dialog: Option<FileDialog>,
     create_yaml_dialog: Option<FileDialog>,
 }
 
@@ -22,21 +23,18 @@ impl YamlMenu {
         // show open yaml dialog if present
         if let Some(d) = self.open_yaml_dialog.as_mut() {
             if d.show(ui.ctx()).selected() {
-                match d.path() {
-                    Some(p) => {
-                        info!("Loading scene from {}", p.display());
-                        Scene::load(p)
-                            .map_err(|e| {
-                                warn!("{}", e);
-                            })
-                            .map(|s| {
-                                scene.replace(s);
-                            })
-                            .ok();
-                    }
-                    None => {
-                        warn!("Open yaml dialog selected but returned no path");
-                    }
+                if let Some(p) = d.path() {
+                    info!("Loading scene from {}", p.display());
+                    Scene::load(p)
+                        .map_err(|e| {
+                            warn!("{}", e);
+                        })
+                        .map(|s| {
+                            scene.replace(s);
+                        })
+                        .ok();
+                } else {
+                    warn!("Open yaml dialog selected but returned no path");
                 }
 
                 self.open_yaml_dialog = None;
@@ -69,16 +67,54 @@ impl YamlMenu {
         }
 
         ui.horizontal(|ui| {
-            ui.heading("YAML");
+            ui.heading(t!("yaml"));
             self.buttons(scene, ui);
         });
 
         ui.group(|ui| {
             ui.vertical_centered(|ui| match scene {
-                Some(s) => ui.label(format!("Loaded scene: {}", s.path.display())),
-                None => ui.label("No scene loaded"),
+                Some(s) => {
+                    ui.label(format!("{}:", t!("loaded_scene")));
+                    ui.label(RichText::new(format!("{}", s.path.display())))
+                }
+                None => ui.label(t!("no_scene_loaded")),
             });
         });
+    }
+
+    pub fn load_scene(&mut self) {
+        if !self
+            .open_yaml_dialog
+            .as_ref()
+            .is_some_and(egui_file::FileDialog::visible)
+        {
+            let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
+                Path::new(p)
+                    .extension()
+                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
+            }));
+
+            dialog.open();
+
+            self.open_yaml_dialog = Some(dialog);
+        }
+    }
+
+    pub fn create_scene(&mut self) {
+        if !self
+            .create_yaml_dialog
+            .as_ref()
+            .is_some_and(egui_file::FileDialog::visible)
+        {
+            let mut dialog = FileDialog::save_file(None).filename_filter(Box::new(|p| {
+                Path::new(p)
+                    .extension()
+                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
+            }));
+
+            dialog.open();
+            self.create_yaml_dialog = Some(dialog);
+        }
     }
 
     fn buttons(&mut self, scene: &mut Option<Scene>, ui: &mut Ui) {
@@ -96,25 +132,9 @@ impl YamlMenu {
                 ImageButton::new(include_image!("../../res/icons/folder-open-solid.svg"))
                     .tint(tint_color),
             )
-            .on_hover_text("Load Scene")
+            .on_hover_text(t!("load_scene"))
             .clicked()
-            .then(|| {
-                if !self
-                    .open_yaml_dialog
-                    .as_ref()
-                    .is_some_and(egui_file::FileDialog::visible)
-                {
-                    let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
-                        Path::new(p)
-                            .extension()
-                            .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
-                    }));
-
-                    dialog.open();
-
-                    self.open_yaml_dialog = Some(dialog);
-                }
-            });
+            .then(|| self.load_scene());
 
             // save button
             ui.add_enabled_ui(scene.is_some(), |ui| {
@@ -123,7 +143,7 @@ impl YamlMenu {
                     ImageButton::new(include_image!("../../res/icons/floppy-disk-solid.svg"))
                         .tint(tint_color),
                 )
-                .on_hover_text("Save Scene")
+                .on_hover_text(t!("save_scene"))
                 .clicked()
                 .then(|| Self::save_scene(scene));
             });
@@ -133,24 +153,9 @@ impl YamlMenu {
                 [20.0, 20.0],
                 ImageButton::new(include_image!("../../res/icons/plus-solid.svg")).tint(tint_color),
             )
-            .on_hover_text("New Scene")
+            .on_hover_text(t!("new_scene"))
             .clicked()
-            .then(|| {
-                if !self
-                    .create_yaml_dialog
-                    .as_ref()
-                    .is_some_and(egui_file::FileDialog::visible)
-                {
-                    let mut dialog = FileDialog::save_file(None).filename_filter(Box::new(|p| {
-                        Path::new(p)
-                            .extension()
-                            .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
-                    }));
-
-                    dialog.open();
-                    self.create_yaml_dialog = Some(dialog);
-                }
-            });
+            .then(|| self.create_scene());
 
             // reload button
             ui.add_enabled_ui(scene.is_some(), |ui| {
@@ -161,7 +166,7 @@ impl YamlMenu {
                     ))
                     .tint(tint_color),
                 )
-                .on_hover_text("Reload Scene")
+                .on_hover_text(t!("reload_scene"))
                 .clicked()
                 .then(|| {
                     if let Some(path) = scene.as_ref().map(|s| s.path.clone()) {
@@ -183,7 +188,7 @@ impl YamlMenu {
                 serde_yaml::to_string(scene)
                     .context("Failed to serialize scene")
                     .and_then(|str| {
-                        std::fs::write(scene.path.as_path(), str).context("Failed to save config")
+                        fs::write(scene.path.as_path(), str).context("Failed to save config")
                     })
                     .unwrap_or_else(|e| {
                         warn!("{}", e);
