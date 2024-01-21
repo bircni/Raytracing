@@ -63,6 +63,19 @@
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
 </pre></div><pre class="rust"><code><span class="attr">#![warn(clippy::pedantic)]
 #![warn(clippy::perf)]
 #![warn(clippy::style)]
@@ -73,18 +86,28 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_sign_loss)]
 
-</span><span class="kw">use </span>anyhow::Context;
+</span><span class="kw">extern crate </span>rust_i18n;
+
+<span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>eframe::Renderer;
 <span class="kw">use </span>egui::ViewportBuilder;
-<span class="kw">use </span>log::{error, LevelFilter};
+<span class="kw">use </span>log::{error, info, LevelFilter};
+<span class="kw">use </span>rust_i18n::i18n;
 <span class="kw">use </span>scene::Scene;
 <span class="kw">use </span>simplelog::{ColorChoice, ConfigBuilder, TerminalMode};
+<span class="kw">use </span>sys_locale::get_locale;
 
 <span class="kw">mod </span>raytracer;
 <span class="kw">mod </span>scene;
 <span class="kw">mod </span>ui;
+<span class="macro">i18n!</span>(<span class="string">&quot;locales&quot;</span>, fallback = <span class="string">&quot;en&quot;</span>);
 
 <span class="kw">fn </span>main() -&gt; anyhow::Result&lt;()&gt; {
+    rust_i18n::set_locale(
+        get_locale()
+            .unwrap_or_else(|| String::from(<span class="string">&quot;en-US&quot;</span>))
+            .as_str(),
+    );
     simplelog::TermLogger::init(
         <span class="attr">#[cfg(debug_assertions)]
         </span>LevelFilter::Trace,
@@ -98,7 +121,10 @@
         ColorChoice::Auto,
     )
     .context(<span class="string">&quot;Failed to initialize logger&quot;</span>)<span class="question-mark">?</span>;
-
+    <span class="macro">info!</span>(
+        <span class="string">&quot;available translations: {:?}&quot;</span>,
+        <span class="macro">rust_i18n::available_locales!</span>()
+    );
     <span class="kw">let </span>viewport = ViewportBuilder::default()
         .with_title(<span class="string">&quot;Trayracer&quot;</span>)
         .with_app_id(<span class="string">&quot;raytracer&quot;</span>)

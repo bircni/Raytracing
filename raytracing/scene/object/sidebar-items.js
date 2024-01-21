@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["load_texture","triangulate"],"mod":["yaml"],"struct":["Object","WithRelativePath"]};
+window.SIDEBAR_ITEMS = {"fn":["filename","load_texture","triangulate"],"mod":["yaml"],"struct":["Object","WithRelativePath"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Tab"],"mod":["preview","properties","render","renderresult","statusbar","yamlmenu"],"struct":["App"]};
+window.SIDEBAR_ITEMS = {"enum":["Tab"],"mod":["preview","properties","renderresult","statusbar","yamlmenu"],"struct":["App"]};

@@ -386,20 +386,57 @@
 <a href="#386" id="386">386</a>
 <a href="#387" id="387">387</a>
 <a href="#388" id="388">388</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::render::Render;
-<span class="kw">use crate</span>::{
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+</pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
+    raytracer::render::Render,
     scene::{Color, Light, Object, Skybox},
     Scene,
 };
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>egui::{
-    color_picker, hex_color, include_image, Align, Button, DragValue, FontFamily, ImageButton,
-    Layout, RichText, Slider, Ui,
+    color_picker, hex_color, include_image, Align, Button, CollapsingHeader, DragValue, FontFamily,
+    ImageButton, Layout, RichText, Slider, Ui,
 };
 <span class="kw">use </span>egui_file::FileDialog;
 <span class="kw">use </span>log::warn;
 <span class="kw">use </span>nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
-<span class="kw">use </span>std::path::Path;
+<span class="kw">use </span>rust_i18n::t;
+<span class="kw">use </span>std::{f32::consts, path::Path};
 
 <span class="kw">fn </span>xyz_drag_value(ui: <span class="kw-2">&amp;mut </span>Ui, value: <span class="kw-2">&amp;mut </span>XYZ&lt;f32&gt;) {
     ui.horizontal(|ui| {
@@ -426,14 +463,20 @@
 
     <span class="kw">pub fn </span>show(<span class="kw-2">&amp;mut </span><span class="self">self</span>, scene: <span class="kw-2">&amp;mut </span>Scene, ui: <span class="kw-2">&amp;mut </span>Ui, render: <span class="kw-2">&amp;mut </span>Render) {
         ui.horizontal(|ui| {
-            ui.heading(<span class="string">&quot;Properties&quot;</span>);
+            ui.heading(<span class="macro">t!</span>(<span class="string">&quot;properties&quot;</span>));
         });
 
         <span class="self">Self</span>::camera_settings(scene, ui);
 
+        ui.add_space(<span class="number">5.0</span>);
+
         <span class="self">self</span>.scene_settings(scene, ui, render);
 
+        ui.add_space(<span class="number">5.0</span>);
+
         <span class="self">Self</span>::lights(ui, scene);
+
+        ui.add_space(<span class="number">5.0</span>);
 
         <span class="self">self</span>.objects(ui, scene);
     }
@@ -441,24 +484,24 @@
     <span class="kw">pub fn </span>camera_settings(scene: <span class="kw-2">&amp;mut </span>Scene, ui: <span class="kw-2">&amp;mut </span>egui::Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
-                ui.label(RichText::new(<span class="string">&quot;Camera&quot;</span>).size(<span class="number">16.0</span>));
+                ui.label(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;camera&quot;</span>)).size(<span class="number">16.0</span>));
             });
 
             ui.separator();
 
             ui.vertical(|ui| {
-                ui.label(<span class="string">&quot;Position:&quot;</span>);
+                ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;position&quot;</span>)));
 
                 xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>scene.camera.position);
 
-                ui.label(<span class="string">&quot;Look at:&quot;</span>);
+                ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;look_at&quot;</span>)));
 
                 xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>scene.camera.look_at);
 
-                ui.label(<span class="string">&quot;Field of View:&quot;</span>);
+                ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;fov&quot;</span>)));
 
                 ui.add(
-                    Slider::new(<span class="kw-2">&amp;mut </span>scene.camera.fov, <span class="number">0.0</span>..=std::f32::consts::PI)
+                    Slider::new(<span class="kw-2">&amp;mut </span>scene.camera.fov, <span class="number">0.0</span>..=consts::PI)
                         .step_by(<span class="number">0.01</span>)
                         .custom_formatter(|x, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{:.2}°&quot;</span>, x.to_degrees()))
                         .clamp_to_range(<span class="bool-val">true</span>),
@@ -468,29 +511,35 @@
     }
 
     <span class="kw">fn </span>scene_settings(<span class="kw-2">&amp;mut </span><span class="self">self</span>, scene: <span class="kw-2">&amp;mut </span>Scene, ui: <span class="kw-2">&amp;mut </span>Ui, render: <span class="kw-2">&amp;mut </span>Render) {
-        ui.group(|ui| {
-            ui.vertical_centered(|ui| {
-                ui.label(RichText::new(<span class="string">&quot;Scene Settings&quot;</span>).size(<span class="number">16.0</span>));
+        ui.vertical(|ui| {
+            ui.group(|ui| {
+                CollapsingHeader::new(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;scene_settings&quot;</span>)).size(<span class="number">16.0</span>))
+                    .default_open(<span class="bool-val">true</span>)
+                    .show_unindented(ui, |ui| {
+                        ui.separator();
+
+                        <span class="self">Self</span>::render_options(ui, render, scene);
+
+                        <span class="self">self</span>.skybox_options(ui, scene);
+
+                        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;ambient_color&quot;</span>)));
+                        color_picker::color_edit_button_rgb(
+                            ui,
+                            scene.settings.ambient_color.as_mut(),
+                        );
+
+                        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;ambient_intensity&quot;</span>)));
+                        ui.add(
+                            Slider::new(<span class="kw-2">&amp;mut </span>scene.settings.ambient_intensity, <span class="number">0.0</span>..=<span class="number">1.0</span>)
+                                .clamp_to_range(<span class="bool-val">true</span>),
+                        );
+                    });
             });
-
-            ui.separator();
-
-            <span class="self">Self</span>::render_options(ui, render, scene);
-
-            <span class="self">self</span>.skybox_options(ui, scene);
-
-            ui.label(<span class="string">&quot;Ambient Color:&quot;</span>);
-            color_picker::color_edit_button_rgb(ui, scene.settings.ambient_color.as_mut());
-
-            ui.label(<span class="string">&quot;Ambient Intensitiy:&quot;</span>);
-            ui.add(
-                Slider::new(<span class="kw-2">&amp;mut </span>scene.settings.ambient_intensity, <span class="number">0.0</span>..=<span class="number">1.0</span>).clamp_to_range(<span class="bool-val">true</span>),
-            );
         });
     }
 
     <span class="kw">fn </span>render_options(ui: <span class="kw-2">&amp;mut </span>Ui, render: <span class="kw-2">&amp;mut </span>Render, scene: <span class="kw-2">&amp;mut </span>Scene) {
-        ui.label(<span class="string">&quot;Render Size:&quot;</span>);
+        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;render_size&quot;</span>)));
         ui.vertical(|ui| {
             ui.add_enabled_ui(render.thread.is_none(), |ui| {
                 ui.vertical(|ui| {
@@ -529,7 +578,7 @@
     }
 
     <span class="kw">fn </span>skybox_options(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui, scene: <span class="kw-2">&amp;mut </span>Scene) {
-        ui.label(<span class="string">&quot;Skybox:&quot;</span>);
+        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;background&quot;</span>)));
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.skybox_dialog {
             <span class="kw">if </span>dialog.show(ui.ctx()).selected() {
@@ -559,32 +608,28 @@
 
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                ui.radio(<span class="macro">matches!</span>(scene.settings.skybox, Skybox::Color(<span class="kw">_</span>)), <span class="string">&quot;Color&quot;</span>)
-                    .clicked()
-                    .then(|| {
-                        scene.settings.skybox = Skybox::Color(Color::default());
-                    });
-
                 ui.radio(
-                    <span class="macro">matches!</span>(scene.settings.skybox, Skybox::Image { .. }),
-                    <span class="string">&quot;Image&quot;</span>,
+                    <span class="macro">matches!</span>(scene.settings.skybox, Skybox::Color(<span class="kw">_</span>)),
+                    <span class="macro">t!</span>(<span class="string">&quot;color&quot;</span>),
                 )
                 .clicked()
                 .then(|| {
-                    <span class="kw">let </span><span class="kw-2">mut </span>dialog = FileDialog::open_file(<span class="prelude-val">None</span>).filename_filter(Box::new(|p| {
-                        Path::new(p)
-                            .extension()
-                            .map_or(<span class="bool-val">false</span>, |ext| ext.eq_ignore_ascii_case(<span class="string">&quot;exr&quot;</span>))
-                    }));
-
-                    dialog.open();
-
-                    <span class="self">self</span>.skybox_dialog = <span class="prelude-val">Some</span>(dialog);
+                    scene.settings.skybox = Skybox::Color(Color::default());
                 });
+
+                ui.radio(
+                    <span class="macro">matches!</span>(scene.settings.skybox, Skybox::Image { .. }),
+                    <span class="macro">t!</span>(<span class="string">&quot;skybox&quot;</span>),
+                )
+                .clicked()
+                .then(|| <span class="self">self</span>.load_skybox_img());
             });
 
             <span class="kw">match </span><span class="kw-2">&amp;mut </span>scene.settings.skybox {
                 Skybox::Image { path, .. } =&gt; {
+                    ui.button(<span class="macro">t!</span>(<span class="string">&quot;reload_skybox&quot;</span>))
+                        .clicked()
+                        .then(|| <span class="self">self</span>.load_skybox_img());
                     ui.label(path.display().to_string());
                 }
                 Skybox::Color(c) =&gt; {
@@ -594,171 +639,198 @@
         });
     }
 
-    <span class="kw">fn </span>lights(ui: <span class="kw-2">&amp;mut </span>Ui, scene: <span class="kw-2">&amp;mut </span>Scene) {
-        ui.group(|ui| {
-            ui.vertical_centered(|ui| {
-                ui.label(RichText::new(<span class="macro">format!</span>(<span class="string">&quot;Lights ({})&quot;</span>, scene.lights.len())).size(<span class="number">16.0</span>))
-            });
+    <span class="kw">fn </span>load_skybox_img(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">let </span><span class="kw-2">mut </span>dialog = FileDialog::open_file(<span class="prelude-val">None</span>).filename_filter(Box::new(|p| {
+            Path::new(p)
+                .extension()
+                .map_or(<span class="bool-val">false</span>, |ext| ext.eq_ignore_ascii_case(<span class="string">&quot;exr&quot;</span>))
+        }));
 
-            scene
-                .lights
-                .iter_mut()
-                .enumerate()
-                .filter_map(|(n, light)| {
-                    <span class="kw">let </span><span class="kw-2">mut </span>remove = <span class="bool-val">false</span>;
+        dialog.open();
+
+        <span class="self">self</span>.skybox_dialog = <span class="prelude-val">Some</span>(dialog);
+    }
+
+    <span class="kw">fn </span>lights(ui: <span class="kw-2">&amp;mut </span>Ui, scene: <span class="kw-2">&amp;mut </span>Scene) {
+        ui.vertical(|ui| {
+            ui.group(|ui| {
+                CollapsingHeader::new(
+                    RichText::new(<span class="macro">format!</span>(<span class="string">&quot;{} ({})&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;lights&quot;</span>), scene.lights.len())).size(<span class="number">16.0</span>),
+                )
+                .show_unindented(ui, |ui| {
+                    scene
+                        .lights
+                        .iter_mut()
+                        .enumerate()
+                        .filter_map(|(n, light)| {
+                            <span class="kw">let </span><span class="kw-2">mut </span>remove = <span class="bool-val">false</span>;
+
+                            ui.separator();
+
+                            ui.horizontal(|ui| {
+                                ui.label(
+                                    RichText::new(<span class="macro">format!</span>(<span class="string">&quot;{} {n}&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;light&quot;</span>)))
+                                        .size(<span class="number">14.0</span>)
+                                        .family(FontFamily::Monospace),
+                                );
+                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                    remove = ui
+                                        .add_sized(
+                                            [<span class="number">20.0</span>, <span class="number">20.0</span>],
+                                            ImageButton::new(<span class="macro">include_image!</span>(
+                                                <span class="string">&quot;../../res/icons/trash-solid.svg&quot;
+                                            </span>))
+                                            .tint(<span class="macro">hex_color!</span>(<span class="string">&quot;#cc0000&quot;</span>)),
+                                        )
+                                        .clicked();
+                                });
+                            });
+
+                            ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;position&quot;</span>)));
+
+                            xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>light.position);
+
+                            ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;intensity&quot;</span>)));
+
+                            ui.add(
+                                Slider::new(<span class="kw-2">&amp;mut </span>light.intensity, <span class="number">0.0</span>..=<span class="number">100.0</span>).clamp_to_range(<span class="bool-val">true</span>),
+                            );
+
+                            ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;color&quot;</span>)));
+
+                            color_picker::color_edit_button_rgb(ui, light.color.as_mut());
+
+                            remove.then_some(n)
+                        })
+                        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+                        .into_iter()
+                        .for_each(|n| {
+                            scene.lights.remove(n);
+                        });
 
                     ui.separator();
-
-                    ui.horizontal(|ui| {
-                        ui.label(
-                            RichText::new(<span class="macro">format!</span>(<span class="string">&quot;Light {n}&quot;</span>))
-                                .size(<span class="number">14.0</span>)
-                                .family(FontFamily::Monospace),
-                        );
-                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            remove = ui
-                                .add_sized(
-                                    [<span class="number">20.0</span>, <span class="number">20.0</span>],
-                                    ImageButton::new(<span class="macro">include_image!</span>(
-                                        <span class="string">&quot;../../res/icons/trash-solid.svg&quot;
-                                    </span>))
-                                    .tint(<span class="macro">hex_color!</span>(<span class="string">&quot;#cc0000&quot;</span>)),
-                                )
-                                .clicked();
-                        });
+                    ui.vertical_centered(|ui| {
+                        ui.add(Button::new(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;add_light&quot;</span>))).frame(<span class="bool-val">false</span>))
+                            .clicked()
+                            .then(|| {
+                                scene.lights.push(Light {
+                                    position: nalgebra::Point3::new(<span class="number">5.0</span>, <span class="number">2.0</span>, <span class="number">2.0</span>),
+                                    intensity: <span class="number">3.0</span>,
+                                    color: nalgebra::Vector3::new(<span class="number">1.0</span>, <span class="number">1.0</span>, <span class="number">1.0</span>),
+                                });
+                            });
                     });
-
-                    ui.label(<span class="string">&quot;Position:&quot;</span>);
-
-                    xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>light.position);
-
-                    ui.label(<span class="string">&quot;Intensity:&quot;</span>);
-
-                    ui.add(Slider::new(<span class="kw-2">&amp;mut </span>light.intensity, <span class="number">0.0</span>..=<span class="number">100.0</span>).clamp_to_range(<span class="bool-val">true</span>));
-
-                    ui.label(<span class="string">&quot;Color:&quot;</span>);
-
-                    color_picker::color_edit_button_rgb(ui, light.color.as_mut());
-
-                    remove.then_some(n)
-                })
-                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                .into_iter()
-                .for_each(|n| {
-                    scene.lights.remove(n);
                 });
-
-            ui.separator();
-            ui.vertical_centered(|ui| {
-                ui.add(Button::new(RichText::new(<span class="string">&quot;+ Add Light&quot;</span>)).frame(<span class="bool-val">false</span>))
-                    .clicked()
-                    .then(|| {
-                        scene.lights.push(Light {
-                            position: nalgebra::Point3::new(<span class="number">5.0</span>, <span class="number">2.0</span>, <span class="number">2.0</span>),
-                            intensity: <span class="number">3.0</span>,
-                            color: nalgebra::Vector3::new(<span class="number">1.0</span>, <span class="number">1.0</span>, <span class="number">1.0</span>),
-                        });
-                    });
             });
         });
     }
 
     <span class="kw">fn </span>objects(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui, scene: <span class="kw-2">&amp;mut </span>Scene) {
-        ui.group(|ui| {
-            ui.vertical_centered(|ui| {
-                ui.label(RichText::new(<span class="macro">format!</span>(<span class="string">&quot;Objects ({})&quot;</span>, scene.objects.len())).size(<span class="number">16.0</span>));
-            });
+        ui.vertical(|ui| {
+            ui.group(|ui| {
+                CollapsingHeader::new(
+                    RichText::new(<span class="macro">format!</span>(<span class="string">&quot;{} ({})&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;objects&quot;</span>), scene.objects.len()))
+                        .size(<span class="number">16.0</span>),
+                )
+                .show_unindented(ui, |ui| {
+                    <span class="kw">let </span><span class="kw-2">mut </span>objects_to_remove = Vec::new();
 
-            <span class="kw">let </span><span class="kw-2">mut </span>objects_to_remove = Vec::new();
+                    <span class="kw">for </span>(n, o) <span class="kw">in </span>scene.objects.iter_mut().enumerate() {
+                        ui.separator();
 
-            <span class="kw">for </span>(n, o) <span class="kw">in </span>scene.objects.iter_mut().enumerate() {
-                ui.separator();
+                        ui.horizontal(|ui| {
+                            ui.label(
+                                RichText::new(<span class="macro">format!</span>(<span class="string">&quot;{} ({} ▲)&quot;</span>, o.name, o.triangles.len()))
+                                    .size(<span class="number">14.0</span>)
+                                    .family(FontFamily::Monospace),
+                            );
+                            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                <span class="kw">if </span>ui
+                                    .add_sized(
+                                        [<span class="number">20.0</span>, <span class="number">20.0</span>],
+                                        ImageButton::new(<span class="macro">include_image!</span>(
+                                            <span class="string">&quot;../../res/icons/trash-solid.svg&quot;
+                                        </span>))
+                                        .tint(<span class="macro">hex_color!</span>(<span class="string">&quot;#cc0000&quot;</span>)),
+                                    )
+                                    .clicked()
+                                {
+                                    objects_to_remove.push(n);
+                                }
+                            });
+                        });
 
-                ui.horizontal(|ui| {
-                    ui.label(
-                        RichText::new(<span class="macro">format!</span>(<span class="string">&quot;Object {} ({} ▲)&quot;</span>, n, o.triangles.len()))
-                            .size(<span class="number">14.0</span>)
-                            .family(FontFamily::Monospace),
-                    );
-                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;position&quot;</span>)));
+
+                        xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>o.translation);
+
+                        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;rotation&quot;</span>)));
+
+                        ui.horizontal(|ui| {
+                            <span class="kw">let </span>(<span class="kw-2">mut </span>x, <span class="kw-2">mut </span>y, <span class="kw-2">mut </span>z) = o.rotation.euler_angles();
+
+                            [(<span class="string">&quot;x&quot;</span>, <span class="kw-2">&amp;mut </span>x), (<span class="string">&quot;y&quot;</span>, <span class="kw-2">&amp;mut </span>y), (<span class="string">&quot;z&quot;</span>, <span class="kw-2">&amp;mut </span>z)]
+                                .iter_mut()
+                                .any(|(prefix, angle)| {
+                                    ui.add(
+                                        DragValue::new(<span class="kw-2">*</span>angle)
+                                            .speed(<span class="number">0.01</span>)
+                                            .custom_formatter(|f, <span class="kw">_</span>| {
+                                                <span class="macro">format!</span>(<span class="string">&quot;{:.1}°&quot;</span>, f.to_degrees())
+                                            })
+                                            .prefix(<span class="macro">format!</span>(<span class="string">&quot;{prefix}: &quot;</span>)),
+                                    )
+                                    .changed()
+                                })
+                                .then(|| {
+                                    o.rotation =
+                                        nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
+                                })
+                        });
+
+                        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;scale&quot;</span>)));
+
+                        xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>o.scale);
+                    }
+
+                    <span class="kw">for </span>o <span class="kw">in </span>objects_to_remove {
+                        scene.objects.remove(o);
+                    }
+
+                    ui.separator();
+                    ui.vertical_centered(|ui| {
                         <span class="kw">if </span>ui
-                            .add_sized(
-                                [<span class="number">20.0</span>, <span class="number">20.0</span>],
-                                ImageButton::new(<span class="macro">include_image!</span>(<span class="string">&quot;../../res/icons/trash-solid.svg&quot;</span>))
-                                    .tint(<span class="macro">hex_color!</span>(<span class="string">&quot;#cc0000&quot;</span>)),
-                            )
+                            .add(Button::new(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;add_object&quot;</span>))).frame(<span class="bool-val">false</span>))
                             .clicked()
                         {
-                            objects_to_remove.push(n);
+                            <span class="kw">let </span><span class="kw-2">mut </span>dialog =
+                                FileDialog::open_file(<span class="prelude-val">None</span>).show_files_filter(Box::new(|path| {
+                                    path.extension()
+                                        .is_some_and(|ext| ext.eq_ignore_ascii_case(<span class="string">&quot;obj&quot;</span>))
+                                }));
+                            dialog.open();
+                            <span class="self">self</span>.object_dialog = <span class="prelude-val">Some</span>(dialog);
+                        }
+
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.object_dialog {
+                            <span class="kw">if </span>dialog.show(ui.ctx()).selected() {
+                                <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = dialog.path() {
+                                    <span class="kw">match </span>Object::from_obj(
+                                        file,
+                                        Translation3::identity(),
+                                        UnitQuaternion::identity(),
+                                        Scale3::identity(),
+                                    ) {
+                                        <span class="prelude-val">Ok</span>(object) =&gt; {
+                                            scene.objects.push(object);
+                                        }
+                                        <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;Failed to load object: {}&quot;</span>, e),
+                                    }
+                                }
+                            }
                         }
                     });
                 });
-
-                ui.label(<span class="string">&quot;Position&quot;</span>);
-
-                xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>o.translation);
-
-                ui.label(<span class="string">&quot;Rotation&quot;</span>);
-
-                ui.horizontal(|ui| {
-                    <span class="kw">let </span>(<span class="kw-2">mut </span>x, <span class="kw-2">mut </span>y, <span class="kw-2">mut </span>z) = o.rotation.euler_angles();
-
-                    [(<span class="string">&quot;x&quot;</span>, <span class="kw-2">&amp;mut </span>x), (<span class="string">&quot;y&quot;</span>, <span class="kw-2">&amp;mut </span>y), (<span class="string">&quot;z&quot;</span>, <span class="kw-2">&amp;mut </span>z)]
-                        .iter_mut()
-                        .any(|(prefix, angle)| {
-                            ui.add(
-                                DragValue::new(<span class="kw-2">*</span>angle)
-                                    .speed(<span class="number">0.01</span>)
-                                    .custom_formatter(|f, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{:.1}°&quot;</span>, f.to_degrees()))
-                                    .prefix(<span class="macro">format!</span>(<span class="string">&quot;{prefix}: &quot;</span>)),
-                            )
-                            .changed()
-                        })
-                        .then(|| {
-                            o.rotation = nalgebra::UnitQuaternion::from_euler_angles(x, y, z);
-                        })
-                });
-
-                ui.label(<span class="string">&quot;Scale&quot;</span>);
-
-                xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>o.scale);
-            }
-
-            <span class="kw">for </span>o <span class="kw">in </span>objects_to_remove {
-                scene.objects.remove(o);
-            }
-
-            ui.separator();
-            ui.vertical_centered(|ui| {
-                <span class="kw">if </span>ui
-                    .add(Button::new(RichText::new(<span class="string">&quot;+ Add Object&quot;</span>)).frame(<span class="bool-val">false</span>))
-                    .clicked()
-                {
-                    <span class="kw">let </span><span class="kw-2">mut </span>dialog =
-                        FileDialog::open_file(<span class="prelude-val">None</span>).show_files_filter(Box::new(|path| {
-                            path.extension().is_some_and(|ext| ext == <span class="string">&quot;obj&quot;</span>)
-                        }));
-                    dialog.open();
-                    <span class="self">self</span>.object_dialog = <span class="prelude-val">Some</span>(dialog);
-                }
-
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.object_dialog {
-                    <span class="kw">if </span>dialog.show(ui.ctx()).selected() {
-                        <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = dialog.path() {
-                            <span class="kw">match </span>Object::from_obj(
-                                file,
-                                Translation3::identity(),
-                                UnitQuaternion::identity(),
-                                Scale3::identity(),
-                            ) {
-                                <span class="prelude-val">Ok</span>(object) =&gt; {
-                                    scene.objects.push(object);
-                                }
-                                <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;Failed to load object: {}&quot;</span>, e),
-                            }
-                        }
-                    }
-                }
             });
         });
     }

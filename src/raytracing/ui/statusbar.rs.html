@@ -179,6 +179,12 @@
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
 <a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::Ordering;
 
 <span class="kw">use </span>egui::special_emojis::GITHUB;
@@ -187,10 +193,12 @@
 };
 <span class="kw">use </span>egui_file::FileDialog;
 <span class="kw">use </span>log::{info, warn};
+<span class="kw">use </span>rust_i18n::t;
 
+<span class="kw">use </span><span class="kw">crate</span>::raytracer::render::Render;
 <span class="kw">use </span><span class="kw">crate</span>::scene::Scene;
 
-<span class="kw">use super</span>::{render::Render, Tab};
+<span class="kw">use </span><span class="kw">super</span>::Tab;
 
 <span class="kw">pub struct </span>StatusBar {
     save_render_dialog: <span class="prelude-ty">Option</span>&lt;FileDialog&gt;,
@@ -214,13 +222,13 @@
         current_tab: <span class="kw-2">&amp;mut </span>Tab,
     ) {
         ui.horizontal(|ui| {
-            ui.selectable_label(<span class="kw-2">*</span>current_tab == Tab::Preview, <span class="string">&quot;Preview&quot;</span>)
+            ui.selectable_label(<span class="kw-2">*</span>current_tab == Tab::Preview, <span class="macro">t!</span>(<span class="string">&quot;preview&quot;</span>))
                 .clicked()
                 .then(|| {
                     <span class="kw-2">*</span>current_tab = Tab::Preview;
                 });
 
-            ui.selectable_label(<span class="kw-2">*</span>current_tab == Tab::RenderResult, <span class="string">&quot;Render&quot;</span>)
+            ui.selectable_label(<span class="kw-2">*</span>current_tab == Tab::RenderResult, <span class="macro">t!</span>(<span class="string">&quot;render&quot;</span>))
                 .clicked()
                 .then(|| {
                     <span class="kw-2">*</span>current_tab = Tab::RenderResult;
@@ -245,7 +253,7 @@
     }
 
     <span class="kw">fn </span>about_window(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
-        Window::new(<span class="string">&quot;About&quot;</span>)
+        Window::new(<span class="macro">t!</span>(<span class="string">&quot;about&quot;</span>))
             .resizable(<span class="bool-val">false</span>)
             .collapsible(<span class="bool-val">false</span>)
             .open(<span class="kw-2">&amp;mut </span><span class="self">self</span>.show_about)
@@ -260,14 +268,14 @@
                             .rounding(<span class="number">10.0</span>),
                     );
 
-                    ui.label(<span class="macro">format!</span>(<span class="string">&quot;Version: {}&quot;</span>, <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>)));
+                    ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}: {}&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;version&quot;</span>), <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>)));
                     ui.hyperlink_to(
-                        <span class="macro">format!</span>(<span class="string">&quot;{GITHUB} GitHub&quot;</span>),
+                        <span class="macro">format!</span>(<span class="string">&quot;{GITHUB} {}&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;github&quot;</span>)),
                         <span class="string">&quot;https://github.com/bircni/Raytracing&quot;</span>,
                     );
 
-                    ui.hyperlink_to(<span class="string">&quot;Built with egui&quot;</span>, <span class="string">&quot;https://docs.rs/egui/&quot;</span>);
-                    ui.label(<span class="string">&quot;© 2024 Team TrayRacer&quot;</span>);
+                    ui.hyperlink_to(<span class="macro">t!</span>(<span class="string">&quot;built_with&quot;</span>), <span class="string">&quot;https://docs.rs/egui/&quot;</span>);
+                    ui.label(<span class="macro">t!</span>(<span class="string">&quot;copyright&quot;</span>));
                 });
             });
     }
@@ -276,15 +284,16 @@
         <span class="kw">if </span>ui
             .add_enabled(
                 render.progress.load(Ordering::Relaxed) == u16::MAX,
-                Button::new(<span class="string">&quot;Export&quot;</span>),
+                Button::new(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;export&quot;</span>)).size(<span class="number">14.0</span>)),
             )
             .clicked()
         {
             <span class="macro">info!</span>(<span class="string">&quot;Exporting image&quot;</span>);
             <span class="self">self</span>.save_render_dialog
                 .get_or_insert_with(|| {
+                    <span class="kw">let </span>(x, y) = render.image.lock().dimensions();
                     FileDialog::save_file(<span class="prelude-val">None</span>)
-                        .default_filename(<span class="string">&quot;render.png&quot;</span>)
+                        .default_filename(<span class="macro">format!</span>(<span class="string">&quot;render_{x}x{y}.png&quot;</span>))
                         .filename_filter(Box::new(|name| {
                             [<span class="string">&quot;.png&quot;</span>, <span class="string">&quot;.jpg&quot;</span>, <span class="string">&quot;.jpeg&quot;</span>]
                                 .into_iter()
@@ -318,17 +327,19 @@
         current_tab: <span class="kw-2">&amp;mut </span>Tab,
     ) {
         <span class="kw">if </span>render.thread.is_some() {
-            ui.button(<span class="string">&quot;Cancel&quot;</span>).clicked().then(|| {
+            ui.button(<span class="macro">t!</span>(<span class="string">&quot;cancel&quot;</span>)).clicked().then(|| {
                 render.cancel.store(<span class="bool-val">true</span>, Ordering::Relaxed);
             });
         } <span class="kw">else </span>{
             ui.add_enabled_ui(render.thread.is_none() &amp;&amp; scene.is_some(), |ui| {
-                ui.button(<span class="string">&quot;Render&quot;</span>).clicked().then(|| {
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(scene) = scene {
-                        render.render(ui.ctx().clone(), scene);
-                        <span class="kw-2">*</span>current_tab = Tab::RenderResult;
-                    }
-                })
+                ui.button(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;render&quot;</span>)).size(<span class="number">14.0</span>))
+                    .clicked()
+                    .then(|| {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(scene) = scene {
+                            render.render(ui.ctx().clone(), scene);
+                            <span class="kw-2">*</span>current_tab = Tab::RenderResult;
+                        }
+                    })
             });
         }
     }
@@ -343,7 +354,8 @@
                         <span class="attr">#[allow(clippy::float_cmp)]
                         </span><span class="kw">if </span>progress == <span class="number">1.0 </span>{
                             <span class="macro">format!</span>(
-                                <span class="string">&quot;Done in: {:.2} s&quot;</span>,
+                                <span class="string">&quot;{}: {:.2} s&quot;</span>,
+                                <span class="macro">t!</span>(<span class="string">&quot;done&quot;</span>),
                                 render.time.load(Ordering::Relaxed) <span class="kw">as </span>f32 / <span class="number">1000.0
                             </span>)
                         } <span class="kw">else if </span>progress &gt; <span class="number">0.0 </span>{
@@ -357,7 +369,7 @@
                 .fill(Color32::BLUE),
         );
 
-        ui.label(<span class="string">&quot;Rendering progress&quot;</span>);
+        ui.label(<span class="macro">t!</span>(<span class="string">&quot;render_progress&quot;</span>));
     }
 }
 </code></pre></div></section></main></body></html>

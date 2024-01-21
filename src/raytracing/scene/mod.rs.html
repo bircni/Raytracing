@@ -134,11 +134,15 @@
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>log::warn;
 <span class="kw">use </span>nalgebra::Vector3;
+<span class="kw">use </span>rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 <span class="kw">use </span>serde::{de::DeserializeSeed, Deserialize, Serialize};
 
 <span class="kw">pub use </span><span class="self">self</span>::{
@@ -190,7 +194,9 @@
 
 <span class="kw">struct </span>WithRelativePath&lt;P: AsRef&lt;std::path::Path&gt;&gt;(P);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>, P: AsRef&lt;std::path::Path&gt;&gt; serde::de::DeserializeSeed&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>WithRelativePath&lt;P&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>, P: AsRef&lt;std::path::Path&gt; + std::marker::Sync&gt; serde::de::DeserializeSeed&lt;<span class="lifetime">&#39;de</span>&gt;
+    <span class="kw">for </span>WithRelativePath&lt;P&gt;
+{
     <span class="kw">type </span>Value = Scene;
 
     <span class="kw">fn </span>deserialize&lt;D&gt;(<span class="self">self</span>, deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Value, D::Error&gt;
@@ -206,7 +212,7 @@
             .ok_or_else(|| {
                 serde::de::Error::invalid_type(serde::de::Unexpected::Map, <span class="kw-2">&amp;</span><span class="string">&quot;a sequence&quot;</span>)
             })<span class="question-mark">?
-            </span>.iter()
+            </span>.par_iter()
             .map(|v| object::WithRelativePath(<span class="self">self</span>.<span class="number">0</span>.as_ref()).deserialize(v))
             .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;Object&gt;, serde_yaml::Error&gt;&gt;()
             .map_err(serde::de::Error::custom)<span class="question-mark">?</span>;

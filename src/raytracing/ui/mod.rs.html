@@ -147,22 +147,18 @@
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="self">self</span>::preview::Preview;
-<span class="kw">use </span><span class="self">self</span>::render::Render;
 <span class="kw">use </span><span class="self">self</span>::renderresult::RenderResult;
 <span class="kw">use </span><span class="self">self</span>::statusbar::StatusBar;
 <span class="kw">use </span><span class="self">self</span>::yamlmenu::YamlMenu;
+<span class="kw">use </span><span class="kw">crate</span>::raytracer::render::Render;
 <span class="kw">use </span><span class="kw">crate</span>::scene::Scene;
 <span class="kw">use </span><span class="kw">crate</span>::ui::properties::Properties;
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>eframe::CreationContext;
 <span class="kw">use </span>egui::mutex::{Mutex, RwLock};
 <span class="kw">use </span>egui::{
-    vec2, Align, CentralPanel, ColorImage, Direction, ImageData, Layout, ScrollArea, SidePanel,
-    TextStyle, TextureOptions,
+    vec2, CentralPanel, ColorImage, ImageData, ScrollArea, SidePanel, TextStyle, TextureOptions,
 };
 <span class="kw">use </span>image::ImageBuffer;
 <span class="kw">use </span>std::sync::atomic::Ordering;
@@ -171,7 +167,6 @@
 
 <span class="kw">mod </span>preview;
 <span class="kw">mod </span>properties;
-<span class="kw">mod </span>render;
 <span class="kw">mod </span>renderresult;
 <span class="kw">mod </span>statusbar;
 <span class="kw">mod </span>yamlmenu;
@@ -207,21 +202,20 @@
         );
 
         <span class="comment">// create initial render texture (GPU exclusive) and image buffer (CPU exclusive)
-        </span><span class="kw">let </span>(render_texture, image_buffer) = {
-            <span class="kw">let </span>texture = cc.egui_ctx.load_texture(
-                <span class="string">&quot;render&quot;</span>,
-                ImageData::Color(Arc::new(ColorImage::example())),
-                TextureOptions::default(),
-            );
-            <span class="kw">let </span>image_buffer = Arc::new(Mutex::new(ImageBuffer::new(<span class="number">0</span>, <span class="number">0</span>)));
-            (texture, image_buffer)
-        };
+        </span><span class="kw">let </span>render_texture = cc.egui_ctx.load_texture(
+            <span class="string">&quot;render&quot;</span>,
+            ImageData::Color(Arc::new(ColorImage::example())),
+            TextureOptions::default(),
+        );
+        <span class="kw">let </span>image_buffer = Arc::new(Mutex::new(ImageBuffer::new(<span class="number">0</span>, <span class="number">0</span>)));
 
         cc.egui_ctx.style_mut(|s| {
             s.text_styles.insert(
                 TextStyle::Name(<span class="string">&quot;subheading&quot;</span>.into()),
                 TextStyle::Monospace.resolve(s),
             );
+            s.text_styles
+                .insert(TextStyle::Body, TextStyle::Monospace.resolve(s));
             s.spacing.item_spacing = vec2(<span class="number">10.0</span>, std::f32::consts::PI * <span class="number">1.76643</span>);
         });
 
@@ -255,7 +249,6 @@
 
         <span class="comment">// lock the scene for the duration of the frame
         </span><span class="kw">let </span><span class="kw-2">mut </span>scene = <span class="self">self</span>.scene.write();
-
         CentralPanel::default().show(ctx, |ui| {
             <span class="self">self</span>.statusbar
                 .show(ui, scene.as_mut(), <span class="kw-2">&amp;mut </span><span class="self">self</span>.render, <span class="kw-2">&amp;mut </span><span class="self">self</span>.current_tab);
@@ -280,18 +273,19 @@
                             });
                         });
 
-                    <span class="kw">match </span>scene.as_mut() {
-                        <span class="prelude-val">Some</span>(scene) =&gt; <span class="self">self</span>.preview.show(ui, scene),
-                        <span class="prelude-val">None </span>=&gt; {
-                            ui.with_layout(
-                                Layout::centered_and_justified(Direction::LeftToRight)
-                                    .with_main_align(Align::Center),
-                                |ui| {
-                                    ui.heading(<span class="string">&quot;No scene loaded&quot;</span>);
-                                },
-                            );
-                        }
-                    }
+                    <span class="comment">//if let Some(scene) = scene.as_mut() {
+                    //    self.preview.show(ui, scene);
+                    //} else {
+                    //    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                    //        ui.horizontal(|ui| {
+                    //            ui.vertical_centered(|ui| {
+                    //                ui.heading(t!(&quot;no_scene_loaded&quot;));
+                    //                ui.label(RichText::new(t!(&quot;drop_yaml&quot;)));
+                    //            });
+                    //        });
+                    //    });
+                    //}
+                    </span><span class="self">self</span>.preview.show(ui, <span class="kw-2">&amp;mut </span>scene);
                 }
                 Tab::RenderResult =&gt; {
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(scene) = scene.as_ref() {

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["main"],"mod":["raytracer","scene","ui"]};
+window.SIDEBAR_ITEMS = {"fn":["_rust_i18n_available_locales","_rust_i18n_lookup_fallback","_rust_i18n_translate","main"],"mod":["raytracer","scene","ui"],"static":["_RUST_I18N_BACKEND","_RUST_I18N_FALLBACK_LOCALE"]};
