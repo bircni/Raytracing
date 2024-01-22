@@ -53,7 +53,7 @@ nalgebra = { version = "0.32.3", features = ["glam022"] }
 obj = "0.10.2"
 
 # automatic parallelization
-rayon = "1.8.0"
+rayon = "1.8.1"
 bytemuck = { version = "1.14.0", features = ["derive"] }
 
 # total order for floats
