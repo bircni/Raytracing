@@ -8,44 +8,58 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_sign_loss)]
 
+extern crate rust_i18n;
+
 use anyhow::Context;
 use eframe::Renderer;
-use log::{error, LevelFilter};
-use nalgebra::Vector3;
+use egui::ViewportBuilder;
+use log::{error, info, LevelFilter};
+use rust_i18n::i18n;
 use scene::Scene;
 use simplelog::{ColorChoice, ConfigBuilder, TerminalMode};
+use sys_locale::get_locale;
 
 mod raytracer;
 mod scene;
 mod ui;
-
-type Color = Vector3<f32>;
+i18n!("locales", fallback = "en");
 
 fn main() -> anyhow::Result<()> {
+    rust_i18n::set_locale(
+        get_locale()
+            .unwrap_or_else(|| String::from("en-US"))
+            .as_str(),
+    );
     simplelog::TermLogger::init(
         #[cfg(debug_assertions)]
         LevelFilter::Trace,
         #[cfg(not(debug_assertions))]
         LevelFilter::Info,
         ConfigBuilder::new()
+            // suppress all logs from dependencies
             .add_filter_allow_str("raytracing")
             .build(),
         TerminalMode::Mixed,
         ColorChoice::Auto,
     )
     .context("Failed to initialize logger")?;
+    info!(
+        "available translations: {:?}",
+        rust_i18n::available_locales!()
+    );
+    let viewport = ViewportBuilder::default()
+        .with_title("Trayracer")
+        .with_app_id("raytracer")
+        .with_inner_size(egui::vec2(1600.0, 900.0))
+        .with_icon(
+            eframe::icon_data::from_png_bytes(include_bytes!("../res/icon.png"))
+                .unwrap_or_default(),
+        );
 
     eframe::run_native(
         "TrayRacer",
         eframe::NativeOptions {
-            viewport: egui::ViewportBuilder::default()
-                .with_inner_size(egui::vec2(1600.0, 900.0))
-                .with_icon(
-                    eframe::icon_data::from_png_bytes(include_bytes!("../res/icon.png"))
-                        .unwrap_or_default(),
-                )
-                .with_app_id("raytracer")
-                .with_title("Trayracer"),
+            viewport,
             renderer: Renderer::Wgpu,
             depth_buffer: 32,
             follow_system_theme: true,

@@ -1,9 +1,8 @@
-use crate::Color;
-
-use super::Skybox;
+use super::{Color, Skybox};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Settings {
+    // TODO: Actually use these
     pub max_bounces: u32,
     pub samples: u32,
     pub ambient_color: Color,
@@ -26,7 +25,7 @@ impl Default for Settings {
 }
 
 mod yaml {
-    use crate::{scene::Skybox, Color};
+    use crate::scene::{Color, Skybox};
 
     use super::Settings;
     use serde::{Deserialize, Serialize};
@@ -55,7 +54,7 @@ mod yaml {
                     .unwrap_or_default(),
                 ambient_intensity: yaml_extras.ambient_color.norm(),
                 skybox: yaml_extras.skybox,
-                anti_aliasing: false,
+                anti_aliasing: yaml_extras.anti_aliasing,
             })
         }
     }

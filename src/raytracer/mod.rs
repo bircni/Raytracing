@@ -1,12 +1,10 @@
+use crate::scene::{Color, Material, Scene, Skybox};
 use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
-use rayon::prelude::*;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-use crate::{
-    scene::{Material, Scene, Skybox},
-    Color,
-};
+pub mod render;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ray {
@@ -24,8 +22,10 @@ pub struct Hit<'a> {
 }
 
 pub struct Raytracer {
+    /// Scene is cloned into here for rendering
     scene: Scene,
     delta: f32,
+    /// max number of nested shade calls
     max_depth: u32,
 }
 
@@ -53,17 +53,19 @@ impl Raytracer {
     }
 
     fn skybox(&self, direction: Vector3<f32>) -> Color {
-        let direction = direction
-            .try_normalize(f32::EPSILON)
-            .unwrap_or(Vector3::y());
-
-        let x = 0.5 + direction.z.atan2(direction.x) / (2.0 * std::f32::consts::PI);
-        let y = 0.5 - direction.y.asin() / std::f32::consts::PI;
-
         match &self.scene.settings.skybox {
             Skybox::Image { image, .. } => {
-                let x = (x * image.width() as f32) as u32 % image.width();
-                let y = (y * image.height() as f32) as u32 % image.height();
+                let direction = direction
+                    .try_normalize(f32::EPSILON)
+                    .unwrap_or(Vector3::y());
+
+                // shperical mapping
+                let x = ((0.5 + direction.z.atan2(direction.x) / (2.0 * std::f32::consts::PI))
+                    * image.width() as f32) as u32
+                    % image.width();
+                let y = ((0.5 - direction.y.asin() / std::f32::consts::PI) * image.height() as f32)
+                    as u32
+                    % image.height();
 
                 let pixel = image.get_pixel(x, y);
 
@@ -88,6 +90,7 @@ impl Raytracer {
         )
     }
 
+    /// Raycast and continue on hits if the material is transparent
     fn raycast_transparent(&self, ray: Ray) -> Box<[Hit]> {
         let mut hits = Vec::<Hit>::new();
         let mut ray = ray;
@@ -203,9 +206,6 @@ impl Raytracer {
         color
     }
 
-    fn random_float() -> f32 {
-        rand::random::<f32>() * 2.0 - 1.0
-    }
     /// Render a pixel at the given coordinates.
     /// x and y are in the range 0..width and 0..height
     /// where (0, 0) is the top left corner.
@@ -217,8 +217,7 @@ impl Raytracer {
         anti_aliasing: bool,
     ) -> Color {
         if anti_aliasing {
-            let samples_per_pixel = 64;
-            //let samples_per_pixel = self.scene.settings.samples_per_pixel;
+            let samples_per_pixel = self.scene.settings.samples;
             let sqrt_samples = (samples_per_pixel as f32).sqrt() as u32;
 
             (0..samples_per_pixel)
@@ -227,10 +226,10 @@ impl Raytracer {
                     let xi = i % sqrt_samples;
                     let yi = i / sqrt_samples;
                     let jitter_x = (x as f32
-                        + (xi as f32 + Self::random_float()) / sqrt_samples as f32)
+                        + (xi as f32 + (rand::random::<f32>() * 2.0 - 1.0)) / sqrt_samples as f32)
                         / width as f32;
                     let jitter_y = (y as f32
-                        + (yi as f32 + Self::random_float()) / sqrt_samples as f32)
+                        + (yi as f32 + (rand::random::<f32>() * 2.0 - 1.0)) / sqrt_samples as f32)
                         / height as f32;
                     let x = (jitter_x * 2.0 - 1.0) * (width as f32 / height as f32);
                     let y = jitter_y * 2.0 - 1.0;
@@ -252,34 +251,4 @@ impl Raytracer {
             self.shade(ray, 0)
         }
     }
-
-    //anti-aliasing light
-    /*  pub fn render(
-        &self,
-        (x, y): (u32, u32),
-        (width, height): (u32, u32),
-        anti_aliasing: bool,
-    ) -> Color {
-        if anti_aliasing {
-            let mut color = Color::default();
-            //let samples_per_pixel = self.scene.settings.samples;
-            let samples_per_pixel = 6;
-            for _ in 0..samples_per_pixel {
-                let jitter_x = (x as f32 + Self::random_float() / width as f32) / width as f32;
-                let jitter_y = (y as f32 + Self::random_float() / height as f32) / height as f32;
-                let x = (jitter_x * 2.0 - 1.0) * (width as f32 / height as f32);
-                let y = jitter_y * 2.0 - 1.0;
-                let ray = self.scene.camera.ray(x, y);
-                color += self.shade(ray, 0);
-            }
-            color /= samples_per_pixel as f32;
-            color
-        } else {
-            let x = ((x as f32 / width as f32) * 2.0 - 1.0) * (width as f32 / height as f32);
-            let y = (y as f32 / height as f32) * 2.0 - 1.0;
-
-            let ray = self.scene.camera.ray(x, y);
-            self.shade(ray, 0)
-        }
-    }   */
 }

@@ -1,7 +1,8 @@
+/// provide (de)serialization for Color (aka. Vector3<f32>) from r,g,b fields
 pub mod color {
     use serde::{Deserialize, Serialize};
 
-    use crate::Color;
+    use crate::scene::Color;
 
     #[derive(Serialize, Deserialize)]
     struct Yaml {
@@ -31,6 +32,7 @@ pub mod color {
     }
 }
 
+/// provide (de)serialization for Point3<f32> from x,y,z fields
 pub mod point {
     use nalgebra::Point3;
     use serde::{Deserialize, Serialize};
@@ -63,6 +65,7 @@ pub mod point {
     }
 }
 
+/// provide (de)serialization for Vector3<f32> from x,y,z fields
 pub mod vector {
     use nalgebra::Vector3;
     use serde::{Deserialize, Serialize};
