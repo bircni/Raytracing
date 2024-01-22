@@ -2,6 +2,25 @@
 name = "raytracing"
 version = "1.0.0"
 edition = "2021"
+description = "Rust Raytracer."
+
+[package.metadata.bundle]
+name = "TrayRacer"
+identifier = "bircni.TrayRacer"
+icon = [
+    "res/mac-icons/icon_16x16.png",
+    "res/mac-icons/icon_32x32.png",
+    "res/mac-icons/icon_128x128.png",
+    "res/mac-icons/icon_256x256.png",
+    "res/mac-icons/icon_16x16@2x.png",
+    "res/mac-icons/icon_32x32@2x.png",
+    "res/mac-icons/icon_128x128@2x.png",
+]
+version = "1.0.0"
+resources = ["./../res/mac-icons/icon*.png"]
+copyright = "© 2024 Team TrayRacer"
+category = "Developer Tool"
+short_description = "A Raytracer."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
