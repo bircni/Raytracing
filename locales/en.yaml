@@ -123,6 +123,9 @@ scale:
 add_object:
   en: + Add object
 
+anti_aliasing:
+  de: Anti-Aliasing
+
 # ui/mod
 
 drop_yaml:

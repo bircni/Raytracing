@@ -96,15 +96,6 @@ impl Properties {
 
                         Self::render_options(ui, render, scene);
 
-                        ui.checkbox(&mut scene.settings.anti_aliasing, "Anti-Aliasing");
-                        if scene.settings.anti_aliasing {
-                            ui.label("Samples per pixel:");
-                            ui.add(
-                                Slider::new(&mut scene.settings.samples, 1..=128)
-                                    .clamp_to_range(true),
-                            );
-                        }
-
                         self.skybox_options(ui, scene);
 
                         ui.label(format!("{}:", t!("ambient_color")));
@@ -142,6 +133,13 @@ impl Properties {
                             ui.selectable_value(&mut scene.camera.resolution, (3840, 2160), "4k");
                             ui.selectable_value(&mut scene.camera.resolution, (7680, 4320), "8k");
                         });
+                    ui.checkbox(&mut scene.settings.anti_aliasing, "Anti-Aliasing");
+                    if scene.settings.anti_aliasing {
+                        ui.label("Samples per pixel:");
+                        ui.add(
+                            Slider::new(&mut scene.settings.samples, 1..=128).clamp_to_range(true),
+                        );
+                    }
                     ui.horizontal(|ui| {
                         let (x, y) = &mut scene.camera.resolution;
                         ui.add(
