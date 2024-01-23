@@ -126,6 +126,9 @@ add_object:
 anti_aliasing:
   de: Anti-Aliasing
 
+samples:
+  de: Abtastwerte pro Pixel
+
 # ui/mod
 
 drop_yaml:
