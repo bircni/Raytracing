@@ -111,10 +111,14 @@ impl Status {
                 .desired_width(ui.available_width() / 3.0)
                 .text(
                     RichText::new(if progress == 1.0 {
-                        format!(
-                            "Done in: {:.2} s",
-                            render.time.load(Ordering::Relaxed) as f32 / 1000.0
-                        )
+                        let time_seconds = render.time.load(Ordering::Relaxed) as f32 / 1000.0;
+                        if time_seconds < 60.0 {
+                            format!("Done in: {time_seconds:.2} s")
+                        } else {
+                            let minutes = time_seconds / 60.0;
+                            let seconds = time_seconds % 60.0;
+                            format!("Done in: {minutes:.0} min {seconds:.0} s")
+                        }
                     } else if progress > 0.0 {
                         format!("{:.1}%", progress * 100.0)
                     } else {

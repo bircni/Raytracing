@@ -89,6 +89,7 @@ fn rendering_thread(
 ) {
     let start = std::time::Instant::now();
     let block_size = [rsize.0 / 20, rsize.1 / 20];
+    let anti_aliasing = scene.settings.anti_aliasing;
     let raytracer = Raytracer::new(scene, 1e-5, 5);
     let blocks = AtomicUsize::new(0);
     (0..rsize.1 / block_size[1])
@@ -112,7 +113,7 @@ fn rendering_thread(
                 .map(|i| {
                     let x = i % block_size[0] + x_block * block_size[0];
                     let y = i / block_size[0] + y_block * block_size[1];
-                    raytracer.render((x, y), (rsize.0, rsize.1))
+                    raytracer.render((x, y), (rsize.0, rsize.1), anti_aliasing)
                 })
                 .map(|c| {
                     Color32::from_rgb(

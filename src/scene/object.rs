@@ -1,5 +1,9 @@
-use std::path::PathBuf;
-
+use super::{
+    material::{IlluminationModel, Material},
+    triangle::Triangle,
+    Color,
+};
+use crate::raytracer::{Hit, Ray};
 use anyhow::Context;
 use bvh::bvh::Bvh;
 use image::RgbImage;
@@ -7,22 +11,14 @@ use log::warn;
 use nalgebra::{
     Affine3, Isometry3, Point3, Scale3, Translation3, UnitQuaternion, Vector2, Vector3,
 };
-use obj::SimplePolygon;
+use obj::{ObjMaterial, SimplePolygon};
 use ordered_float::OrderedFloat;
-
-use crate::{
-    raytracer::{Hit, Ray},
-    Color,
-};
-
-use super::{
-    material::{IlluminationModel, Material},
-    triangle::Triangle,
-};
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct Object {
-    name: String,
+    pub name: String,
+    material_name: String,
     path: PathBuf,
     pub triangles: Vec<Triangle>,
     pub materials: Vec<Material>,
@@ -32,7 +28,7 @@ pub struct Object {
     bvh: Bvh<f32, 3>,
 }
 
-fn load_texture<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<RgbImage> {
+fn load_texture<P: AsRef<Path>>(path: P) -> anyhow::Result<RgbImage> {
     Ok(image::open(path.as_ref())
         .context(format!(
             "Failed to load image from path: {:?}",
@@ -41,8 +37,24 @@ fn load_texture<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<RgbImage> 
         .into_rgb8())
 }
 
+// extract filename from path and return as String
+fn filename<P: AsRef<Path>>(path: P) -> String {
+    path.as_ref()
+        .file_name()
+        .map_or_else(String::new, |s| s.to_string_lossy().to_string())
+        .split('.')
+        .next()
+        .unwrap_or("")
+        .to_string()
+        // first char to uppercase
+        .chars()
+        .enumerate()
+        .map(|(i, c)| if i == 0 { c.to_ascii_uppercase() } else { c })
+        .collect()
+}
+
 impl Object {
-    pub fn from_obj<P: AsRef<std::path::Path>>(
+    pub fn from_obj<P: AsRef<Path>>(
         path: P,
         translation: Translation3<f32>,
         rotation: UnitQuaternion<f32>,
@@ -52,6 +64,7 @@ impl Object {
             "Failed to load obj from path: {}",
             path.as_ref().display()
         ))?;
+
         obj.load_mtls().context(format!(
             "Failed to load materials from obj path: {}",
             path.as_ref().display()
@@ -68,17 +81,16 @@ impl Object {
                 specular_color: m.ks.map(Color::from),
                 specular_exponent: m.ns,
                 diffuse_texture: {
-                    let path = m
-                        .map_kd
+                    m.map_kd
                         .as_deref()
-                        .and_then(|p| path.as_ref().parent().map(|pa| pa.join(p)));
-                    path.and_then(|p| {
-                        load_texture(p.as_path())
-                            .map_err(|e| {
-                                warn!("Failed to load texture from path: {:?}: {}", p, e);
-                            })
-                            .ok()
-                    })
+                        .and_then(|p| path.as_ref().parent().map(|pa| pa.join(p)))
+                        .and_then(|p| {
+                            load_texture(p.as_path())
+                                .map_err(|e| {
+                                    warn!("Failed to load texture from path: {:?}: {}", p, e);
+                                })
+                                .ok()
+                        })
                 },
                 illumination_model: m
                     .illum
@@ -102,10 +114,10 @@ impl Object {
                     .material
                     .as_ref()
                     .map(|m| match m {
-                        obj::ObjMaterial::Ref(str) => {
+                        ObjMaterial::Ref(str) => {
                             panic!("Material reference not supported: {str}")
                         }
-                        obj::ObjMaterial::Mtl(m) => m,
+                        ObjMaterial::Mtl(m) => m,
                     })
                     .and_then(|m| {
                         materials
@@ -140,7 +152,8 @@ impl Object {
         let bvh = Bvh::build(triangles.as_mut_slice());
 
         Ok(Object {
-            name: obj
+            name: filename(&path),
+            material_name: obj
                 .data
                 .objects
                 .iter()
@@ -193,7 +206,7 @@ impl Object {
                 let normal = self.transform().transform_vector(&normal);
 
                 Hit {
-                    name: self.name.as_str(),
+                    name: self.material_name.as_str(),
                     point,
                     normal,
                     material: t.material_index.map(|i| &self.materials[i]),
@@ -203,6 +216,7 @@ impl Object {
     }
 }
 
+/// Triangulate a polygon and compute normals and uv coordinates if they are missing
 fn triangulate(
     obj: &obj::Obj,
     poly: &SimplePolygon,

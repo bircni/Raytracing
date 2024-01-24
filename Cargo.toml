@@ -1,7 +1,26 @@
 [package]
 name = "raytracing"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
+description = "Rust Raytracer."
+
+[package.metadata.bundle]
+name = "TrayRacer"
+identifier = "bircni.TrayRacer"
+icon = [
+    "res/mac-icons/icon_16x16.png",
+    "res/mac-icons/icon_32x32.png",
+    "res/mac-icons/icon_128x128.png",
+    "res/mac-icons/icon_256x256.png",
+    "res/mac-icons/icon_16x16@2x.png",
+    "res/mac-icons/icon_32x32@2x.png",
+    "res/mac-icons/icon_128x128@2x.png",
+]
+version = "1.0.0"
+resources = ["./../res/mac-icons/icon*.png"]
+copyright = "© 2024 Team TrayRacer"
+category = "Developer Tool"
+short_description = "A Raytracer."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -29,12 +48,13 @@ simplelog = "0.12.1"
 
 # linear algebra
 nalgebra = { version = "0.32.3", features = ["glam022"] }
+rand = "0.8.4"
 
 # obj file loading
 obj = "0.10.2"
 
 # automatic parallelization
-rayon = "1.8.0"
+rayon = "1.8.1"
 bytemuck = { version = "1.14.0", features = ["derive"] }
 
 # total order for floats
@@ -55,12 +75,14 @@ eframe = { version = "0.25", features = [
 egui = { version = "0.25", features = ["log", "color-hex"] }
 egui-wgpu = { version = "0.25" }
 egui_file = "0.14.1"
-egui_extras = { version = "0.25", features = ["svg"] }
+egui_extras = { version = "0.25", features = ["svg", "image"] }
 color-hex = "0.2.0"
 
 # BVH
 # mal schauen wann die version auch auf crates.io ist
 bvh = { git = "https://github.com/svenstaro/bvh.git" }
+rust-i18n = "3.0.0"
+sys-locale = "0.3.1"
 
 [dev-dependencies]
 cargo-husky = { version = "1.5.0", default-features = false, features = [
@@ -69,6 +91,9 @@ cargo-husky = { version = "1.5.0", default-features = false, features = [
 
 [lints.rust]
 unsafe_code = "forbid"
+
+[profile.dev]
+opt-level = 3
 
 [profile.perftest]
 inherits = "release"
