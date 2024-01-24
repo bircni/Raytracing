@@ -44,4 +44,13 @@ Distributed under the GNU General Public License v3.0. See `LICENSE` for more in
 
 ## Contributing
 
-To contribute to this project, please read the [contributing guidelines](./CONTRIBUTING.md).
+To contribute to this project, please read the [Contributing Guidelines](./CONTRIBUTING.md).
+
+## Translations
+
+Available translations:
+
+- English
+- German
+
+If you want to contribute a translation, create a new `.yaml` file in the `locales` folder and add the translations.
