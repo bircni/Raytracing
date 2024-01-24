@@ -188,7 +188,7 @@ impl RenderingThread {
 mod tests {
     use super::*;
     use anyhow::Context;
-    use image::{GenericImageView, RgbImage};
+    use image::{DynamicImage, GenericImageView, RgbImage};
 
     #[test]
     fn e2e_test() -> anyhow::Result<()> {
@@ -233,14 +233,10 @@ mod tests {
             }
         }
 
-        image
-            .save("./tests/render.png")
-            .context("Failed to save image")?;
-
         // compare generated image with reference image
         let reference =
-            image::open("./tests/reference_image.png").context("Failed to open image")?;
-        let generated = image::open("./tests/render.png").context("Failed to open image")?;
+            image::open("./tests/reference_image.png").context("Failed to open reference image")?;
+        let generated: DynamicImage = image.into();
 
         assert_eq!(
             reference.dimensions(),
