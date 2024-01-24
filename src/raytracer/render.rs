@@ -235,8 +235,13 @@ mod tests {
         }
 
         // compare generated image with reference image
-        let reference =
-            image::open("./tests/reference_image.png").context("Failed to open reference image")?;
+        let reference = if cfg!(target_os = "macos") {
+            image::open("./tests/render_macOS.png").context("Failed to open reference image")?
+        } else {
+            image::open("./tests/reference_image.png").context("Failed to open reference image")?
+        };
+        //let reference =
+        //image::open("./tests/render_macOS.png").context("Failed to open reference image")?;
         let generated: DynamicImage = image.into();
 
         assert_eq!(
