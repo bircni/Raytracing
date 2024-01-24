@@ -192,10 +192,9 @@ mod tests {
 
     #[test]
     fn e2e_test() -> anyhow::Result<()> {
-        std::fs::remove_file("./res/e2e-test/test.png").ok();
+        std::fs::remove_file("./tests/render.png").ok();
 
-        let scene =
-            Scene::load("./res/e2e-test/test_config.yaml").context("Failed to load scene")?;
+        let scene = Scene::load("./tests/test_config.yaml").context("Failed to load scene")?;
         let resolution = scene.camera.resolution;
         let width = resolution.0;
         let height = resolution.1;
@@ -235,13 +234,13 @@ mod tests {
         }
 
         image
-            .save("./res/e2e-test/test.png")
+            .save("./tests/render.png")
             .context("Failed to save image")?;
 
         // compare generated image with reference image
         let reference =
-            image::open("./res/e2e-test/reference_image.png").context("Failed to open image")?;
-        let generated = image::open("./res/e2e-test/test.png").context("Failed to open image")?;
+            image::open("./tests/reference_image.png").context("Failed to open image")?;
+        let generated = image::open("./tests/render.png").context("Failed to open image")?;
 
         assert_eq!(
             reference.dimensions(),
