@@ -453,7 +453,7 @@
                     origin: hit.point + hit.normal * <span class="self">self</span>.delta,
                     direction: <span class="self">Self</span>::reflect(ray.direction, hit.normal),
                 };
-                color = color.component_mul(<span class="kw-2">&amp;</span><span class="self">self</span>.shade(reflection_ray, depth + <span class="number">1</span>));
+                color += color.component_mul(<span class="kw-2">&amp;</span><span class="self">self</span>.shade(reflection_ray, depth + <span class="number">1</span>));
             }
         }
 
