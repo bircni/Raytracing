@@ -199,7 +199,7 @@ impl Raytracer {
                     origin: hit.point + hit.normal * self.delta,
                     direction: Self::reflect(ray.direction, hit.normal),
                 };
-                color = color.component_mul(&self.shade(reflection_ray, depth + 1));
+                color += color.component_mul(&self.shade(reflection_ray, depth + 1));
             }
         }
 

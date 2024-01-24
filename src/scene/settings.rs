@@ -17,7 +17,7 @@ impl Default for Settings {
             max_bounces: 4,
             samples: 1,
             ambient_color: Color::new(0.34, 0.14, 0.04).normalize(),
-            ambient_intensity: 0.5,
+            ambient_intensity: 0.2,
             skybox: Skybox::default(),
             anti_aliasing: false,
         }
