@@ -123,6 +123,12 @@ scale:
 add_object:
   de: + Objekt hinzufügen
 
+anti_aliasing:
+  de: Anti-Aliasing
+
+samples:
+  de: Abtastwerte pro Pixel
+
 # ui/mod
 
 drop_yaml:

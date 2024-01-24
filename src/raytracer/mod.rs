@@ -2,6 +2,7 @@ use crate::scene::{Color, Material, Scene, Skybox};
 use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 pub mod render;
 
@@ -208,11 +209,46 @@ impl Raytracer {
     /// Render a pixel at the given coordinates.
     /// x and y are in the range 0..width and 0..height
     /// where (0, 0) is the top left corner.
-    pub fn render(&self, (x, y): (u32, u32), (width, height): (u32, u32)) -> Color {
-        let x = ((x as f32 / width as f32) * 2.0 - 1.0) * (width as f32 / height as f32);
-        let y = (y as f32 / height as f32) * 2.0 - 1.0;
+    ///Anti-aliasing is done by sampling multiple rays per pixel, enhanced with stratified sampling.
+    pub fn render(
+        &self,
+        (x, y): (u32, u32),
+        (width, height): (u32, u32),
+        anti_aliasing: bool,
+    ) -> Color {
+        if anti_aliasing {
+            let samples_per_pixel = self.scene.settings.samples;
+            let sqrt_samples = (samples_per_pixel as f32).sqrt() as u32;
 
-        let ray = self.scene.camera.ray(x, y);
-        self.shade(ray, 0)
+            (0..samples_per_pixel)
+                .into_par_iter()
+                .map(|i| {
+                    let xi = i % sqrt_samples;
+                    let yi = i / sqrt_samples;
+                    let jitter_x = (x as f32
+                        + (xi as f32 + (rand::random::<f32>() * 2.0 - 1.0)) / sqrt_samples as f32)
+                        / width as f32;
+                    let jitter_y = (y as f32
+                        + (yi as f32 + (rand::random::<f32>() * 2.0 - 1.0)) / sqrt_samples as f32)
+                        / height as f32;
+                    let x = (jitter_x * 2.0 - 1.0) * (width as f32 / height as f32);
+                    let y = jitter_y * 2.0 - 1.0;
+                    let ray = self.scene.camera.ray(x, y);
+
+                    if let Some(_hit) = self.raycast(ray) {
+                        self.shade(ray, 0)
+                    } else {
+                        self.skybox(ray.direction)
+                    }
+                })
+                .sum::<Color>()
+                / samples_per_pixel as f32
+        } else {
+            let x = ((x as f32 / width as f32) * 2.0 - 1.0) * (width as f32 / height as f32);
+            let y = (y as f32 / height as f32) * 2.0 - 1.0;
+
+            let ray = self.scene.camera.ray(x, y);
+            self.shade(ray, 0)
+        }
     }
 }
