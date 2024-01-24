@@ -124,7 +124,7 @@ impl Preview {
                             Align2::LEFT_TOP,
                             Color32::WHITE,
                             format!(
-                                "{}\n{} {:.2}\n{} {:.2}\n{}\n{}",
+                                "{}\n{} {:.2}\n{} {:.4}\n{}\n{}",
                                 t!("wasd"),
                                 t!("qe"),
                                 self.speed,
