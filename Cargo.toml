@@ -29,6 +29,7 @@ simplelog = "0.12.1"
 
 # linear algebra
 nalgebra = { version = "0.32.3", features = ["glam022"] }
+rand = "0.8.4"
 
 # obj file loading
 obj = "0.10.2"

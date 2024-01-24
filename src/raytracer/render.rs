@@ -93,6 +93,7 @@ impl RenderingThread {
         // this will currently cause unrendered pixels if
         // the resolution is not a multiple of 20
         let block_size = [width / 20, height / 20];
+        let anti_aliasing = self.scene.settings.anti_aliasing;
         let raytracer = Raytracer::new(self.scene, 1e-5, 5);
 
         let blocks_rendered = AtomicUsize::new(0);
@@ -120,7 +121,7 @@ impl RenderingThread {
                     .map(|i| {
                         let x = i % block_size[0] + x_block * block_size[0];
                         let y = i / block_size[0] + y_block * block_size[1];
-                        raytracer.render((x, y), (width, height))
+                        raytracer.render((x, y), (width, height), anti_aliasing)
                     })
                     .map(|c| {
                         Color32::from_rgb(

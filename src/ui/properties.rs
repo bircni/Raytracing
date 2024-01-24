@@ -98,20 +98,18 @@ impl Properties {
 
                         self.skybox_options(ui, scene);
 
-                        ui.label(format!("{}:", t!("ambient_color")));
-                        color_picker::color_edit_button_rgb(
-                            ui,
-                            scene.settings.ambient_color.as_mut(),
-                        );
-
-                        ui.label(format!("{}:", t!("ambient_intensity")));
-                        ui.add(
-                            Slider::new(&mut scene.settings.ambient_intensity, 0.0..=1.0)
-                                .clamp_to_range(true),
-                        );
+                        Self::ambient_options(ui, scene);
                     });
             });
         });
+    }
+
+    fn ambient_options(ui: &mut Ui, scene: &mut Scene) {
+        ui.label(format!("{}:", t!("ambient_color")));
+        color_picker::color_edit_button_rgb(ui, scene.settings.ambient_color.as_mut());
+
+        ui.label(format!("{}:", t!("ambient_intensity")));
+        ui.add(Slider::new(&mut scene.settings.ambient_intensity, 0.0..=1.0).clamp_to_range(true));
     }
 
     fn render_options(ui: &mut Ui, render: &mut Render, scene: &mut Scene) {
@@ -148,6 +146,13 @@ impl Properties {
                                 .prefix("h: "),
                         );
                     });
+                    ui.checkbox(&mut scene.settings.anti_aliasing, "Anti-Aliasing");
+                    if scene.settings.anti_aliasing {
+                        ui.label("Samples per pixel:");
+                        ui.add(
+                            Slider::new(&mut scene.settings.samples, 1..=128).clamp_to_range(true),
+                        );
+                    }
                 });
             });
         });
@@ -233,6 +238,7 @@ impl Properties {
                 CollapsingHeader::new(
                     RichText::new(format!("{} ({})", t!("lights"), scene.lights.len())).size(16.0),
                 )
+                .default_open(true)
                 .show_unindented(ui, |ui| {
                     scene
                         .lights
@@ -308,6 +314,7 @@ impl Properties {
                     RichText::new(format!("{} ({})", t!("objects"), scene.objects.len()))
                         .size(16.0),
                 )
+                .default_open(true)
                 .show_unindented(ui, |ui| {
                     let mut objects_to_remove = Vec::new();
 
