@@ -562,13 +562,6 @@
                             ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">3840</span>, <span class="number">2160</span>), <span class="string">&quot;4k&quot;</span>);
                             ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">7680</span>, <span class="number">4320</span>), <span class="string">&quot;8k&quot;</span>);
                         });
-                    ui.checkbox(<span class="kw-2">&amp;mut </span>scene.settings.anti_aliasing, <span class="string">&quot;Anti-Aliasing&quot;</span>);
-                    <span class="kw">if </span>scene.settings.anti_aliasing {
-                        ui.label(<span class="string">&quot;Samples per pixel:&quot;</span>);
-                        ui.add(
-                            Slider::new(<span class="kw-2">&amp;mut </span>scene.settings.samples, <span class="number">1</span>..=<span class="number">128</span>).clamp_to_range(<span class="bool-val">true</span>),
-                        );
-                    }
                     ui.horizontal(|ui| {
                         <span class="kw">let </span>(x, y) = <span class="kw-2">&amp;mut </span>scene.camera.resolution;
                         ui.add(
@@ -584,6 +577,13 @@
                                 .prefix(<span class="string">&quot;h: &quot;</span>),
                         );
                     });
+                    ui.checkbox(<span class="kw-2">&amp;mut </span>scene.settings.anti_aliasing, <span class="string">&quot;Anti-Aliasing&quot;</span>);
+                    <span class="kw">if </span>scene.settings.anti_aliasing {
+                        ui.label(<span class="string">&quot;Samples per pixel:&quot;</span>);
+                        ui.add(
+                            Slider::new(<span class="kw-2">&amp;mut </span>scene.settings.samples, <span class="number">1</span>..=<span class="number">128</span>).clamp_to_range(<span class="bool-val">true</span>),
+                        );
+                    }
                 });
             });
         });
