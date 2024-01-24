@@ -207,7 +207,7 @@ mod tests {
             .map(|i| {
                 let x = i % width;
                 let y = i / width;
-                raytracer.render((x, y), (width, height))
+                raytracer.render((x, y), (width, height), false)
             })
             .map(|c| {
                 Color32::from_rgb(
