@@ -184,3 +184,82 @@ impl RenderingThread {
         info!("rendering finished: {:?}", start.elapsed());
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::Context;
+    use image::{DynamicImage, GenericImageView, RgbImage};
+
+    #[test]
+    fn e2e_test() -> anyhow::Result<()> {
+        std::fs::remove_file("./tests/render.png").ok();
+
+        let scene = Scene::load("./tests/test_config.yaml").context("Failed to load scene")?;
+        let resolution = scene.camera.resolution;
+        let width = resolution.0;
+        let height = resolution.1;
+
+        let raytracer = Raytracer::new(scene, 1e-5, 5);
+
+        let pixels = (0..width * height)
+            .into_par_iter()
+            .map(|i| {
+                let x = i % width;
+                let y = i / width;
+                raytracer.render((x, y), (width, height), false)
+            })
+            .map(|c| {
+                Color32::from_rgb(
+                    (c.x * 255.0) as u8,
+                    (c.y * 255.0) as u8,
+                    (c.z * 255.0) as u8,
+                )
+            })
+            .collect::<Vec<_>>();
+
+        let mut image = RgbImage::new(width, height);
+
+        for x in 0..width {
+            for y in 0..height {
+                image.put_pixel(
+                    x,
+                    y,
+                    image::Rgb([
+                        pixels[(x + y * width) as usize].r(),
+                        pixels[(x + y * width) as usize].g(),
+                        pixels[(x + y * width) as usize].b(),
+                    ]),
+                );
+            }
+        }
+
+        // compare generated image with reference image
+        let reference = if cfg!(target_os = "macos") {
+            image::open("./tests/render_macOS.png").context("Failed to open reference image")?
+        } else {
+            image::open("./tests/reference_image.png").context("Failed to open reference image")?
+        };
+        //let reference =
+        //image::open("./tests/render_macOS.png").context("Failed to open reference image")?;
+        let generated: DynamicImage = image.into();
+
+        assert_eq!(
+            reference.dimensions(),
+            generated.dimensions(),
+            "Reference image dimensions don't match"
+        );
+
+        for x in 0..reference.dimensions().0 {
+            for y in 0..reference.dimensions().1 {
+                assert_eq!(
+                    reference.get_pixel(x, y),
+                    generated.get_pixel(x, y),
+                    "Reference image pixel don't match"
+                );
+            }
+        }
+
+        Ok(())
+    }
+}
