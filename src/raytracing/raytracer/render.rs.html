@@ -183,6 +183,7 @@
 <a href="#183" id="183">183</a>
 <a href="#184" id="184">184</a>
 <a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{raytracer::Raytracer, scene::Scene};
 <span class="kw">use </span>egui::{mutex::Mutex, Color32, ColorImage, ImageData, TextureHandle, TextureOptions};
 <span class="kw">use </span>image::RgbImage;
@@ -278,6 +279,7 @@
         // this will currently cause unrendered pixels if
         // the resolution is not a multiple of 20
         </span><span class="kw">let </span>block_size = [width / <span class="number">20</span>, height / <span class="number">20</span>];
+        <span class="kw">let </span>anti_aliasing = <span class="self">self</span>.scene.settings.anti_aliasing;
         <span class="kw">let </span>raytracer = Raytracer::new(<span class="self">self</span>.scene, <span class="number">1e-5</span>, <span class="number">5</span>);
 
         <span class="kw">let </span>blocks_rendered = AtomicUsize::new(<span class="number">0</span>);
@@ -305,7 +307,7 @@
                     .map(|i| {
                         <span class="kw">let </span>x = i % block_size[<span class="number">0</span>] + x_block * block_size[<span class="number">0</span>];
                         <span class="kw">let </span>y = i / block_size[<span class="number">0</span>] + y_block * block_size[<span class="number">1</span>];
-                        raytracer.render((x, y), (width, height))
+                        raytracer.render((x, y), (width, height), anti_aliasing)
                     })
                     .map(|c| {
                         Color32::from_rgb(

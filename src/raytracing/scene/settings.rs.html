@@ -65,24 +65,38 @@
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{Color, Skybox};
 
 <span class="attr">#[derive(Debug, Clone, PartialEq)]
 </span><span class="kw">pub struct </span>Settings {
     <span class="comment">// TODO: Actually use these
     </span><span class="kw">pub </span>max_bounces: u32,
+    <span class="kw">pub </span>samples: u32,
     <span class="kw">pub </span>ambient_color: Color,
     <span class="kw">pub </span>ambient_intensity: f32,
     <span class="kw">pub </span>skybox: Skybox,
+    <span class="kw">pub </span>anti_aliasing: bool,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>Settings {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             max_bounces: <span class="number">4</span>,
+            samples: <span class="number">1</span>,
             ambient_color: Color::new(<span class="number">0.34</span>, <span class="number">0.14</span>, <span class="number">0.04</span>).normalize(),
             ambient_intensity: <span class="number">0.5</span>,
             skybox: Skybox::default(),
+            anti_aliasing: <span class="bool-val">false</span>,
         }
     }
 }
@@ -96,9 +110,11 @@
     <span class="attr">#[derive(Serialize, Deserialize)]
     </span><span class="kw">pub struct </span>SettingsDef {
         <span class="kw">pub </span>max_bounces: u32,
+        <span class="kw">pub </span>samples: u32,
         <span class="attr">#[serde(with = <span class="string">&quot;super::super::yaml::color&quot;</span>)]
         </span><span class="kw">pub </span>ambient_color: Color,
         <span class="kw">pub </span>skybox: Skybox,
+        <span class="kw">pub </span>anti_aliasing: bool,
     }
 
     <span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>Settings {
@@ -108,12 +124,14 @@
         {
             SettingsDef::deserialize(deserializer).map(|yaml_extras| Settings {
                 max_bounces: yaml_extras.max_bounces,
+                samples: yaml_extras.samples,
                 ambient_color: yaml_extras
                     .ambient_color
                     .try_normalize(<span class="number">0.0</span>)
                     .unwrap_or_default(),
                 ambient_intensity: yaml_extras.ambient_color.norm(),
                 skybox: yaml_extras.skybox,
+                anti_aliasing: yaml_extras.anti_aliasing,
             })
         }
     }
@@ -125,8 +143,10 @@
         {
             SettingsDef {
                 max_bounces: <span class="self">self</span>.max_bounces,
+                samples: <span class="self">self</span>.samples,
                 ambient_color: <span class="self">self</span>.ambient_color * <span class="self">self</span>.ambient_intensity,
                 skybox: <span class="self">self</span>.skybox.clone(),
+                anti_aliasing: <span class="self">self</span>.anti_aliasing,
             }
             .serialize(serializer)
         }
