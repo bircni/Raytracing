@@ -253,7 +253,7 @@ mod tests {
                 assert_eq!(
                     reference.get_pixel(x, y),
                     generated.get_pixel(x, y),
-                    "Reference image dimensions don't match"
+                    "Reference image pixel don't match"
                 );
             }
         }
