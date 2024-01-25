@@ -25,14 +25,12 @@ short_description = "A Raytracer."
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# git hooks
-cargo-husky = "1.5.0"
 
 # error handling
 anyhow = "1.0.79"
 
 # time
-chrono = { version = "0.4.31", default-features = false, features = ["clock"] }
+chrono = { version = "0.4.32", default-features = false, features = ["clock"] }
 
 # image loading and saving
 image = { version = "0.24.8", default-features = false, features = [
@@ -48,20 +46,20 @@ simplelog = "0.12.1"
 
 # linear algebra
 nalgebra = { version = "0.32.3", features = ["glam022"] }
-rand = "0.8.4"
+rand = "0.8.5"
 
 # obj file loading
 obj = "0.10.2"
 
 # automatic parallelization
 rayon = "1.8.1"
-bytemuck = { version = "1.14.0", features = ["derive"] }
+bytemuck = { version = "1.14.1", features = ["derive"] }
 
 # total order for floats
 ordered-float = "4.2.0"
 
 # generic serialization / deserialization
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1.0.195", features = ["derive"] }
 serde_yaml = "0.9.30"
 
 # GUI
@@ -81,13 +79,8 @@ color-hex = "0.2.0"
 # BVH
 # mal schauen wann die version auch auf crates.io ist
 bvh = { git = "https://github.com/svenstaro/bvh.git" }
-rust-i18n = "3.0.0"
+rust-i18n = "3.0.1"
 sys-locale = "0.3.1"
-
-[dev-dependencies]
-cargo-husky = { version = "1.5.0", default-features = false, features = [
-    "user-hooks",
-] }
 
 [lints.rust]
 unsafe_code = "forbid"

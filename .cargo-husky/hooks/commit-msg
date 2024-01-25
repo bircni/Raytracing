@@ -1,9 +1,0 @@
-#!/bin/bash
-
-commit_msg_file=$1
-commit_msg=$(cat "$commit_msg_file")
-pattern='^TRY-[0-9]+'
-if [[ ! $commit_msg =~ $pattern ]]; then
-    echo "Error: Commit message must start with an issue number (e.g., TRY-42) followed by text."
-    exit 1
-fi
