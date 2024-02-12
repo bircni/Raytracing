@@ -72,7 +72,7 @@ eframe = { version = "0.25", features = [
 ], default-features = false }
 egui = { version = "0.25", features = ["log", "color-hex"] }
 egui-wgpu = { version = "0.25" }
-egui_file = "0.14.1"
+egui_file = "0.15.0"
 egui_extras = { version = "0.25", features = ["svg", "image"] }
 color-hex = "0.2.0"
 
