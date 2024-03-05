@@ -235,7 +235,7 @@ impl Preview {
         scene.camera.look_at =
             scene.camera.position + (new_point - scene.camera.position).normalize();
 
-        scene.camera.fov = (scene.camera.fov - (ui.input(|i| i.scroll_delta.y) * 0.001))
+        scene.camera.fov = (scene.camera.fov - (ui.input(|i| i.raw_scroll_delta.y) * 0.001))
             .clamp(0.0_f32.to_radians(), 180.0_f32.to_radians());
 
         // compute movement
