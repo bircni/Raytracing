@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/preview/mod.rs`."><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="raytracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/preview/mod.rs`."><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="raytracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -355,8 +356,8 @@
             ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
                 ui.horizontal(|ui| {
                     ui.vertical_centered(|ui| {
-                        ui.heading(<span class="macro">t!</span>(<span class="string">&quot;no_scene_loaded&quot;</span>));
-                        ui.label(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;drop_yaml&quot;</span>)));
+                        ui.heading(<span class="macro">t!</span>(<span class="string">"no_scene_loaded"</span>));
+                        ui.label(RichText::new(<span class="macro">t!</span>(<span class="string">"drop_yaml"</span>)));
                     });
                 });
             });
@@ -398,8 +399,8 @@
                     )));
 
                     <span class="kw">if </span>response.hover_pos().is_some() &amp;&amp; !<span class="self">self</span>.active {
-                        egui::show_tooltip(ui.ctx(), egui::Id::new(<span class="string">&quot;preview_tooltip&quot;</span>), |ui| {
-                            ui.label(<span class="macro">t!</span>(<span class="string">&quot;change_camera_pos&quot;</span>));
+                        egui::show_tooltip(ui.ctx(), egui::Id::new(<span class="string">"preview_tooltip"</span>), |ui| {
+                            ui.label(<span class="macro">t!</span>(<span class="string">"change_camera_pos"</span>));
                         });
                     }
 
@@ -414,14 +415,14 @@
                             Align2::LEFT_TOP,
                             Color32::WHITE,
                             <span class="macro">format!</span>(
-                                <span class="string">&quot;{}\n{} {:.2}\n{} {:.4}\n{}\n{}&quot;</span>,
-                                <span class="macro">t!</span>(<span class="string">&quot;wasd&quot;</span>),
-                                <span class="macro">t!</span>(<span class="string">&quot;qe&quot;</span>),
+                                <span class="string">"{}\n{} {:.2}\n{} {:.4}\n{}\n{}"</span>,
+                                <span class="macro">t!</span>(<span class="string">"wasd"</span>),
+                                <span class="macro">t!</span>(<span class="string">"qe"</span>),
                                 <span class="self">self</span>.speed,
-                                <span class="macro">t!</span>(<span class="string">&quot;yc&quot;</span>),
+                                <span class="macro">t!</span>(<span class="string">"yc"</span>),
                                 <span class="self">self</span>.sensitivity,
-                                <span class="macro">t!</span>(<span class="string">&quot;f&quot;</span>),
-                                <span class="macro">t!</span>(<span class="string">&quot;esc&quot;</span>)
+                                <span class="macro">t!</span>(<span class="string">"f"</span>),
+                                <span class="macro">t!</span>(<span class="string">"esc"</span>)
                             ),
                         );
 
@@ -438,17 +439,17 @@
 
     <span class="kw">fn </span>handle_file(path: <span class="kw-2">&amp;</span>PathBuf, scene: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Option</span>&lt;Scene&gt;) {
         <span class="kw">match </span>path.extension().and_then(|ext| ext.to_str()) {
-            <span class="prelude-val">Some</span>(<span class="string">&quot;yaml&quot; </span>| <span class="string">&quot;yml&quot;</span>) =&gt; {
+            <span class="prelude-val">Some</span>(<span class="string">"yaml" </span>| <span class="string">"yml"</span>) =&gt; {
                 Scene::load(path).map_or_else(
                     |e| {
-                        <span class="macro">warn!</span>(<span class="string">&quot;Failed to load scene: {}&quot;</span>, e);
+                        <span class="macro">warn!</span>(<span class="string">"Failed to load scene: {}"</span>, e);
                     },
                     |s| {
                         scene.replace(s);
                     },
                 );
             }
-            <span class="prelude-val">Some</span>(<span class="string">&quot;obj&quot;</span>) =&gt; {
+            <span class="prelude-val">Some</span>(<span class="string">"obj"</span>) =&gt; {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(scene) = scene.as_mut() {
                     <span class="kw">match </span>Object::from_obj(
                         path,
@@ -457,7 +458,7 @@
                         Scale3::identity(),
                     ) {
                         <span class="prelude-val">Ok</span>(object) =&gt; scene.objects.push(object),
-                        <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;Failed to load object: {}&quot;</span>, e),
+                        <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">warn!</span>(<span class="string">"Failed to load object: {}"</span>, e),
                     }
                 }
             }
@@ -469,7 +470,7 @@
         <span class="comment">//TODO: show only when hovering over preview
         </span><span class="kw">if </span>!ctx.input(|i| i.raw.hovered_files.is_empty()) {
             <span class="kw">let </span>painter =
-                ctx.layer_painter(LayerId::new(Order::Foreground, Id::new(<span class="string">&quot;file_drop_target&quot;</span>)));
+                ctx.layer_painter(LayerId::new(Order::Foreground, Id::new(<span class="string">"file_drop_target"</span>)));
             <span class="kw">if let </span><span class="prelude-val">Some</span>(hovered) = ctx.input(|i| i.raw.hovered_files.clone()).first() {
                 <span class="kw">let </span>extension = hovered
                     .path
@@ -481,9 +482,9 @@
                     rect.center(),
                     Align2::CENTER_CENTER,
                     <span class="kw">match </span>extension {
-                        <span class="prelude-val">Some</span>(<span class="string">&quot;yaml&quot; </span>| <span class="string">&quot;yml&quot;</span>) =&gt; <span class="macro">t!</span>(<span class="string">&quot;hov_yaml&quot;</span>),
-                        <span class="prelude-val">Some</span>(<span class="string">&quot;obj&quot;</span>) <span class="kw">if </span>scene.is_some() =&gt; <span class="macro">t!</span>(<span class="string">&quot;hov_obj&quot;</span>),
-                        <span class="kw">_ </span>=&gt; <span class="macro">t!</span>(<span class="string">&quot;hov_unknown&quot;</span>),
+                        <span class="prelude-val">Some</span>(<span class="string">"yaml" </span>| <span class="string">"yml"</span>) =&gt; <span class="macro">t!</span>(<span class="string">"hov_yaml"</span>),
+                        <span class="prelude-val">Some</span>(<span class="string">"obj"</span>) <span class="kw">if </span>scene.is_some() =&gt; <span class="macro">t!</span>(<span class="string">"hov_obj"</span>),
+                        <span class="kw">_ </span>=&gt; <span class="macro">t!</span>(<span class="string">"hov_unknown"</span>),
                     },
                     TextStyle::Heading.resolve(<span class="kw-2">&amp;</span>ctx.style()),
                     Color32::WHITE,
@@ -525,7 +526,7 @@
         scene.camera.look_at =
             scene.camera.position + (new_point - scene.camera.position).normalize();
 
-        scene.camera.fov = (scene.camera.fov - (ui.input(|i| i.scroll_delta.y) * <span class="number">0.001</span>))
+        scene.camera.fov = (scene.camera.fov - (ui.input(|i| i.raw_scroll_delta.y) * <span class="number">0.001</span>))
             .clamp(<span class="number">0.0_f32</span>.to_radians(), <span class="number">180.0_f32</span>.to_radians());
 
         <span class="comment">// compute movement
@@ -536,19 +537,19 @@
 
             i.key_pressed(Key::Y).then(|| {
                 <span class="self">self</span>.sensitivity = (<span class="self">self</span>.sensitivity - <span class="number">0.0001_f32</span>).max(<span class="number">0.0</span>);
-                <span class="macro">warn!</span>(<span class="string">&quot;Look sensitivity: {}&quot;</span>, <span class="self">self</span>.sensitivity);
+                <span class="macro">warn!</span>(<span class="string">"Look sensitivity: {}"</span>, <span class="self">self</span>.sensitivity);
             });
             i.key_pressed(Key::C).then(|| {
                 <span class="self">self</span>.sensitivity = (<span class="self">self</span>.sensitivity + <span class="number">0.0001_f32</span>).min(<span class="number">0.5</span>);
-                <span class="macro">warn!</span>(<span class="string">&quot;Look sensitivity: {}&quot;</span>, <span class="self">self</span>.sensitivity);
+                <span class="macro">warn!</span>(<span class="string">"Look sensitivity: {}"</span>, <span class="self">self</span>.sensitivity);
             });
             i.key_down(Key::Q).then(|| {
                 <span class="self">self</span>.speed = (<span class="self">self</span>.speed - <span class="number">0.005_f32</span>).max(<span class="number">0.0</span>);
-                <span class="macro">warn!</span>(<span class="string">&quot;Movement speed: {}&quot;</span>, <span class="self">self</span>.speed);
+                <span class="macro">warn!</span>(<span class="string">"Movement speed: {}"</span>, <span class="self">self</span>.speed);
             });
             i.key_down(Key::E).then(|| {
                 <span class="self">self</span>.speed = (<span class="self">self</span>.speed + <span class="number">0.005_f32</span>).min(<span class="number">1.0</span>);
-                <span class="macro">warn!</span>(<span class="string">&quot;Movement speed: {}&quot;</span>, <span class="self">self</span>.speed);
+                <span class="macro">warn!</span>(<span class="string">"Movement speed: {}"</span>, <span class="self">self</span>.speed);
             });
 
             i.key_down(Key::W).then(|| {

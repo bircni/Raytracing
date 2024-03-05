@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/scene/object.rs`."><title>object.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="raytracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/scene/object.rs`."><title>object.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="raytracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -400,7 +401,7 @@
 <span class="kw">fn </span>load_texture&lt;P: AsRef&lt;Path&gt;&gt;(path: P) -&gt; anyhow::Result&lt;RgbImage&gt; {
     <span class="prelude-val">Ok</span>(image::open(path.as_ref())
         .context(<span class="macro">format!</span>(
-            <span class="string">&quot;Failed to load image from path: {:?}&quot;</span>,
+            <span class="string">"Failed to load image from path: {:?}"</span>,
             path.as_ref()
         ))<span class="question-mark">?
         </span>.into_rgb8())
@@ -411,9 +412,9 @@
     path.as_ref()
         .file_name()
         .map_or_else(String::new, |s| s.to_string_lossy().to_string())
-        .split(<span class="string">&#39;.&#39;</span>)
+        .split(<span class="string">'.'</span>)
         .next()
-        .unwrap_or(<span class="string">&quot;&quot;</span>)
+        .unwrap_or(<span class="string">""</span>)
         .to_string()
         <span class="comment">// first char to uppercase
         </span>.chars()
@@ -430,12 +431,12 @@
         scale: Scale3&lt;f32&gt;,
     ) -&gt; anyhow::Result&lt;Object&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>obj = obj::Obj::load(path.as_ref()).context(<span class="macro">format!</span>(
-            <span class="string">&quot;Failed to load obj from path: {}&quot;</span>,
+            <span class="string">"Failed to load obj from path: {}"</span>,
             path.as_ref().display()
         ))<span class="question-mark">?</span>;
 
         obj.load_mtls().context(<span class="macro">format!</span>(
-            <span class="string">&quot;Failed to load materials from obj path: {}&quot;</span>,
+            <span class="string">"Failed to load materials from obj path: {}"</span>,
             path.as_ref().display()
         ))<span class="question-mark">?</span>;
 
@@ -456,7 +457,7 @@
                         .and_then(|p| {
                             load_texture(p.as_path())
                                 .map_err(|e| {
-                                    <span class="macro">warn!</span>(<span class="string">&quot;Failed to load texture from path: {:?}: {}&quot;</span>, p, e);
+                                    <span class="macro">warn!</span>(<span class="string">"Failed to load texture from path: {:?}: {}"</span>, p, e);
                                 })
                                 .ok()
                         })
@@ -465,7 +466,7 @@
                     .illum
                     .and_then(IlluminationModel::from_i32)
                     .unwrap_or_else(|| {
-                        <span class="macro">warn!</span>(<span class="string">&quot;Invalid illumination model: {}&quot;</span>, m.illum.unwrap_or(-<span class="number">1</span>));
+                        <span class="macro">warn!</span>(<span class="string">"Invalid illumination model: {}"</span>, m.illum.unwrap_or(-<span class="number">1</span>));
                         IlluminationModel::default()
                     }),
                 dissolve: m.d.map(|d| <span class="number">1.0 </span>- d),
@@ -484,7 +485,7 @@
                     .as_ref()
                     .map(|m| <span class="kw">match </span>m {
                         ObjMaterial::Ref(str) =&gt; {
-                            <span class="macro">panic!</span>(<span class="string">&quot;Material reference not supported: {str}&quot;</span>)
+                            <span class="macro">panic!</span>(<span class="string">"Material reference not supported: {str}"</span>)
                         }
                         ObjMaterial::Mtl(m) =&gt; m,
                     })
@@ -493,7 +494,7 @@
                             .iter()
                             .position(|mat| mat.name == m.name)
                             .or_else(|| {
-                                <span class="macro">warn!</span>(<span class="string">&quot;Material not found: {}&quot;</span>, m.name);
+                                <span class="macro">warn!</span>(<span class="string">"Material not found: {}"</span>, m.name);
                                 <span class="prelude-val">None
                             </span>})
                     });
@@ -507,15 +508,15 @@
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="kw">if </span>warnings.<span class="number">0 </span>&gt; <span class="number">0 </span>{
-            <span class="macro">warn!</span>(<span class="string">&quot;Computed normals for {} triangles is zero&quot;</span>, warnings.<span class="number">0</span>);
+            <span class="macro">warn!</span>(<span class="string">"Computed normals for {} triangles is zero"</span>, warnings.<span class="number">0</span>);
         }
 
         <span class="kw">if </span>warnings.<span class="number">1 </span>&gt; <span class="number">0 </span>{
-            <span class="macro">warn!</span>(<span class="string">&quot;No normals for {} triangles&quot;</span>, warnings.<span class="number">1</span>);
+            <span class="macro">warn!</span>(<span class="string">"No normals for {} triangles"</span>, warnings.<span class="number">1</span>);
         }
 
         <span class="kw">if </span>warnings.<span class="number">2 </span>&gt; <span class="number">0 </span>{
-            <span class="macro">warn!</span>(<span class="string">&quot;No UV for {} triangles&quot;</span>, warnings.<span class="number">2</span>);
+            <span class="macro">warn!</span>(<span class="string">"No UV for {} triangles"</span>, warnings.<span class="number">2</span>);
         }
 
         <span class="kw">let </span>bvh = Bvh::build(triangles.as_mut_slice());
@@ -528,7 +529,7 @@
                 .iter()
                 .map(|o| o.name.clone())
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                .join(<span class="string">&quot;, &quot;</span>),
+                .join(<span class="string">", "</span>),
             path: path.as_ref().to_path_buf(),
             triangles,
             materials,
@@ -672,22 +673,22 @@
 
     <span class="attr">#[derive(Serialize, Deserialize)]
     </span><span class="kw">pub struct </span>ObjectDef {
-        <span class="attr">#[serde(rename = <span class="string">&quot;filePath&quot;</span>)]
+        <span class="attr">#[serde(rename = <span class="string">"filePath"</span>)]
         </span><span class="kw">pub </span>file_path: PathBuf,
-        <span class="attr">#[serde(with = <span class="string">&quot;super::super::yaml::point&quot;</span>)]
+        <span class="attr">#[serde(with = <span class="string">"super::super::yaml::point"</span>)]
         </span><span class="kw">pub </span>position: Point3&lt;f32&gt;,
-        <span class="attr">#[serde(with = <span class="string">&quot;super::super::yaml::vector&quot;</span>)]
+        <span class="attr">#[serde(with = <span class="string">"super::super::yaml::vector"</span>)]
         </span><span class="kw">pub </span>rotation: Vector3&lt;f32&gt;,
-        <span class="attr">#[serde(with = <span class="string">&quot;super::super::yaml::vector&quot;</span>)]
+        <span class="attr">#[serde(with = <span class="string">"super::super::yaml::vector"</span>)]
         </span><span class="kw">pub </span>scale: Vector3&lt;f32&gt;,
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>, P: AsRef&lt;std::path::Path&gt;&gt; serde::de::DeserializeSeed&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>WithRelativePath&lt;P&gt; {
+    <span class="kw">impl</span>&lt;<span class="lifetime">'de</span>, P: AsRef&lt;std::path::Path&gt;&gt; serde::de::DeserializeSeed&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span>WithRelativePath&lt;P&gt; {
         <span class="kw">type </span>Value = Object;
 
         <span class="kw">fn </span>deserialize&lt;D&gt;(<span class="self">self</span>, deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Value, D::Error&gt;
         <span class="kw">where
-            </span>D: serde::Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;,
+            </span>D: serde::Deserializer&lt;<span class="lifetime">'de</span>&gt;,
         {
             <span class="kw">let </span>yaml_object = ObjectDef::deserialize(deserializer)<span class="question-mark">?</span>;
 
@@ -704,7 +705,7 @@
                 </span>.as_ref()
                 .parent()
                 .map(|p| p.join(yaml_object.file_path.as_path()))
-                .ok_or_else(|| serde::de::Error::custom(<span class="string">&quot;Failed to get parent path&quot;</span>))<span class="question-mark">?</span>;
+                .ok_or_else(|| serde::de::Error::custom(<span class="string">"Failed to get parent path"</span>))<span class="question-mark">?</span>;
 
             Object::from_obj(path, translation, rotation, scale)
                 .map_err(serde::de::Error::custom)

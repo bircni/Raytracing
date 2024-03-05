@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/statusbar.rs`."><title>statusbar.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="raytracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/statusbar.rs`."><title>statusbar.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="raytracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -222,13 +223,13 @@
         current_tab: <span class="kw-2">&amp;mut </span>Tab,
     ) {
         ui.horizontal(|ui| {
-            ui.selectable_label(<span class="kw-2">*</span>current_tab == Tab::Preview, <span class="macro">t!</span>(<span class="string">&quot;preview&quot;</span>))
+            ui.selectable_label(<span class="kw-2">*</span>current_tab == Tab::Preview, <span class="macro">t!</span>(<span class="string">"preview"</span>))
                 .clicked()
                 .then(|| {
                     <span class="kw-2">*</span>current_tab = Tab::Preview;
                 });
 
-            ui.selectable_label(<span class="kw-2">*</span>current_tab == Tab::RenderResult, <span class="macro">t!</span>(<span class="string">&quot;render&quot;</span>))
+            ui.selectable_label(<span class="kw-2">*</span>current_tab == Tab::RenderResult, <span class="macro">t!</span>(<span class="string">"render"</span>))
                 .clicked()
                 .then(|| {
                     <span class="kw-2">*</span>current_tab = Tab::RenderResult;
@@ -245,7 +246,7 @@
     }
 
     <span class="kw">pub fn </span>about_us_button(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
-        ui.add(Button::new(<span class="string">&quot; ? &quot;</span>).rounding(<span class="number">40.0</span>))
+        ui.add(Button::new(<span class="string">" ? "</span>).rounding(<span class="number">40.0</span>))
             .clicked()
             .then(|| {
                 <span class="self">self</span>.show_about = <span class="bool-val">true</span>;
@@ -253,7 +254,7 @@
     }
 
     <span class="kw">fn </span>about_window(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui) {
-        Window::new(<span class="macro">t!</span>(<span class="string">&quot;about&quot;</span>))
+        Window::new(<span class="macro">t!</span>(<span class="string">"about"</span>))
             .resizable(<span class="bool-val">false</span>)
             .collapsible(<span class="bool-val">false</span>)
             .open(<span class="kw-2">&amp;mut </span><span class="self">self</span>.show_about)
@@ -263,19 +264,19 @@
             .show(ui.ctx(), |ui| {
                 ui.vertical_centered(|ui| {
                     ui.add(
-                        egui::Image::new(<span class="macro">egui::include_image!</span>(<span class="string">&quot;../../res/icon.png&quot;</span>))
+                        egui::Image::new(<span class="macro">egui::include_image!</span>(<span class="string">"../../res/icon.png"</span>))
                             .shrink_to_fit()
                             .rounding(<span class="number">10.0</span>),
                     );
 
-                    ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}: {}&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;version&quot;</span>), <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>)));
+                    ui.label(<span class="macro">format!</span>(<span class="string">"{}: {}"</span>, <span class="macro">t!</span>(<span class="string">"version"</span>), <span class="macro">env!</span>(<span class="string">"CARGO_PKG_VERSION"</span>)));
                     ui.hyperlink_to(
-                        <span class="macro">format!</span>(<span class="string">&quot;{GITHUB} {}&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;github&quot;</span>)),
-                        <span class="string">&quot;https://github.com/bircni/Raytracing&quot;</span>,
+                        <span class="macro">format!</span>(<span class="string">"{GITHUB} {}"</span>, <span class="macro">t!</span>(<span class="string">"github"</span>)),
+                        <span class="string">"https://github.com/bircni/Raytracing"</span>,
                     );
 
-                    ui.hyperlink_to(<span class="macro">t!</span>(<span class="string">&quot;built_with&quot;</span>), <span class="string">&quot;https://docs.rs/egui/&quot;</span>);
-                    ui.label(<span class="macro">t!</span>(<span class="string">&quot;copyright&quot;</span>));
+                    ui.hyperlink_to(<span class="macro">t!</span>(<span class="string">"built_with"</span>), <span class="string">"https://docs.rs/egui/"</span>);
+                    ui.label(<span class="macro">t!</span>(<span class="string">"copyright"</span>));
                 });
             });
     }
@@ -284,18 +285,18 @@
         <span class="kw">if </span>ui
             .add_enabled(
                 render.progress.load(Ordering::Relaxed) == u16::MAX,
-                Button::new(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;export&quot;</span>)).size(<span class="number">14.0</span>)),
+                Button::new(RichText::new(<span class="macro">t!</span>(<span class="string">"export"</span>)).size(<span class="number">14.0</span>)),
             )
             .clicked()
         {
-            <span class="macro">info!</span>(<span class="string">&quot;Exporting image&quot;</span>);
+            <span class="macro">info!</span>(<span class="string">"Exporting image"</span>);
             <span class="self">self</span>.save_render_dialog
                 .get_or_insert_with(|| {
                     <span class="kw">let </span>(x, y) = render.image.lock().dimensions();
                     FileDialog::save_file(<span class="prelude-val">None</span>)
-                        .default_filename(<span class="macro">format!</span>(<span class="string">&quot;render_{x}x{y}.png&quot;</span>))
+                        .default_filename(<span class="macro">format!</span>(<span class="string">"render_{x}x{y}.png"</span>))
                         .filename_filter(Box::new(|name| {
-                            [<span class="string">&quot;.png&quot;</span>, <span class="string">&quot;.jpg&quot;</span>, <span class="string">&quot;.jpeg&quot;</span>]
+                            [<span class="string">".png"</span>, <span class="string">".jpg"</span>, <span class="string">".jpeg"</span>]
                                 .into_iter()
                                 .any(|ext| name.ends_with(ext))
                         }))
@@ -307,13 +308,13 @@
             <span class="kw">if </span>dialog.show(ui.ctx()).selected() {
                 <span class="kw">match </span>dialog.path() {
                     <span class="prelude-val">Some</span>(path) =&gt; {
-                        <span class="macro">log::info!</span>(<span class="string">&quot;Saving image to {:?}&quot;</span>, path);
+                        <span class="macro">log::info!</span>(<span class="string">"Saving image to {:?}"</span>, path);
                         render.image.lock().save(path).unwrap_or_else(|e| {
-                            <span class="macro">warn!</span>(<span class="string">&quot;Failed to save image: {}&quot;</span>, e);
+                            <span class="macro">warn!</span>(<span class="string">"Failed to save image: {}"</span>, e);
                         });
                     }
                     <span class="prelude-val">None </span>=&gt; {
-                        <span class="macro">warn!</span>(<span class="string">&quot;Save dialog returned no path&quot;</span>);
+                        <span class="macro">warn!</span>(<span class="string">"Save dialog returned no path"</span>);
                     }
                 }
             }
@@ -327,12 +328,12 @@
         current_tab: <span class="kw-2">&amp;mut </span>Tab,
     ) {
         <span class="kw">if </span>render.thread.is_some() {
-            ui.button(<span class="macro">t!</span>(<span class="string">&quot;cancel&quot;</span>)).clicked().then(|| {
+            ui.button(<span class="macro">t!</span>(<span class="string">"cancel"</span>)).clicked().then(|| {
                 render.cancel.store(<span class="bool-val">true</span>, Ordering::Relaxed);
             });
         } <span class="kw">else </span>{
             ui.add_enabled_ui(render.thread.is_none() &amp;&amp; scene.is_some(), |ui| {
-                ui.button(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;render&quot;</span>)).size(<span class="number">14.0</span>))
+                ui.button(RichText::new(<span class="macro">t!</span>(<span class="string">"render"</span>)).size(<span class="number">14.0</span>))
                     .clicked()
                     .then(|| {
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(scene) = scene {
@@ -354,12 +355,12 @@
                         <span class="attr">#[allow(clippy::float_cmp)]
                         </span><span class="kw">if </span>progress == <span class="number">1.0 </span>{
                             <span class="macro">format!</span>(
-                                <span class="string">&quot;{}: {:.2} s&quot;</span>,
-                                <span class="macro">t!</span>(<span class="string">&quot;done&quot;</span>),
+                                <span class="string">"{}: {:.2} s"</span>,
+                                <span class="macro">t!</span>(<span class="string">"done"</span>),
                                 render.time.load(Ordering::Relaxed) <span class="kw">as </span>f32 / <span class="number">1000.0
                             </span>)
                         } <span class="kw">else if </span>progress &gt; <span class="number">0.0 </span>{
-                            <span class="macro">format!</span>(<span class="string">&quot;{:.1}%&quot;</span>, progress * <span class="number">100.0</span>)
+                            <span class="macro">format!</span>(<span class="string">"{:.1}%"</span>, progress * <span class="number">100.0</span>)
                         } <span class="kw">else </span>{
                             String::new()
                         },
@@ -369,7 +370,7 @@
                 .fill(Color32::BLUE),
         );
 
-        ui.label(<span class="macro">t!</span>(<span class="string">&quot;render_progress&quot;</span>));
+        ui.label(<span class="macro">t!</span>(<span class="string">"render_progress"</span>));
     }
 }
 </code></pre></div></section></main></body></html>

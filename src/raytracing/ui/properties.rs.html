@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/properties.rs`."><title>properties.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="raytracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/properties.rs`."><title>properties.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="raytracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -447,9 +448,9 @@
 
 <span class="kw">fn </span>xyz_drag_value(ui: <span class="kw-2">&amp;mut </span>Ui, value: <span class="kw-2">&amp;mut </span>XYZ&lt;f32&gt;) {
     ui.horizontal(|ui| {
-        ui.add(DragValue::new(<span class="kw-2">&amp;mut </span>value.x).speed(<span class="number">0.1</span>).prefix(<span class="string">&quot;x: &quot;</span>));
-        ui.add(DragValue::new(<span class="kw-2">&amp;mut </span>value.y).speed(<span class="number">0.1</span>).prefix(<span class="string">&quot;y: &quot;</span>));
-        ui.add(DragValue::new(<span class="kw-2">&amp;mut </span>value.z).speed(<span class="number">0.1</span>).prefix(<span class="string">&quot;z: &quot;</span>));
+        ui.add(DragValue::new(<span class="kw-2">&amp;mut </span>value.x).speed(<span class="number">0.1</span>).prefix(<span class="string">"x: "</span>));
+        ui.add(DragValue::new(<span class="kw-2">&amp;mut </span>value.y).speed(<span class="number">0.1</span>).prefix(<span class="string">"y: "</span>));
+        ui.add(DragValue::new(<span class="kw-2">&amp;mut </span>value.z).speed(<span class="number">0.1</span>).prefix(<span class="string">"z: "</span>));
     });
 }
 
@@ -470,7 +471,7 @@
 
     <span class="kw">pub fn </span>show(<span class="kw-2">&amp;mut </span><span class="self">self</span>, scene: <span class="kw-2">&amp;mut </span>Scene, ui: <span class="kw-2">&amp;mut </span>Ui, render: <span class="kw-2">&amp;mut </span>Render) {
         ui.horizontal(|ui| {
-            ui.heading(<span class="macro">t!</span>(<span class="string">&quot;properties&quot;</span>));
+            ui.heading(<span class="macro">t!</span>(<span class="string">"properties"</span>));
         });
 
         <span class="self">Self</span>::camera_settings(scene, ui);
@@ -491,26 +492,26 @@
     <span class="kw">pub fn </span>camera_settings(scene: <span class="kw-2">&amp;mut </span>Scene, ui: <span class="kw-2">&amp;mut </span>egui::Ui) {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
-                ui.label(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;camera&quot;</span>)).size(<span class="number">16.0</span>));
+                ui.label(RichText::new(<span class="macro">t!</span>(<span class="string">"camera"</span>)).size(<span class="number">16.0</span>));
             });
 
             ui.separator();
 
             ui.vertical(|ui| {
-                ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;position&quot;</span>)));
+                ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"position"</span>)));
 
                 xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>scene.camera.position);
 
-                ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;look_at&quot;</span>)));
+                ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"look_at"</span>)));
 
                 xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>scene.camera.look_at);
 
-                ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;fov&quot;</span>)));
+                ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"fov"</span>)));
 
                 ui.add(
                     Slider::new(<span class="kw-2">&amp;mut </span>scene.camera.fov, <span class="number">0.0</span>..=consts::PI)
                         .step_by(<span class="number">0.01</span>)
-                        .custom_formatter(|x, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{:.2}°&quot;</span>, x.to_degrees()))
+                        .custom_formatter(|x, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">"{:.2}°"</span>, x.to_degrees()))
                         .clamp_to_range(<span class="bool-val">true</span>),
                 );
             });
@@ -520,7 +521,7 @@
     <span class="kw">fn </span>scene_settings(<span class="kw-2">&amp;mut </span><span class="self">self</span>, scene: <span class="kw-2">&amp;mut </span>Scene, ui: <span class="kw-2">&amp;mut </span>Ui, render: <span class="kw-2">&amp;mut </span>Render) {
         ui.vertical(|ui| {
             ui.group(|ui| {
-                CollapsingHeader::new(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;scene_settings&quot;</span>)).size(<span class="number">16.0</span>))
+                CollapsingHeader::new(RichText::new(<span class="macro">t!</span>(<span class="string">"scene_settings"</span>)).size(<span class="number">16.0</span>))
                     .default_open(<span class="bool-val">true</span>)
                     .show_unindented(ui, |ui| {
                         ui.separator();
@@ -536,15 +537,15 @@
     }
 
     <span class="kw">fn </span>ambient_options(ui: <span class="kw-2">&amp;mut </span>Ui, scene: <span class="kw-2">&amp;mut </span>Scene) {
-        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;ambient_color&quot;</span>)));
+        ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"ambient_color"</span>)));
         color_picker::color_edit_button_rgb(ui, scene.settings.ambient_color.as_mut());
 
-        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;ambient_intensity&quot;</span>)));
+        ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"ambient_intensity"</span>)));
         ui.add(Slider::new(<span class="kw-2">&amp;mut </span>scene.settings.ambient_intensity, <span class="number">0.0</span>..=<span class="number">1.0</span>).clamp_to_range(<span class="bool-val">true</span>));
     }
 
     <span class="kw">fn </span>render_options(ui: <span class="kw-2">&amp;mut </span>Ui, render: <span class="kw-2">&amp;mut </span>Render, scene: <span class="kw-2">&amp;mut </span>Scene) {
-        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;render_size&quot;</span>)));
+        ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"render_size"</span>)));
         ui.vertical(|ui| {
             ui.add_enabled_ui(render.thread.is_none(), |ui| {
                 ui.vertical(|ui| {
@@ -552,15 +553,15 @@
                     egui::ComboBox::from_id_source(<span class="number">0</span>)
                         .selected_text(text)
                         .show_ui(ui, |ui| {
-                            ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">1280</span>, <span class="number">720</span>), <span class="string">&quot;HD&quot;</span>);
+                            ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">1280</span>, <span class="number">720</span>), <span class="string">"HD"</span>);
                             ui.selectable_value(
                                 <span class="kw-2">&amp;mut </span>scene.camera.resolution,
                                 (<span class="number">1920</span>, <span class="number">1080</span>),
-                                <span class="string">&quot;Full HD&quot;</span>,
+                                <span class="string">"Full HD"</span>,
                             );
-                            ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">2560</span>, <span class="number">1440</span>), <span class="string">&quot;2k&quot;</span>);
-                            ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">3840</span>, <span class="number">2160</span>), <span class="string">&quot;4k&quot;</span>);
-                            ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">7680</span>, <span class="number">4320</span>), <span class="string">&quot;8k&quot;</span>);
+                            ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">2560</span>, <span class="number">1440</span>), <span class="string">"2k"</span>);
+                            ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">3840</span>, <span class="number">2160</span>), <span class="string">"4k"</span>);
+                            ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">7680</span>, <span class="number">4320</span>), <span class="string">"8k"</span>);
                         });
                     ui.horizontal(|ui| {
                         <span class="kw">let </span>(x, y) = <span class="kw-2">&amp;mut </span>scene.camera.resolution;
@@ -568,18 +569,18 @@
                             DragValue::new(x)
                                 .speed(<span class="number">1.0</span>)
                                 .clamp_range(<span class="number">10</span>..=<span class="number">8192</span>)
-                                .prefix(<span class="string">&quot;w: &quot;</span>),
+                                .prefix(<span class="string">"w: "</span>),
                         );
                         ui.add(
                             DragValue::new(y)
                                 .speed(<span class="number">1.0</span>)
                                 .clamp_range(<span class="number">10</span>..=<span class="number">8192</span>)
-                                .prefix(<span class="string">&quot;h: &quot;</span>),
+                                .prefix(<span class="string">"h: "</span>),
                         );
                     });
-                    ui.checkbox(<span class="kw-2">&amp;mut </span>scene.settings.anti_aliasing, <span class="string">&quot;Anti-Aliasing&quot;</span>);
+                    ui.checkbox(<span class="kw-2">&amp;mut </span>scene.settings.anti_aliasing, <span class="string">"Anti-Aliasing"</span>);
                     <span class="kw">if </span>scene.settings.anti_aliasing {
-                        ui.label(<span class="string">&quot;Samples per pixel:&quot;</span>);
+                        ui.label(<span class="string">"Samples per pixel:"</span>);
                         ui.add(
                             Slider::new(<span class="kw-2">&amp;mut </span>scene.settings.samples, <span class="number">1</span>..=<span class="number">128</span>).clamp_to_range(<span class="bool-val">true</span>),
                         );
@@ -590,15 +591,15 @@
     }
 
     <span class="kw">fn </span>skybox_options(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ui: <span class="kw-2">&amp;mut </span>Ui, scene: <span class="kw-2">&amp;mut </span>Scene) {
-        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;background&quot;</span>)));
+        ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"background"</span>)));
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(dialog) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.skybox_dialog {
             <span class="kw">if </span>dialog.show(ui.ctx()).selected() {
                 <span class="kw">match </span>(|| {
-                    <span class="kw">let </span>path = dialog.path().ok_or(<span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;No path selected&quot;</span>))<span class="question-mark">?</span>;
+                    <span class="kw">let </span>path = dialog.path().ok_or(<span class="macro">anyhow::anyhow!</span>(<span class="string">"No path selected"</span>))<span class="question-mark">?</span>;
 
                     <span class="kw">let </span>image = image::open(path)
-                        .context(<span class="string">&quot;Failed to open image&quot;</span>)<span class="question-mark">?
+                        .context(<span class="string">"Failed to open image"</span>)<span class="question-mark">?
                         </span>.into_rgb8();
 
                     <span class="prelude-val">Ok</span>::&lt;<span class="kw">_</span>, anyhow::Error&gt;(Skybox::Image {
@@ -610,7 +611,7 @@
                         scene.settings.skybox = skybox;
                     }
                     <span class="prelude-val">Err</span>(e) =&gt; {
-                        <span class="macro">warn!</span>(<span class="string">&quot;Failed to load skybox: {}&quot;</span>, e);
+                        <span class="macro">warn!</span>(<span class="string">"Failed to load skybox: {}"</span>, e);
                     }
                 }
 
@@ -622,7 +623,7 @@
             ui.horizontal(|ui| {
                 ui.radio(
                     <span class="macro">matches!</span>(scene.settings.skybox, Skybox::Color(<span class="kw">_</span>)),
-                    <span class="macro">t!</span>(<span class="string">&quot;color&quot;</span>),
+                    <span class="macro">t!</span>(<span class="string">"color"</span>),
                 )
                 .clicked()
                 .then(|| {
@@ -631,7 +632,7 @@
 
                 ui.radio(
                     <span class="macro">matches!</span>(scene.settings.skybox, Skybox::Image { .. }),
-                    <span class="macro">t!</span>(<span class="string">&quot;skybox&quot;</span>),
+                    <span class="macro">t!</span>(<span class="string">"skybox"</span>),
                 )
                 .clicked()
                 .then(|| <span class="self">self</span>.load_skybox_img());
@@ -639,7 +640,7 @@
 
             <span class="kw">match </span><span class="kw-2">&amp;mut </span>scene.settings.skybox {
                 Skybox::Image { path, .. } =&gt; {
-                    ui.button(<span class="macro">t!</span>(<span class="string">&quot;reload_skybox&quot;</span>))
+                    ui.button(<span class="macro">t!</span>(<span class="string">"reload_skybox"</span>))
                         .clicked()
                         .then(|| <span class="self">self</span>.load_skybox_img());
                     ui.label(path.display().to_string());
@@ -655,7 +656,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>dialog = FileDialog::open_file(<span class="prelude-val">None</span>).filename_filter(Box::new(|p| {
             Path::new(p)
                 .extension()
-                .map_or(<span class="bool-val">false</span>, |ext| ext.eq_ignore_ascii_case(<span class="string">&quot;exr&quot;</span>))
+                .map_or(<span class="bool-val">false</span>, |ext| ext.eq_ignore_ascii_case(<span class="string">"exr"</span>))
         }));
 
         dialog.open();
@@ -667,7 +668,7 @@
         ui.vertical(|ui| {
             ui.group(|ui| {
                 CollapsingHeader::new(
-                    RichText::new(<span class="macro">format!</span>(<span class="string">&quot;{} ({})&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;lights&quot;</span>), scene.lights.len())).size(<span class="number">16.0</span>),
+                    RichText::new(<span class="macro">format!</span>(<span class="string">"{} ({})"</span>, <span class="macro">t!</span>(<span class="string">"lights"</span>), scene.lights.len())).size(<span class="number">16.0</span>),
                 )
                 .default_open(<span class="bool-val">true</span>)
                 .show_unindented(ui, |ui| {
@@ -682,7 +683,7 @@
 
                             ui.horizontal(|ui| {
                                 ui.label(
-                                    RichText::new(<span class="macro">format!</span>(<span class="string">&quot;{} {n}&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;light&quot;</span>)))
+                                    RichText::new(<span class="macro">format!</span>(<span class="string">"{} {n}"</span>, <span class="macro">t!</span>(<span class="string">"light"</span>)))
                                         .size(<span class="number">14.0</span>)
                                         .family(FontFamily::Monospace),
                                 );
@@ -691,25 +692,25 @@
                                         .add_sized(
                                             [<span class="number">20.0</span>, <span class="number">20.0</span>],
                                             ImageButton::new(<span class="macro">include_image!</span>(
-                                                <span class="string">&quot;../../res/icons/trash-solid.svg&quot;
+                                                <span class="string">"../../res/icons/trash-solid.svg"
                                             </span>))
-                                            .tint(<span class="macro">hex_color!</span>(<span class="string">&quot;#cc0000&quot;</span>)),
+                                            .tint(<span class="macro">hex_color!</span>(<span class="string">"#cc0000"</span>)),
                                         )
                                         .clicked();
                                 });
                             });
 
-                            ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;position&quot;</span>)));
+                            ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"position"</span>)));
 
                             xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>light.position);
 
-                            ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;intensity&quot;</span>)));
+                            ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"intensity"</span>)));
 
                             ui.add(
                                 Slider::new(<span class="kw-2">&amp;mut </span>light.intensity, <span class="number">0.0</span>..=<span class="number">100.0</span>).clamp_to_range(<span class="bool-val">true</span>),
                             );
 
-                            ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;color&quot;</span>)));
+                            ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"color"</span>)));
 
                             color_picker::color_edit_button_rgb(ui, light.color.as_mut());
 
@@ -723,7 +724,7 @@
 
                     ui.separator();
                     ui.vertical_centered(|ui| {
-                        ui.add(Button::new(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;add_light&quot;</span>))).frame(<span class="bool-val">false</span>))
+                        ui.add(Button::new(RichText::new(<span class="macro">t!</span>(<span class="string">"add_light"</span>))).frame(<span class="bool-val">false</span>))
                             .clicked()
                             .then(|| {
                                 scene.lights.push(Light {
@@ -742,7 +743,7 @@
         ui.vertical(|ui| {
             ui.group(|ui| {
                 CollapsingHeader::new(
-                    RichText::new(<span class="macro">format!</span>(<span class="string">&quot;{} ({})&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;objects&quot;</span>), scene.objects.len()))
+                    RichText::new(<span class="macro">format!</span>(<span class="string">"{} ({})"</span>, <span class="macro">t!</span>(<span class="string">"objects"</span>), scene.objects.len()))
                         .size(<span class="number">16.0</span>),
                 )
                 .default_open(<span class="bool-val">true</span>)
@@ -754,7 +755,7 @@
 
                         ui.horizontal(|ui| {
                             ui.label(
-                                RichText::new(<span class="macro">format!</span>(<span class="string">&quot;{} ({} ▲)&quot;</span>, o.name, o.triangles.len()))
+                                RichText::new(<span class="macro">format!</span>(<span class="string">"{} ({} ▲)"</span>, o.name, o.triangles.len()))
                                     .size(<span class="number">14.0</span>)
                                     .family(FontFamily::Monospace),
                             );
@@ -763,9 +764,9 @@
                                     .add_sized(
                                         [<span class="number">20.0</span>, <span class="number">20.0</span>],
                                         ImageButton::new(<span class="macro">include_image!</span>(
-                                            <span class="string">&quot;../../res/icons/trash-solid.svg&quot;
+                                            <span class="string">"../../res/icons/trash-solid.svg"
                                         </span>))
-                                        .tint(<span class="macro">hex_color!</span>(<span class="string">&quot;#cc0000&quot;</span>)),
+                                        .tint(<span class="macro">hex_color!</span>(<span class="string">"#cc0000"</span>)),
                                     )
                                     .clicked()
                                 {
@@ -774,25 +775,25 @@
                             });
                         });
 
-                        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;position&quot;</span>)));
+                        ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"position"</span>)));
 
                         xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>o.translation);
 
-                        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;rotation&quot;</span>)));
+                        ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"rotation"</span>)));
 
                         ui.horizontal(|ui| {
                             <span class="kw">let </span>(<span class="kw-2">mut </span>x, <span class="kw-2">mut </span>y, <span class="kw-2">mut </span>z) = o.rotation.euler_angles();
 
-                            [(<span class="string">&quot;x&quot;</span>, <span class="kw-2">&amp;mut </span>x), (<span class="string">&quot;y&quot;</span>, <span class="kw-2">&amp;mut </span>y), (<span class="string">&quot;z&quot;</span>, <span class="kw-2">&amp;mut </span>z)]
+                            [(<span class="string">"x"</span>, <span class="kw-2">&amp;mut </span>x), (<span class="string">"y"</span>, <span class="kw-2">&amp;mut </span>y), (<span class="string">"z"</span>, <span class="kw-2">&amp;mut </span>z)]
                                 .iter_mut()
                                 .any(|(prefix, angle)| {
                                     ui.add(
                                         DragValue::new(<span class="kw-2">*</span>angle)
                                             .speed(<span class="number">0.01</span>)
                                             .custom_formatter(|f, <span class="kw">_</span>| {
-                                                <span class="macro">format!</span>(<span class="string">&quot;{:.1}°&quot;</span>, f.to_degrees())
+                                                <span class="macro">format!</span>(<span class="string">"{:.1}°"</span>, f.to_degrees())
                                             })
-                                            .prefix(<span class="macro">format!</span>(<span class="string">&quot;{prefix}: &quot;</span>)),
+                                            .prefix(<span class="macro">format!</span>(<span class="string">"{prefix}: "</span>)),
                                     )
                                     .changed()
                                 })
@@ -802,7 +803,7 @@
                                 })
                         });
 
-                        ui.label(<span class="macro">format!</span>(<span class="string">&quot;{}:&quot;</span>, <span class="macro">t!</span>(<span class="string">&quot;scale&quot;</span>)));
+                        ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"scale"</span>)));
 
                         xyz_drag_value(ui, <span class="kw-2">&amp;mut </span>o.scale);
                     }
@@ -814,13 +815,13 @@
                     ui.separator();
                     ui.vertical_centered(|ui| {
                         <span class="kw">if </span>ui
-                            .add(Button::new(RichText::new(<span class="macro">t!</span>(<span class="string">&quot;add_object&quot;</span>))).frame(<span class="bool-val">false</span>))
+                            .add(Button::new(RichText::new(<span class="macro">t!</span>(<span class="string">"add_object"</span>))).frame(<span class="bool-val">false</span>))
                             .clicked()
                         {
                             <span class="kw">let </span><span class="kw-2">mut </span>dialog =
                                 FileDialog::open_file(<span class="prelude-val">None</span>).show_files_filter(Box::new(|path| {
                                     path.extension()
-                                        .is_some_and(|ext| ext.eq_ignore_ascii_case(<span class="string">&quot;obj&quot;</span>))
+                                        .is_some_and(|ext| ext.eq_ignore_ascii_case(<span class="string">"obj"</span>))
                                 }));
                             dialog.open();
                             <span class="self">self</span>.object_dialog = <span class="prelude-val">Some</span>(dialog);
@@ -838,7 +839,7 @@
                                         <span class="prelude-val">Ok</span>(object) =&gt; {
                                             scene.objects.push(object);
                                         }
-                                        <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;Failed to load object: {}&quot;</span>, e),
+                                        <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">warn!</span>(<span class="string">"Failed to load object: {}"</span>, e),
                                     }
                                 }
                             }
@@ -849,14 +850,14 @@
         });
     }
 
-    <span class="kw">fn </span>format_render_size(size: (u32, u32)) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+    <span class="kw">fn </span>format_render_size(size: (u32, u32)) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
         <span class="kw">match </span>size {
-            (<span class="number">1280</span>, <span class="number">720</span>) =&gt; <span class="string">&quot;HD&quot;</span>,
-            (<span class="number">1920</span>, <span class="number">1080</span>) =&gt; <span class="string">&quot;FullHD&quot;</span>,
-            (<span class="number">2560</span>, <span class="number">1440</span>) =&gt; <span class="string">&quot;2k&quot;</span>,
-            (<span class="number">3840</span>, <span class="number">2160</span>) =&gt; <span class="string">&quot;4k&quot;</span>,
-            (<span class="number">7680</span>, <span class="number">4320</span>) =&gt; <span class="string">&quot;8k&quot;</span>,
-            <span class="kw">_ </span>=&gt; <span class="string">&quot;Custom&quot;</span>,
+            (<span class="number">1280</span>, <span class="number">720</span>) =&gt; <span class="string">"HD"</span>,
+            (<span class="number">1920</span>, <span class="number">1080</span>) =&gt; <span class="string">"FullHD"</span>,
+            (<span class="number">2560</span>, <span class="number">1440</span>) =&gt; <span class="string">"2k"</span>,
+            (<span class="number">3840</span>, <span class="number">2160</span>) =&gt; <span class="string">"4k"</span>,
+            (<span class="number">7680</span>, <span class="number">4320</span>) =&gt; <span class="string">"8k"</span>,
+            <span class="kw">_ </span>=&gt; <span class="string">"Custom"</span>,
         }
     }
 }
