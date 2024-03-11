@@ -33,7 +33,7 @@ anyhow = "1.0.80"
 chrono = { version = "0.4.34", default-features = false, features = ["clock"] }
 
 # image loading and saving
-image = { version = "0.24.9", default-features = false, features = [
+image = { version = "0.25.0", default-features = false, features = [
     "png",
     "jpeg",
     "tiff",
