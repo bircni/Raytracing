@@ -7,6 +7,8 @@
 #![allow(clippy::cast_precision_loss)]
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_sign_loss)]
+//hex-color out of bounds
+#![allow(clippy::out_of_bounds_indexing)]
 
 extern crate rust_i18n;
 

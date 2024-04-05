@@ -158,6 +158,7 @@ impl Properties {
         });
     }
 
+    #[allow(clippy::blocks_in_conditions)]
     fn skybox_options(&mut self, ui: &mut Ui, scene: &mut Scene) {
         ui.label(format!("{}:", t!("background")));
 
