@@ -27,17 +27,14 @@ short_description = "A Raytracer."
 [dependencies]
 
 # error handling
-anyhow = "1.0.80"
-
-# time
-chrono = { version = "0.4.34", default-features = false, features = ["clock"] }
+anyhow = "1.0.81"
 
 # image loading and saving
-image = { version = "0.24.9", default-features = false, features = [
+image = { version = "0.25.1", default-features = false, features = [
     "png",
     "jpeg",
     "tiff",
-    "openexr",
+    "exr",
 ] }
 
 # logging
@@ -45,35 +42,35 @@ log = "0.4.21"
 simplelog = "0.12.2"
 
 # linear algebra
-nalgebra = { version = "0.32.4", features = ["glam022"] }
+nalgebra = { version = "0.32.5", features = ["glam022"] }
 rand = "0.8.5"
 
 # obj file loading
 obj = "0.10.2"
 
 # automatic parallelization
-rayon = "1.9.0"
-bytemuck = { version = "1.14.3", features = ["derive"] }
+rayon = "1.10.0"
+bytemuck = { version = "1.15.0", features = ["derive"] }
 
 # total order for floats
 ordered-float = "4.2.0"
 
 # generic serialization / deserialization
 serde = { version = "1.0.197", features = ["derive"] }
-serde_yaml = "0.9.32"
+serde_yaml = "0.9.33"
 
 # GUI
-eframe = { version = "0.26.2", features = [
+eframe = { version = "0.27.2", features = [
     "wgpu",
     "accesskit",
     "default_fonts",
     "wayland",
     "x11",
 ], default-features = false }
-egui = { version = "0.26.2", features = ["log", "color-hex"] }
-egui-wgpu = { version = "0.26.2" }
-egui_file = "0.16.3"
-egui_extras = { version = "0.26.2", features = ["svg", "image"] }
+egui = { version = "0.27.2", features = ["log", "color-hex"] }
+egui-wgpu = { version = "0.27.2" }
+egui_file = "0.17.0"
+egui_extras = { version = "0.27.2", features = ["svg", "image"] }
 color-hex = "0.2.0"
 
 # BVH
