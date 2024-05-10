@@ -10,7 +10,7 @@ use std::sync::{
 
 pub struct Render {
     pub texture: TextureHandle,
-    /// Progress of the rendering in the range [0, u16::MAX]
+    /// Progress of the rendering in the range [0, `u16::MAX`]
     pub progress: Arc<AtomicU16>,
     pub thread: Option<std::thread::JoinHandle<()>>,
     /// Cancel the rendering if true
@@ -76,7 +76,7 @@ struct RenderingThread {
     image: Arc<Mutex<RgbImage>>,
     /// Cancel the rendering if true
     cancel: Arc<AtomicBool>,
-    /// Progress of the rendering in the range [0, u16::MAX]
+    /// Progress of the rendering in the range [0, `u16::MAX`]
     progress: Arc<AtomicU16>,
     /// Write the rendering time in milliseconds
     time: Arc<AtomicU32>,
