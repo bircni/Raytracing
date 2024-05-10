@@ -64,7 +64,7 @@ impl<'de, P: AsRef<std::path::Path> + std::marker::Sync> serde::de::DeserializeS
     where
         D: serde::Deserializer<'de>,
     {
-        let map = <serde_yaml::Value as serde::Deserialize>::deserialize(deserializer)?;
+        let map = <serde_yml::Value as serde::Deserialize>::deserialize(deserializer)?;
 
         let objects = map
             .get("models")
@@ -75,7 +75,7 @@ impl<'de, P: AsRef<std::path::Path> + std::marker::Sync> serde::de::DeserializeS
             })?
             .par_iter()
             .map(|v| object::WithRelativePath(self.0.as_ref()).deserialize(v))
-            .collect::<Result<Vec<Object>, serde_yaml::Error>>()
+            .collect::<Result<Vec<Object>, serde_yml::Error>>()
             .map_err(serde::de::Error::custom)?;
 
         let lights = map
@@ -87,7 +87,7 @@ impl<'de, P: AsRef<std::path::Path> + std::marker::Sync> serde::de::DeserializeS
             })?
             .iter()
             .map(Light::deserialize)
-            .collect::<Result<Vec<Light>, serde_yaml::Error>>()
+            .collect::<Result<Vec<Light>, serde_yml::Error>>()
             .map_err(serde::de::Error::custom)?;
 
         let camera = map
@@ -127,7 +127,7 @@ impl Scene {
         ))?;
 
         WithRelativePath(path.as_ref())
-            .deserialize(serde_yaml::Deserializer::from_str(&s))
+            .deserialize(serde_yml::Deserializer::from_str(&s))
             .map_err(|e| {
                 anyhow::anyhow!(
                     "Failed to deserialize scene from path: {}\n{}",

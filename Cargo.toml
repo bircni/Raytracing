@@ -27,7 +27,7 @@ short_description = "A Raytracer."
 [dependencies]
 
 # error handling
-anyhow = "1.0.81"
+anyhow = "1.0.83"
 
 # image loading and saving
 image = { version = "0.25.1", default-features = false, features = [
@@ -56,8 +56,8 @@ bytemuck = { version = "1.15.0", features = ["derive"] }
 ordered-float = "4.2.0"
 
 # generic serialization / deserialization
-serde = { version = "1.0.197", features = ["derive"] }
-serde_yaml = "0.9.34"
+serde = { version = "1.0.201", features = ["derive"] }
+serde_yml = "0.0.5"
 
 # GUI
 eframe = { version = "0.27.2", features = [
