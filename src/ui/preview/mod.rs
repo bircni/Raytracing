@@ -54,7 +54,8 @@ impl Preview {
         Self::show_hover_overlay(ui.ctx(), scene, ui.available_rect_before_wrap());
         ui.ctx().input(|i| {
             if !i.raw.dropped_files.is_empty() {
-                self.dropped_files = i.raw.dropped_files.clone();
+                //self.dropped_files = i.raw.dropped_files.clone();
+                self.dropped_files.clone_from(&i.raw.dropped_files);
                 if let Some(path) = self.dropped_files.first().and_then(|p| p.path.as_ref()) {
                     Self::handle_file(path, scene);
                 }

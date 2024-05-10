@@ -185,7 +185,7 @@ impl YamlMenu {
     fn save_scene(scene: &Option<Scene>) {
         match scene {
             Some(scene) => {
-                serde_yaml::to_string(scene)
+                serde_yml::to_string(scene)
                     .context("Failed to serialize scene")
                     .and_then(|str| {
                         fs::write(scene.path.as_path(), str).context("Failed to save config")
