@@ -54,3 +54,11 @@ Available translations:
 - German
 
 If you want to contribute a translation, create a new `.yaml` file in the `locales` folder and add the translations.
+
+## Contributors
+
+<p align="center">
+<a href="https://github.com/bircni/Raytracing/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=bircni/Raytracing"/>
+</a>
+</p>
