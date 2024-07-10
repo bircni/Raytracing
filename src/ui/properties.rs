@@ -133,18 +133,8 @@ impl Properties {
                         });
                     ui.horizontal(|ui| {
                         let (x, y) = &mut scene.camera.resolution;
-                        ui.add(
-                            DragValue::new(x)
-                                .speed(1.0)
-                                .clamp_range(10..=8192)
-                                .prefix("w: "),
-                        );
-                        ui.add(
-                            DragValue::new(y)
-                                .speed(1.0)
-                                .clamp_range(10..=8192)
-                                .prefix("h: "),
-                        );
+                        ui.add(DragValue::new(x).speed(1.0).range(10..=8192).prefix("w: "));
+                        ui.add(DragValue::new(y).speed(1.0).range(10..=8192).prefix("h: "));
                     });
                     ui.checkbox(&mut scene.settings.anti_aliasing, "Anti-Aliasing");
                     if scene.settings.anti_aliasing {

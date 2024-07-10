@@ -109,9 +109,14 @@ impl Preview {
                     )));
 
                     if response.hover_pos().is_some() && !self.active {
-                        egui::show_tooltip(ui.ctx(), egui::Id::new("preview_tooltip"), |ui| {
-                            ui.label(t!("change_camera_pos"));
-                        });
+                        egui::show_tooltip(
+                            ui.ctx(),
+                            ui.layer_id(),
+                            egui::Id::new("preview_tooltip"),
+                            |ui| {
+                                ui.label(t!("change_camera_pos"));
+                            },
+                        );
                     }
 
                     if response.clicked() {

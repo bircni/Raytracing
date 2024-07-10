@@ -69,10 +69,10 @@ fn main() -> anyhow::Result<()> {
             ..Default::default()
         },
         Box::new(|cc| {
-            Box::new(ui::App::new(cc).unwrap_or_else(|e| {
+            Ok(Box::new(ui::App::new(cc).unwrap_or_else(|e| {
                 error!("Failed to create app: {}", e);
                 std::process::exit(1);
-            }))
+            })))
         }),
     )
     .map_err(|e| anyhow::anyhow!(e.to_string()))

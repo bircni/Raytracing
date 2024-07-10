@@ -59,7 +59,7 @@ impl Raytracer {
                     .try_normalize(f32::EPSILON)
                     .unwrap_or(Vector3::y());
 
-                // shperical mapping
+                // spherical mapping
                 let x = ((0.5 + direction.z.atan2(direction.x) / (2.0 * std::f32::consts::PI))
                     * image.width() as f32) as u32
                     % image.width();

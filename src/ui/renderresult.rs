@@ -26,7 +26,7 @@ impl RenderResult {
                 self.zoom += ui.input(|i| i.raw_scroll_delta.y);
                 self.zoom = self.zoom.clamp(
                     -response.rect.width().min(response.rect.height()) / 4.0,
-                    std::f32::INFINITY,
+                    f32::INFINITY,
                 );
                 self.position += response.drag_delta();
             }
