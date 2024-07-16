@@ -14,6 +14,7 @@ pub struct Ray {
 
 #[derive(Debug, Clone)]
 pub struct Hit<'a> {
+    #[allow(dead_code)]
     pub name: &'a str,
     pub point: Point3<f32>,
     pub normal: Vector3<f32>,
