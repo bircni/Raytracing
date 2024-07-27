@@ -30,7 +30,7 @@ short_description = "A Raytracer."
 anyhow = "1.0.86"
 
 # image loading and saving
-image = { version = "0.25.1", default-features = false, features = [
+image = { version = "0.25.2", default-features = false, features = [
     "png",
     "jpeg",
     "tiff",
@@ -57,7 +57,7 @@ ordered-float = "4.2.1"
 
 # generic serialization / deserialization
 serde = { version = "1.0.204", features = ["derive"] }
-serde_yml = "0.0.10"
+serde_yml = "0.0.11"
 
 # GUI
 eframe = { version = "0.28.1", features = [
