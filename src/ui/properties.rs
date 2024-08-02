@@ -30,14 +30,14 @@ pub struct Properties {
 }
 
 impl Properties {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             skybox_dialog: None,
             object_dialog: None,
         }
     }
 
-    pub fn show(&mut self, scene: &mut Scene, ui: &mut Ui, render: &mut Render) {
+    pub fn show(&mut self, scene: &mut Scene, ui: &mut Ui, render: &Render) {
         ui.horizontal(|ui| {
             ui.heading(t!("properties"));
         });
@@ -86,7 +86,7 @@ impl Properties {
         });
     }
 
-    fn scene_settings(&mut self, scene: &mut Scene, ui: &mut Ui, render: &mut Render) {
+    fn scene_settings(&mut self, scene: &mut Scene, ui: &mut Ui, render: &Render) {
         ui.vertical(|ui| {
             ui.group(|ui| {
                 CollapsingHeader::new(RichText::new(t!("scene_settings")).size(16.0))
@@ -112,7 +112,7 @@ impl Properties {
         ui.add(Slider::new(&mut scene.settings.ambient_intensity, 0.0..=1.0).clamp_to_range(true));
     }
 
-    fn render_options(ui: &mut Ui, render: &mut Render, scene: &mut Scene) {
+    fn render_options(ui: &mut Ui, render: &Render, scene: &mut Scene) {
         ui.label(format!("{}:", t!("render_size")));
         ui.vertical(|ui| {
             ui.add_enabled_ui(render.thread.is_none(), |ui| {
@@ -155,7 +155,9 @@ impl Properties {
         if let Some(dialog) = &mut self.skybox_dialog {
             if dialog.show(ui.ctx()).selected() {
                 match (|| {
-                    let path = dialog.path().ok_or(anyhow::anyhow!("No path selected"))?;
+                    let path = dialog
+                        .path()
+                        .ok_or_else(|| anyhow::anyhow!("No path selected"))?;
 
                     let image = image::open(path)
                         .context("Failed to open image")?
@@ -409,7 +411,7 @@ impl Properties {
         });
     }
 
-    fn format_render_size(size: (u32, u32)) -> &'static str {
+    const fn format_render_size(size: (u32, u32)) -> &'static str {
         match size {
             (1280, 720) => "HD",
             (1920, 1080) => "FullHD",

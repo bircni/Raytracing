@@ -34,7 +34,7 @@ impl Preview {
         }
     }
 
-    fn change_preview_movement(&mut self, ui: &mut Ui, response: &egui::Response, active: bool) {
+    fn change_preview_movement(&mut self, ui: &Ui, response: &egui::Response, active: bool) {
         self.active = active;
 
         if active {
@@ -208,7 +208,7 @@ impl Preview {
         }
     }
 
-    fn move_camera(&mut self, ui: &mut Ui, response: &egui::Response, scene: &mut Scene) {
+    fn move_camera(&mut self, ui: &Ui, response: &egui::Response, scene: &mut Scene) {
         if ui.input(|i| i.key_pressed(egui::Key::Escape)) && self.active {
             // exit movement mode using ESC
             self.change_preview_movement(ui, response, false);
@@ -241,7 +241,9 @@ impl Preview {
         scene.camera.look_at =
             scene.camera.position + (new_point - scene.camera.position).normalize();
 
-        scene.camera.fov = (scene.camera.fov - (ui.input(|i| i.raw_scroll_delta.y) * 0.001))
+        scene.camera.fov = ui
+            .input(|i| i.raw_scroll_delta.y)
+            .mul_add(-0.001, scene.camera.fov)
             .clamp(0.0_f32.to_radians(), 180.0_f32.to_radians());
 
         // compute movement

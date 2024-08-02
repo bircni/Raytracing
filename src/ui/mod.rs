@@ -119,7 +119,7 @@ impl eframe::App for App {
                                 ui.separator();
 
                                 if let Some(scene) = scene.as_mut() {
-                                    self.properties.show(scene, ui, &mut self.render);
+                                    self.properties.show(scene, ui, &self.render);
                                 }
                             });
                         });

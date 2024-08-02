@@ -50,10 +50,10 @@ obj = "0.10.2"
 
 # automatic parallelization
 rayon = "1.10.0"
-bytemuck = { version = "1.16.1", features = ["derive"] }
+bytemuck = { version = "1.16.3", features = ["derive"] }
 
 # total order for floats
-ordered-float = "4.2.1"
+ordered-float = "4.2.2"
 
 # generic serialization / deserialization
 serde = { version = "1.0.204", features = ["derive"] }
@@ -77,12 +77,26 @@ bvh = "0.10.0"
 rust-i18n = "3.0.1"
 sys-locale = "0.3.1"
 
-[lints.rust]
-unsafe_code = "forbid"
-
 [profile.dev]
 opt-level = 3
 
 [profile.perftest]
 inherits = "release"
 debug = true
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+nursery = { level = "deny", priority = 0 }
+pedantic = { level = "deny", priority = 1 }
+enum_glob_use = { level = "deny", priority = 2 }
+module_name_repetitions = { level = "allow", priority = 3 }
+cast_precision_loss = { level = "allow", priority = 4 }
+cast_possible_truncation = { level = "allow", priority = 5 }
+cast_sign_loss = { level = "allow", priority = 6 }
+out_of_bounds_indexing = { level = "allow", priority = 7 }
+perf = { level = "warn", priority = 8 }
+style = { level = "warn", priority = 9 }
+unwrap_used = { level = "deny", priority = 10 }
+expect_used = { level = "deny", priority = 11 }
