@@ -26,7 +26,7 @@ pub struct Material {
 8. Reflection on and Ray trace off
 9. Transparency: Glass on, Reflection: Ray trace off
 10. Casts shadows onto invisible surfaces
-<http://www.paulbourke.net/dataformats/mtl/> <https://en.wikipedia.org/wiki/Wavefront_.obj_file>
+    <http://www.paulbourke.net/dataformats/mtl/> <https://en.wikipedia.org/wiki/Wavefront_.obj_file>
 */
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IlluminationModel(i32);
