@@ -14,6 +14,7 @@ pub struct Ray {
 
 #[derive(Debug, Clone)]
 pub struct Hit<'a> {
+    #[allow(dead_code)]
     pub name: &'a str,
     pub point: Point3<f32>,
     pub normal: Vector3<f32>,
@@ -32,8 +33,8 @@ pub struct Raytracer {
 impl Raytracer {
     const NO_MATERIAL_COLOR: Color = Color::new(0.9, 0.9, 0.9);
 
-    pub fn new(scene: Scene, delta: f32, max_depth: u32) -> Raytracer {
-        Raytracer {
+    pub const fn new(scene: Scene, delta: f32, max_depth: u32) -> Self {
+        Self {
             scene,
             delta,
             max_depth,
@@ -57,9 +58,9 @@ impl Raytracer {
             Skybox::Image { image, .. } => {
                 let direction = direction
                     .try_normalize(f32::EPSILON)
-                    .unwrap_or(Vector3::y());
+                    .unwrap_or_else(Vector3::y);
 
-                // shperical mapping
+                // spherical mapping
                 let x = ((0.5 + direction.z.atan2(direction.x) / (2.0 * std::f32::consts::PI))
                     * image.width() as f32) as u32
                     % image.width();
@@ -128,7 +129,7 @@ impl Raytracer {
             .material
             .and_then(|m| m.diffuse_texture.as_ref())
             .map(|map| Self::texture(map, hit.uv))
-            .or(hit.material.and_then(|m| m.diffuse_color).map(Color::from))
+            .or_else(|| hit.material.and_then(|m| m.diffuse_color).map(Color::from))
             .unwrap_or(Self::NO_MATERIAL_COLOR);
 
         let specular_color = hit
@@ -154,13 +155,16 @@ impl Raytracer {
                 .raycast_transparent(light_ray)
                 .iter()
                 .last()
-                .map_or(Color::from_element(1.0), |hit| {
-                    color.component_mul(
-                        &hit.material
-                            .and_then(|m| m.diffuse_color)
-                            .unwrap_or(Color::from_element(1.0)),
-                    ) * hit.material.and_then(|m| m.dissolve).unwrap_or(1.0)
-                })
+                .map_or_else(
+                    || Color::from_element(1.0),
+                    |hit| {
+                        color.component_mul(
+                            &hit.material
+                                .and_then(|m| m.diffuse_color)
+                                .unwrap_or_else(|| Color::from_element(1.0)),
+                        ) * hit.material.and_then(|m| m.dissolve).unwrap_or(1.0)
+                    },
+                )
                 .component_mul(&light.color);
 
             if light_transmission_color.norm() < 0.01 {
@@ -226,26 +230,25 @@ impl Raytracer {
                     let xi = i % sqrt_samples;
                     let yi = i / sqrt_samples;
                     let jitter_x = (x as f32
-                        + (xi as f32 + (rand::random::<f32>() * 2.0 - 1.0)) / sqrt_samples as f32)
+                        + (xi as f32 + rand::random::<f32>().mul_add(2.0, -1.0))
+                            / sqrt_samples as f32)
                         / width as f32;
                     let jitter_y = (y as f32
-                        + (yi as f32 + (rand::random::<f32>() * 2.0 - 1.0)) / sqrt_samples as f32)
+                        + (yi as f32 + rand::random::<f32>().mul_add(2.0, -1.0))
+                            / sqrt_samples as f32)
                         / height as f32;
-                    let x = (jitter_x * 2.0 - 1.0) * (width as f32 / height as f32);
-                    let y = jitter_y * 2.0 - 1.0;
+                    let x = jitter_x.mul_add(2.0, -1.0) * (width as f32 / height as f32);
+                    let y = jitter_y.mul_add(2.0, -1.0);
                     let ray = self.scene.camera.ray(x, y);
 
-                    if let Some(_hit) = self.raycast(ray) {
-                        self.shade(ray, 0)
-                    } else {
-                        self.skybox(ray.direction)
-                    }
+                    self.raycast(ray)
+                        .map_or_else(|| self.skybox(ray.direction), |_hit| self.shade(ray, 0))
                 })
                 .sum::<Color>()
                 / samples_per_pixel as f32
         } else {
-            let x = ((x as f32 / width as f32) * 2.0 - 1.0) * (width as f32 / height as f32);
-            let y = (y as f32 / height as f32) * 2.0 - 1.0;
+            let x = (x as f32 / width as f32).mul_add(2.0, -1.0) * (width as f32 / height as f32);
+            let y = (y as f32 / height as f32).mul_add(2.0, -1.0);
 
             let ray = self.scene.camera.ray(x, y);
             self.shade(ray, 0)

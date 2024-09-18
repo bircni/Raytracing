@@ -10,7 +10,7 @@ pub enum Skybox {
 
 impl Default for Skybox {
     fn default() -> Self {
-        Skybox::Color(Color::new(0.16, 0.16, 0.16))
+        Self::Color(Color::new(0.16, 0.16, 0.16))
     }
 }
 
@@ -31,9 +31,9 @@ mod yaml {
             D: serde::Deserializer<'de>,
         {
             SkyboxDef::deserialize(deserializer).and_then(|yaml_extras| match yaml_extras {
-                SkyboxDef::Path(path) => Skybox::load_from_path(path)
+                SkyboxDef::Path(path) => Self::load_from_path(path)
                     .map_err(|e| serde::de::Error::custom(format!("Failed to load skybox: {e}"))),
-                SkyboxDef::Color(color) => Ok(Skybox::Color(color)),
+                SkyboxDef::Color(color) => Ok(Self::Color(color)),
             })
         }
     }
@@ -44,8 +44,8 @@ mod yaml {
             S: serde::Serializer,
         {
             match self {
-                Skybox::Image { path, .. } => SkyboxDef::Path(path.to_string_lossy().to_string()),
-                Skybox::Color(color) => SkyboxDef::Color(*color),
+                Self::Image { path, .. } => SkyboxDef::Path(path.to_string_lossy().to_string()),
+                Self::Color(color) => SkyboxDef::Color(*color),
             }
             .serialize(serializer)
         }
@@ -56,7 +56,7 @@ impl Skybox {
     fn load_from_path<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self> {
         let image = image::open(path.as_ref())?.into_rgb8();
 
-        Ok(Skybox::Image {
+        Ok(Self::Image {
             path: path.as_ref().to_path_buf(),
             image,
         })

@@ -68,7 +68,7 @@ mod yaml {
         where
             D: serde::Deserializer<'de>,
         {
-            CameraDef::deserialize(deserializer).map(|yaml_camera| Camera {
+            CameraDef::deserialize(deserializer).map(|yaml_camera| Self {
                 position: yaml_camera.position,
                 look_at: yaml_camera.look_at,
                 up: yaml_camera.up_vec,

@@ -28,7 +28,7 @@ mod yaml {
         where
             D: serde::Deserializer<'de>,
         {
-            LightDef::deserialize(deserializer).map(|yaml_light| Light {
+            LightDef::deserialize(deserializer).map(|yaml_light| Self {
                 position: yaml_light.position,
                 color: yaml_light.ke.try_normalize(0.0).unwrap_or_default(),
                 intensity: yaml_light.intensity,

@@ -120,7 +120,7 @@ impl<'de, P: AsRef<std::path::Path> + std::marker::Sync> serde::de::DeserializeS
 }
 
 impl Scene {
-    pub fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Scene> {
+    pub fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self> {
         let s = std::fs::read_to_string(path.as_ref()).context(format!(
             "Failed to read file from path: {}",
             path.as_ref().display()

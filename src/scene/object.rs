@@ -59,7 +59,7 @@ impl Object {
         translation: Translation3<f32>,
         rotation: UnitQuaternion<f32>,
         scale: Scale3<f32>,
-    ) -> anyhow::Result<Object> {
+    ) -> anyhow::Result<Self> {
         let mut obj = obj::Obj::load(path.as_ref()).context(format!(
             "Failed to load obj from path: {}",
             path.as_ref().display()
@@ -151,7 +151,7 @@ impl Object {
 
         let bvh = Bvh::build(triangles.as_mut_slice());
 
-        Ok(Object {
+        Ok(Self {
             name: filename(&path),
             material_name: obj
                 .data

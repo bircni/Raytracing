@@ -8,7 +8,7 @@ pub struct RenderResult {
 }
 
 impl RenderResult {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             zoom: 0.0,
             position: Vec2::ZERO,
@@ -26,7 +26,7 @@ impl RenderResult {
                 self.zoom += ui.input(|i| i.raw_scroll_delta.y);
                 self.zoom = self.zoom.clamp(
                     -response.rect.width().min(response.rect.height()) / 4.0,
-                    std::f32::INFINITY,
+                    f32::INFINITY,
                 );
                 self.position += response.drag_delta();
             }
@@ -43,8 +43,8 @@ impl RenderResult {
                     painter.rect(
                         Rect::from_min_size(
                             pos2(
-                                response.rect.left() + x as f32 * cell_size,
-                                response.rect.top() + y as f32 * cell_size,
+                                (x as f32).mul_add(cell_size, response.rect.left()),
+                                (y as f32).mul_add(cell_size, response.rect.top()),
                             ),
                             Vec2::splat(cell_size),
                         ),

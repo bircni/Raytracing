@@ -12,7 +12,7 @@ pub struct YamlMenu {
 }
 
 impl YamlMenu {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             open_yaml_dialog: None,
             create_yaml_dialog: None,
