@@ -38,7 +38,7 @@ impl WgpuPainter {
     const MAX_LIGHTS: usize = 255;
     const MAX_OBJECTS: usize = 255;
 
-    pub fn new(scene: Arc<RwLock<Option<Scene>>>) -> Self {
+    pub const fn new(scene: Arc<RwLock<Option<Scene>>>) -> Self {
         Self { scene }
     }
 }

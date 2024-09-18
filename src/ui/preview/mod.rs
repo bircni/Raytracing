@@ -24,7 +24,7 @@ pub struct Preview {
 }
 
 impl Preview {
-    pub fn new(scene: Arc<RwLock<Option<Scene>>>) -> Self {
+    pub const fn new(scene: Arc<RwLock<Option<Scene>>>) -> Self {
         Self {
             active: false,
             speed: 0.1,
