@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["render"],"struct":["Hit","Ray","Raytracer"]};

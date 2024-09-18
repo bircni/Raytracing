@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["camera","light","material","object","settings","skybox","triangle","yaml"],"struct":["Scene","WithRelativePath"],"type":["Color"]};

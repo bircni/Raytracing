@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["xyz_drag_value"],"struct":["Properties"]};

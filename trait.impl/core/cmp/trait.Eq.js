@@ -1,3 +1,3 @@
 (function() {var implementors = {
-"raytracing":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.75.0/core/cmp/trait.Eq.html\" title=\"trait core::cmp::Eq\">Eq</a> for <a class=\"enum\" href=\"raytracing/ui/enum.RenderSize.html\" title=\"enum raytracing::ui::RenderSize\">RenderSize</a>"]]
+"trayracer":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.81.0/core/cmp/trait.Eq.html\" title=\"trait core::cmp::Eq\">Eq</a> for <a class=\"struct\" href=\"trayracer/scene/material/struct.IlluminationModel.html\" title=\"struct trayracer::scene::material::IlluminationModel\">IlluminationModel</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

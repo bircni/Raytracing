@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["raytracing"];
+window.ALL_CRATES = ["trayracer"];
