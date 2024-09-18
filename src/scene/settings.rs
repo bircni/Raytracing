@@ -45,7 +45,7 @@ mod yaml {
         where
             D: serde::Deserializer<'de>,
         {
-            SettingsDef::deserialize(deserializer).map(|yaml_extras| Settings {
+            SettingsDef::deserialize(deserializer).map(|yaml_extras| Self {
                 max_bounces: yaml_extras.max_bounces,
                 samples: yaml_extras.samples,
                 ambient_color: yaml_extras

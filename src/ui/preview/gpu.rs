@@ -1,6 +1,7 @@
 use std::{borrow::Cow, sync::Arc};
 
 use crate::scene::Scene;
+use eframe::wgpu::PipelineCompilationOptions;
 use egui::mutex::RwLock;
 use egui_wgpu::{
     wgpu::{
@@ -37,7 +38,7 @@ impl WgpuPainter {
     const MAX_LIGHTS: usize = 255;
     const MAX_OBJECTS: usize = 255;
 
-    pub fn new(scene: Arc<RwLock<Option<Scene>>>) -> Self {
+    pub const fn new(scene: Arc<RwLock<Option<Scene>>>) -> Self {
         Self { scene }
     }
 }
@@ -312,6 +313,7 @@ pub fn init_wgpu(render_state: &egui_wgpu::RenderState) {
                     },
                 ],
             }],
+            compilation_options: PipelineCompilationOptions::default(),
         },
         fragment: Some(FragmentState {
             module: &shader,
@@ -321,6 +323,7 @@ pub fn init_wgpu(render_state: &egui_wgpu::RenderState) {
                 blend: None,
                 write_mask: ColorWrites::ALL,
             })],
+            compilation_options: PipelineCompilationOptions::default(),
         }),
         primitive: PrimitiveState {
             topology: PrimitiveTopology::TriangleList,

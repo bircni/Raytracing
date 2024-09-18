@@ -83,6 +83,7 @@ struct RenderingThread {
 }
 
 impl RenderingThread {
+    #[allow(clippy::significant_drop_tightening)]
     /// main rendering thread
     fn run(self) {
         let start = std::time::Instant::now();

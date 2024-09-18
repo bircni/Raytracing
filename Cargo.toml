@@ -1,8 +1,22 @@
 [package]
-name = "raytracing"
+name = "trayracer"
 version = "1.0.0"
 edition = "2021"
-description = "Rust Raytracer."
+description = "A Raytracer written in Rust."
+license = "GNU GPLv3"
+repository = "https://github.com/bircni/Raytracing"
+readme = "README.md"
+categories = ["graphics", "raytracer", "rendering", "3d"]
+keywords = ["raytracer", "rendering", "3d", "graphics"]
+authors = [
+    "bircni",
+    "Fabus1184",
+    "LesKlugi",
+    "MarcelQ5",
+    "phaman09",
+    "GitNether",
+    "HermanoGranger",
+]
 
 [package.metadata.bundle]
 name = "TrayRacer"
@@ -20,17 +34,17 @@ version = "1.0.0"
 resources = ["./../res/mac-icons/icon*.png"]
 copyright = "© 2024 Team TrayRacer"
 category = "Developer Tool"
-short_description = "A Raytracer."
+short_description = "A Raytracer written in Rust."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 
 # error handling
-anyhow = "1.0.83"
+anyhow = "1.0.89"
 
 # image loading and saving
-image = { version = "0.25.1", default-features = false, features = [
+image = { version = "0.25.2", default-features = false, features = [
     "png",
     "jpeg",
     "tiff",
@@ -38,11 +52,11 @@ image = { version = "0.25.1", default-features = false, features = [
 ] }
 
 # logging
-log = "0.4.21"
+log = "0.4.22"
 simplelog = "0.12.2"
 
 # linear algebra
-nalgebra = { version = "0.32.5", features = ["glam022"] }
+nalgebra = { version = "0.33.0", features = ["glam022"] }
 rand = "0.8.5"
 
 # obj file loading
@@ -50,36 +64,36 @@ obj = "0.10.2"
 
 # automatic parallelization
 rayon = "1.10.0"
-bytemuck = { version = "1.15.0", features = ["derive"] }
+bytemuck = { version = "1.18", features = ["derive"] }
 
 # total order for floats
-ordered-float = "4.2.0"
+ordered-float = "4.2.2"
 
 # generic serialization / deserialization
-serde = { version = "1.0.201", features = ["derive"] }
-serde_yml = "0.0.5"
+serde = { version = "1.0.210", features = ["derive"] }
+serde_yml = "0.0.12"
 
 # GUI
-eframe = { version = "0.27.2", features = [
+eframe = { version = "0.28.1", features = [
     "wgpu",
     "accesskit",
     "default_fonts",
     "wayland",
     "x11",
 ], default-features = false }
-egui = { version = "0.27.2", features = ["log", "color-hex"] }
-egui-wgpu = { version = "0.27.2" }
-egui_file = "0.17.0"
-egui_extras = { version = "0.27.2", features = ["svg", "image"] }
-color-hex = "0.2.0"
+egui = { version = "0.28.1", features = ["log", "color-hex"] }
+egui-wgpu = { version = "0.28.1" }
+egui_file = "0.18.0"
+egui_extras = { version = "0.28.1", features = ["svg", "image"] }
 
 # BVH
-bvh = "0.9.0"
-rust-i18n = "3.0.1"
+bvh = "0.10.0"
+rust-i18n = "3.1.2"
 sys-locale = "0.3.1"
 
-[lints.rust]
-unsafe_code = "forbid"
+[build-dependencies]
+anyhow = "1.0.89"
+winresource = "0.1.17"
 
 [profile.dev]
 opt-level = 3
@@ -87,3 +101,20 @@ opt-level = 3
 [profile.perftest]
 inherits = "release"
 debug = true
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+nursery = { level = "deny", priority = 0 }
+pedantic = { level = "deny", priority = 1 }
+enum_glob_use = { level = "deny", priority = 2 }
+module_name_repetitions = { level = "allow", priority = 3 }
+cast_precision_loss = { level = "allow", priority = 4 }
+cast_possible_truncation = { level = "allow", priority = 5 }
+cast_sign_loss = { level = "allow", priority = 6 }
+out_of_bounds_indexing = { level = "allow", priority = 7 }
+perf = { level = "warn", priority = 8 }
+style = { level = "warn", priority = 9 }
+unwrap_used = { level = "deny", priority = 10 }
+expect_used = { level = "deny", priority = 11 }

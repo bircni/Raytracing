@@ -19,7 +19,7 @@ pub struct Triangle {
 
 impl Triangle {
     #[allow(clippy::too_many_arguments)]
-    pub fn new(
+    pub const fn new(
         a: Point3<f32>,
         b: Point3<f32>,
         c: Point3<f32>,

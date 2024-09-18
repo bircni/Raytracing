@@ -20,7 +20,7 @@ pub struct StatusBar {
 }
 
 impl StatusBar {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             save_render_dialog: None,
             show_about: false,
@@ -65,7 +65,7 @@ impl StatusBar {
             });
     }
 
-    fn about_window(&mut self, ui: &mut Ui) {
+    fn about_window(&mut self, ui: &Ui) {
         Window::new(t!("about"))
             .resizable(false)
             .collapsible(false)
@@ -93,7 +93,7 @@ impl StatusBar {
             });
     }
 
-    pub fn export_button(&mut self, ui: &mut Ui, render: &mut Render) {
+    pub fn export_button(&mut self, ui: &mut Ui, render: &Render) {
         if ui
             .add_enabled(
                 render.progress.load(Ordering::Relaxed) == u16::MAX,

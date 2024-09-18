@@ -1,8 +1,11 @@
 [![Linux](https://github.com/bircni/Raytracing/actions/workflows/rust-linux.yml/badge.svg)](https://github.com/bircni/Raytracing/actions/workflows/rust-linux.yml)
 [![Windows](https://github.com/bircni/Raytracing/actions/workflows/rust-windows.yml/badge.svg)](https://github.com/bircni/Raytracing/actions/workflows/rust-windows.yml)
 [![MacOS](https://github.com/bircni/Raytracing/actions/workflows/rust-macos.yml/badge.svg)](https://github.com/bircni/Raytracing/actions/workflows/rust-macos.yml)
+[![Crates.io](https://img.shields.io/crates/v/trayracer)](https://crates.io/crates/trayracer)
+[![docs.rs](https://img.shields.io/docsrs/trayracer)](https://docs.rs/trayracer)
+[![GNU licensed](https://img.shields.io/badge/license-GNU-blue.svg)](https://github.com/bircni/Raytracing/blob/main/LICENSE)
 
-# Raytracing
+# Trayracer - Raytracing
 
 This is the main repository for the raytracing project.
 
