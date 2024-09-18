@@ -5,6 +5,5 @@ fn main() -> anyhow::Result<()> {
         res.set_icon("./res/icon.ico");
         res.compile()?;
     }
-
     Ok(())
 }

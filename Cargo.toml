@@ -1,8 +1,17 @@
 [package]
-name = "raytracing"
+name = "trayracer"
 version = "1.0.0"
 edition = "2021"
-description = "Rust Raytracer."
+description = "A Raytracer written in Rust."
+authors = [
+    "bircni",
+    "Fabus1184",
+    "LesKlugi",
+    "MarcelQ5",
+    "phaman09",
+    "GitNether",
+    "HermanoGranger",
+]
 
 [package.metadata.bundle]
 name = "TrayRacer"
@@ -20,7 +29,7 @@ version = "1.0.0"
 resources = ["./../res/mac-icons/icon*.png"]
 copyright = "© 2024 Team TrayRacer"
 category = "Developer Tool"
-short_description = "A Raytracer."
+short_description = "A Raytracer written in Rust."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -78,7 +87,7 @@ rust-i18n = "3.1.2"
 sys-locale = "0.3.1"
 
 [build-dependencies]
-anyhow = "1.0"
+anyhow = "1.0.89"
 winresource = "0.1.17"
 
 [profile.dev]
