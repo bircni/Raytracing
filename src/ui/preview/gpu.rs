@@ -202,11 +202,11 @@ impl CallbackTrait for WgpuPainter {
         vec![]
     }
 
-    fn paint<'a>(
-        &'a self,
+    fn paint(
+        &self,
         _info: egui::PaintCallbackInfo,
-        render_pass: &mut wgpu::RenderPass<'a>,
-        callback_resources: &'a egui_wgpu::CallbackResources,
+        render_pass: &mut wgpu::RenderPass,
+        callback_resources: &egui_wgpu::CallbackResources,
     ) {
         let resources = callback_resources
             .get::<Resources>()
@@ -343,6 +343,7 @@ pub fn init_wgpu(render_state: &egui_wgpu::RenderState) {
         }),
         multisample: MultisampleState::default(),
         multiview: None,
+        cache: None,
     });
 
     let uniform_buffer = device.create_buffer(&BufferDescriptor {
