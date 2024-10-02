@@ -52,7 +52,6 @@ fn main() -> anyhow::Result<()> {
             viewport,
             renderer: Renderer::Wgpu,
             depth_buffer: 32,
-            follow_system_theme: true,
             centered: true,
             ..Default::default()
         },

@@ -6,7 +6,7 @@ use crate::{
 use anyhow::Context;
 use egui::{
     color_picker, hex_color, include_image, Align, Button, CollapsingHeader, DragValue, FontFamily,
-    ImageButton, Layout, RichText, Slider, Ui,
+    ImageButton, Layout, RichText, Slider, SliderClamping, Ui,
 };
 use egui_file::FileDialog;
 use log::warn;
@@ -80,7 +80,7 @@ impl Properties {
                     Slider::new(&mut scene.camera.fov, 0.0..=consts::PI)
                         .step_by(0.01)
                         .custom_formatter(|x, _| format!("{:.2}°", x.to_degrees()))
-                        .clamp_to_range(true),
+                        .clamping(SliderClamping::Always),
                 );
             });
         });
@@ -109,7 +109,10 @@ impl Properties {
         color_picker::color_edit_button_rgb(ui, scene.settings.ambient_color.as_mut());
 
         ui.label(format!("{}:", t!("ambient_intensity")));
-        ui.add(Slider::new(&mut scene.settings.ambient_intensity, 0.0..=1.0).clamp_to_range(true));
+        ui.add(
+            Slider::new(&mut scene.settings.ambient_intensity, 0.0..=1.0)
+                .clamping(SliderClamping::Always),
+        );
     }
 
     fn render_options(ui: &mut Ui, render: &Render, scene: &mut Scene) {
@@ -118,7 +121,7 @@ impl Properties {
             ui.add_enabled_ui(render.thread.is_none(), |ui| {
                 ui.vertical(|ui| {
                     let text = Self::format_render_size(scene.camera.resolution);
-                    egui::ComboBox::from_id_source(0)
+                    egui::ComboBox::from_id_salt(0)
                         .selected_text(text)
                         .show_ui(ui, |ui| {
                             ui.selectable_value(&mut scene.camera.resolution, (1280, 720), "HD");
@@ -140,7 +143,8 @@ impl Properties {
                     if scene.settings.anti_aliasing {
                         ui.label("Samples per pixel:");
                         ui.add(
-                            Slider::new(&mut scene.settings.samples, 1..=128).clamp_to_range(true),
+                            Slider::new(&mut scene.settings.samples, 1..=128)
+                                .clamping(SliderClamping::Always),
                         );
                     }
                 });
@@ -268,7 +272,8 @@ impl Properties {
                             ui.label(format!("{}:", t!("intensity")));
 
                             ui.add(
-                                Slider::new(&mut light.intensity, 0.0..=100.0).clamp_to_range(true),
+                                Slider::new(&mut light.intensity, 0.0..=100.0)
+                                    .clamping(SliderClamping::Always),
                             );
 
                             ui.label(format!("{}:", t!("color")));
