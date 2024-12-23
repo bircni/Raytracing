@@ -55,7 +55,7 @@ impl YamlMenu {
                             settings: Settings::default(),
                         });
 
-                        Self::save_scene(scene);
+                        Self::save_scene(scene.as_ref());
                     }
                     None => {
                         warn!("Create yaml dialog selected but returned no path");
@@ -145,7 +145,7 @@ impl YamlMenu {
                 )
                 .on_hover_text(t!("save_scene"))
                 .clicked()
-                .then(|| Self::save_scene(scene));
+                .then(|| Self::save_scene(scene.as_ref()));
             });
 
             // new button
@@ -182,7 +182,7 @@ impl YamlMenu {
         });
     }
 
-    fn save_scene(scene: &Option<Scene>) {
+    fn save_scene(scene: Option<&Scene>) {
         match scene {
             Some(scene) => {
                 serde_yml::to_string(scene)

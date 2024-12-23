@@ -205,7 +205,7 @@ impl CallbackTrait for WgpuPainter {
     fn paint<'a>(
         &'a self,
         _info: egui::PaintCallbackInfo,
-        render_pass: &mut wgpu::RenderPass<'a>,
+        render_pass: &mut wgpu::RenderPass<'static>,
         callback_resources: &'a egui_wgpu::CallbackResources,
     ) {
         let resources = callback_resources
@@ -281,7 +281,7 @@ pub fn init_wgpu(render_state: &egui_wgpu::RenderState) {
         layout: Some(&pipeline_layout),
         vertex: VertexState {
             module: &shader,
-            entry_point: "vs_main",
+            entry_point: Some("vs_main"),
             buffers: &[VertexBufferLayout {
                 // 3x f32 for position, 3x f32 for normal, 3x f32 for color, 1x u32 for transform index
                 array_stride: std::mem::size_of::<f32>() as u64 * (3 + 3 + 3 + 1),
@@ -317,7 +317,7 @@ pub fn init_wgpu(render_state: &egui_wgpu::RenderState) {
         },
         fragment: Some(FragmentState {
             module: &shader,
-            entry_point: "fs_main",
+            entry_point: Some("fs_main"),
             targets: &[Some(ColorTargetState {
                 format: render_state.target_format,
                 blend: None,
@@ -343,6 +343,7 @@ pub fn init_wgpu(render_state: &egui_wgpu::RenderState) {
         }),
         multisample: MultisampleState::default(),
         multiview: None,
+        cache: None,
     });
 
     let uniform_buffer = device.create_buffer(&BufferDescriptor {
