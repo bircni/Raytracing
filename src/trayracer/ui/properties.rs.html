@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/properties.rs`."><title>properties.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="trayracer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/properties.rs`."><title>properties.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="trayracer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0 (90b35a623 2024-11-26)" data-channel="1.83.0" data-search-js="search-f0d225181b97f9a4.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../../../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">trayracer/ui/</div>properties.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -422,7 +423,11 @@
 <a href="#422" id="422">422</a>
 <a href="#423" id="423">423</a>
 <a href="#424" id="424">424</a>
-</pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a></pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     raytracer::render::Render,
     scene::{Color, Light, Object, Skybox},
     Scene,
@@ -430,7 +435,7 @@
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>egui::{
     color_picker, hex_color, include_image, Align, Button, CollapsingHeader, DragValue, FontFamily,
-    ImageButton, Layout, RichText, Slider, Ui,
+    ImageButton, Layout, RichText, Slider, SliderClamping, Ui,
 };
 <span class="kw">use </span>egui_file::FileDialog;
 <span class="kw">use </span>log::warn;
@@ -504,7 +509,7 @@
                     Slider::new(<span class="kw-2">&amp;mut </span>scene.camera.fov, <span class="number">0.0</span>..=consts::PI)
                         .step_by(<span class="number">0.01</span>)
                         .custom_formatter(|x, <span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">"{:.2}°"</span>, x.to_degrees()))
-                        .clamp_to_range(<span class="bool-val">true</span>),
+                        .clamping(SliderClamping::Edits),
                 );
             });
         });
@@ -533,7 +538,10 @@
         color_picker::color_edit_button_rgb(ui, scene.settings.ambient_color.as_mut());
 
         ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"ambient_intensity"</span>)));
-        ui.add(Slider::new(<span class="kw-2">&amp;mut </span>scene.settings.ambient_intensity, <span class="number">0.0</span>..=<span class="number">1.0</span>).clamp_to_range(<span class="bool-val">true</span>));
+        ui.add(
+            Slider::new(<span class="kw-2">&amp;mut </span>scene.settings.ambient_intensity, <span class="number">0.0</span>..=<span class="number">1.0</span>)
+                .clamping(SliderClamping::Edits),
+        );
     }
 
     <span class="kw">fn </span>render_options(ui: <span class="kw-2">&amp;mut </span>Ui, render: <span class="kw-2">&amp;</span>Render, scene: <span class="kw-2">&amp;mut </span>Scene) {
@@ -542,7 +550,7 @@
             ui.add_enabled_ui(render.thread.is_none(), |ui| {
                 ui.vertical(|ui| {
                     <span class="kw">let </span>text = <span class="self">Self</span>::format_render_size(scene.camera.resolution);
-                    egui::ComboBox::from_id_source(<span class="number">0</span>)
+                    egui::ComboBox::from_id_salt(<span class="number">0</span>)
                         .selected_text(text)
                         .show_ui(ui, |ui| {
                             ui.selectable_value(<span class="kw-2">&amp;mut </span>scene.camera.resolution, (<span class="number">1280</span>, <span class="number">720</span>), <span class="string">"HD"</span>);
@@ -564,7 +572,8 @@
                     <span class="kw">if </span>scene.settings.anti_aliasing {
                         ui.label(<span class="string">"Samples per pixel:"</span>);
                         ui.add(
-                            Slider::new(<span class="kw-2">&amp;mut </span>scene.settings.samples, <span class="number">1</span>..=<span class="number">128</span>).clamp_to_range(<span class="bool-val">true</span>),
+                            Slider::new(<span class="kw-2">&amp;mut </span>scene.settings.samples, <span class="number">1</span>..=<span class="number">128</span>)
+                                .clamping(SliderClamping::Edits),
                         );
                     }
                 });
@@ -692,7 +701,8 @@
                             ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"intensity"</span>)));
 
                             ui.add(
-                                Slider::new(<span class="kw-2">&amp;mut </span>light.intensity, <span class="number">0.0</span>..=<span class="number">100.0</span>).clamp_to_range(<span class="bool-val">true</span>),
+                                Slider::new(<span class="kw-2">&amp;mut </span>light.intensity, <span class="number">0.0</span>..=<span class="number">100.0</span>)
+                                    .clamping(SliderClamping::Edits),
                             );
 
                             ui.label(<span class="macro">format!</span>(<span class="string">"{}:"</span>, <span class="macro">t!</span>(<span class="string">"color"</span>)));
