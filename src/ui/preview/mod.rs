@@ -51,7 +51,7 @@ impl Preview {
     }
 
     pub fn show(&mut self, ui: &mut Ui, scene: &mut Option<Scene>) {
-        Self::show_hover_overlay(ui.ctx(), scene, ui.available_rect_before_wrap());
+        Self::show_hover_overlay(ui.ctx(), scene.as_ref(), ui.available_rect_before_wrap());
         ui.ctx().input(|i| {
             if !i.raw.dropped_files.is_empty() {
                 //self.dropped_files = i.raw.dropped_files.clone();
@@ -181,7 +181,7 @@ impl Preview {
         }
     }
 
-    pub fn show_hover_overlay(ctx: &Context, scene: &Option<Scene>, rect: Rect) {
+    pub fn show_hover_overlay(ctx: &Context, scene: Option<&Scene>, rect: Rect) {
         //TODO: show only when hovering over preview
         if !ctx.input(|i| i.raw.hovered_files.is_empty()) {
             let painter =
