@@ -5,7 +5,7 @@ use super::{
 };
 use crate::raytracer::{Hit, Ray};
 use anyhow::Context;
-use bvh::bvh::Bvh;
+use bvh::{bvh::Bvh, ray};
 use image::RgbImage;
 use log::warn;
 use nalgebra::{
@@ -45,7 +45,7 @@ fn filename<P: AsRef<Path>>(path: P) -> String {
         .split('.')
         .next()
         .unwrap_or("")
-        .to_string()
+        .to_owned()
         // first char to uppercase
         .chars()
         .enumerate()
@@ -54,6 +54,10 @@ fn filename<P: AsRef<Path>>(path: P) -> String {
 }
 
 impl Object {
+    #[expect(
+        clippy::panic_in_result_fn,
+        reason = "panic if wrong material reference is used"
+    )]
     pub fn from_obj<P: AsRef<Path>>(
         path: P,
         translation: Translation3<f32>,
@@ -177,7 +181,7 @@ impl Object {
         )
     }
 
-    pub fn intersect(&self, ray: Ray, delta: f32) -> Option<Hit> {
+    pub fn intersect(&self, ray: Ray, delta: f32) -> Option<Hit<'_>> {
         // Transform ray into object space
         let ray = Ray {
             origin: self.transform().inverse_transform_point(&ray.origin),
@@ -186,7 +190,7 @@ impl Object {
 
         self.bvh
             .traverse(
-                &bvh::ray::Ray::new(ray.origin, ray.direction),
+                &ray::Ray::new(ray.origin, ray.direction),
                 self.triangles.as_slice(),
             )
             .into_iter()
@@ -291,13 +295,19 @@ fn triangulate(
     triangles
 }
 
-pub struct WithRelativePath<P: AsRef<std::path::Path>>(pub P);
+pub struct WithRelativePath<P: AsRef<Path>>(pub P);
 
 mod yaml {
-    use std::path::PathBuf;
+    use std::{
+        f32,
+        path::{Path, PathBuf},
+    };
 
     use nalgebra::{Point3, Scale3, Translation3, UnitQuaternion, Vector3};
-    use serde::{Deserialize, Serialize};
+    use serde::{
+        de::{DeserializeSeed, Error},
+        Deserialize, Serialize,
+    };
 
     use super::{Object, WithRelativePath};
 
@@ -313,7 +323,7 @@ mod yaml {
         pub scale: Vector3<f32>,
     }
 
-    impl<'de, P: AsRef<std::path::Path>> serde::de::DeserializeSeed<'de> for WithRelativePath<P> {
+    impl<'de, P: AsRef<Path>> DeserializeSeed<'de> for WithRelativePath<P> {
         type Value = Object;
 
         fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
@@ -324,9 +334,9 @@ mod yaml {
 
             let translation = Translation3::from(yaml_object.position.coords);
             let rotation = UnitQuaternion::from_euler_angles(
-                yaml_object.rotation.x * std::f32::consts::PI * 2.0 / 360.0,
-                yaml_object.rotation.y * std::f32::consts::PI * 2.0 / 360.0,
-                yaml_object.rotation.z * std::f32::consts::PI * 2.0 / 360.0,
+                yaml_object.rotation.x * f32::consts::PI * 2.0 / 360.0,
+                yaml_object.rotation.y * f32::consts::PI * 2.0 / 360.0,
+                yaml_object.rotation.z * f32::consts::PI * 2.0 / 360.0,
             );
             let scale = Scale3::from(yaml_object.scale);
 
@@ -335,10 +345,10 @@ mod yaml {
                 .as_ref()
                 .parent()
                 .map(|p| p.join(yaml_object.file_path.as_path()))
-                .ok_or_else(|| serde::de::Error::custom("Failed to get parent path"))?;
+                .ok_or_else(|| Error::custom("Failed to get parent path"))?;
 
             Object::from_obj(path, translation, rotation, scale)
-                .map_err(serde::de::Error::custom)
+                .map_err(Error::custom)
                 .map(|mut o| {
                     o.path = yaml_object.file_path;
                     o

@@ -1,7 +1,7 @@
-extern crate rust_i18n;
+use std::process;
 
 use anyhow::Context;
-use eframe::Renderer;
+use eframe::{icon_data, Renderer};
 use egui::ViewportBuilder;
 use log::{error, info, LevelFilter};
 use rust_i18n::i18n;
@@ -42,8 +42,7 @@ fn main() -> anyhow::Result<()> {
         .with_app_id("raytracer")
         .with_inner_size(egui::vec2(1600.0, 900.0))
         .with_icon(
-            eframe::icon_data::from_png_bytes(include_bytes!("../res/icon.png"))
-                .unwrap_or_default(),
+            icon_data::from_png_bytes(include_bytes!("../res/icon.png")).unwrap_or_default(),
         );
 
     eframe::run_native(
@@ -58,7 +57,7 @@ fn main() -> anyhow::Result<()> {
         Box::new(|cc| {
             Ok(Box::new(ui::App::new(cc).unwrap_or_else(|e| {
                 error!("Failed to create app: {}", e);
-                std::process::exit(1);
+                process::exit(1);
             })))
         }),
     )

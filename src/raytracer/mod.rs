@@ -3,6 +3,7 @@ use image::RgbImage;
 use nalgebra::{Point3, Vector2, Vector3};
 use ordered_float::OrderedFloat;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use std::f32;
 
 pub mod render;
 
@@ -14,7 +15,7 @@ pub struct Ray {
 
 #[derive(Debug, Clone)]
 pub struct Hit<'a> {
-    #[allow(dead_code)]
+    #[expect(dead_code, reason = "We don't use the name but need it for parsing")]
     pub name: &'a str,
     pub point: Point3<f32>,
     pub normal: Vector3<f32>,
@@ -41,7 +42,7 @@ impl Raytracer {
         }
     }
 
-    fn raycast(&self, ray: Ray) -> Option<Hit> {
+    fn raycast(&self, ray: Ray) -> Option<Hit<'_>> {
         self.scene
             .objects
             .iter()
@@ -61,10 +62,10 @@ impl Raytracer {
                     .unwrap_or_else(Vector3::y);
 
                 // spherical mapping
-                let x = ((0.5 + direction.z.atan2(direction.x) / (2.0 * std::f32::consts::PI))
+                let x = ((0.5 + direction.z.atan2(direction.x) / (2.0 * f32::consts::PI))
                     * image.width() as f32) as u32
                     % image.width();
-                let y = ((0.5 - direction.y.asin() / std::f32::consts::PI) * image.height() as f32)
+                let y = ((0.5 - direction.y.asin() / f32::consts::PI) * image.height() as f32)
                     as u32
                     % image.height();
 
@@ -92,8 +93,8 @@ impl Raytracer {
     }
 
     /// Raycast and continue on hits if the material is transparent
-    fn raycast_transparent(&self, ray: Ray) -> Box<[Hit]> {
-        let mut hits = Vec::<Hit>::new();
+    fn raycast_transparent(&self, ray: Ray) -> Box<[Hit<'_>]> {
+        let mut hits = Vec::<Hit<'_>>::new();
         let mut ray = ray;
 
         while let Some(hit) = self.raycast(ray) {
@@ -120,7 +121,7 @@ impl Raytracer {
         )
     }
 
-    fn shade_impl(&self, ray: Ray, hit: &Hit, depth: u32) -> Color {
+    fn shade_impl(&self, ray: Ray, hit: &Hit<'_>, depth: u32) -> Color {
         if depth >= self.max_depth {
             return self.skybox(ray.direction);
         }

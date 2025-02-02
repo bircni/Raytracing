@@ -1,10 +1,16 @@
-use std::path::PathBuf;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Context;
 use log::warn;
 use nalgebra::Vector3;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use serde::{de::DeserializeSeed, Deserialize, Serialize};
+use serde::{
+    de::{DeserializeSeed, Error, Unexpected},
+    Deserialize, Serialize,
+};
 
 pub use self::{
     camera::Camera, light::Light, material::Material, object::Object, settings::Settings,
@@ -53,11 +59,9 @@ impl Clone for Scene {
     }
 }
 
-struct WithRelativePath<P: AsRef<std::path::Path>>(P);
+struct WithRelativePath<P: AsRef<Path>>(P);
 
-impl<'de, P: AsRef<std::path::Path> + std::marker::Sync> serde::de::DeserializeSeed<'de>
-    for WithRelativePath<P>
-{
+impl<'de, P: AsRef<Path> + Sync> DeserializeSeed<'de> for WithRelativePath<P> {
     type Value = Scene;
 
     fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
@@ -68,32 +72,28 @@ impl<'de, P: AsRef<std::path::Path> + std::marker::Sync> serde::de::DeserializeS
 
         let objects = map
             .get("models")
-            .ok_or_else(|| serde::de::Error::missing_field("models"))?
+            .ok_or_else(|| Error::missing_field("models"))?
             .as_sequence()
-            .ok_or_else(|| {
-                serde::de::Error::invalid_type(serde::de::Unexpected::Map, &"a sequence")
-            })?
+            .ok_or_else(|| Error::invalid_type(Unexpected::Map, &"a sequence"))?
             .par_iter()
             .map(|v| object::WithRelativePath(self.0.as_ref()).deserialize(v))
             .collect::<Result<Vec<Object>, serde_yml::Error>>()
-            .map_err(serde::de::Error::custom)?;
+            .map_err(Error::custom)?;
 
         let lights = map
             .get("pointLights")
-            .ok_or_else(|| serde::de::Error::missing_field("pointLights"))?
+            .ok_or_else(|| Error::missing_field("pointLights"))?
             .as_sequence()
-            .ok_or_else(|| {
-                serde::de::Error::invalid_type(serde::de::Unexpected::Map, &"a sequence")
-            })?
+            .ok_or_else(|| Error::invalid_type(Unexpected::Map, &"a sequence"))?
             .iter()
             .map(Light::deserialize)
             .collect::<Result<Vec<Light>, serde_yml::Error>>()
-            .map_err(serde::de::Error::custom)?;
+            .map_err(Error::custom)?;
 
         let camera = map
             .get("camera")
-            .ok_or_else(|| serde::de::Error::missing_field("camera"))?;
-        let camera = Camera::deserialize(camera).map_err(serde::de::Error::custom)?;
+            .ok_or_else(|| Error::missing_field("camera"))?;
+        let camera = Camera::deserialize(camera).map_err(Error::custom)?;
 
         // dont fail if extraArgs is missing but warn
         let settings = map
@@ -120,8 +120,8 @@ impl<'de, P: AsRef<std::path::Path> + std::marker::Sync> serde::de::DeserializeS
 }
 
 impl Scene {
-    pub fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self> {
-        let s = std::fs::read_to_string(path.as_ref()).context(format!(
+    pub fn load<P: AsRef<Path>>(path: P) -> anyhow::Result<Self> {
+        let s = fs::read_to_string(path.as_ref()).context(format!(
             "Failed to read file from path: {}",
             path.as_ref().display()
         ))?;

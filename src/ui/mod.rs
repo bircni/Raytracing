@@ -12,6 +12,7 @@ use egui::{
     vec2, CentralPanel, ColorImage, ImageData, ScrollArea, SidePanel, TextStyle, TextureOptions,
 };
 use image::ImageBuffer;
+use std::f32;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread::JoinHandle;
@@ -42,7 +43,7 @@ enum Tab {
 }
 
 impl App {
-    pub fn new(cc: &CreationContext) -> anyhow::Result<Self> {
+    pub fn new(cc: &CreationContext<'_>) -> anyhow::Result<Self> {
         egui_extras::install_image_loaders(&cc.egui_ctx);
 
         // Initialize the preview renderer with the wgpu context
@@ -67,7 +68,7 @@ impl App {
             );
             s.text_styles
                 .insert(TextStyle::Body, TextStyle::Monospace.resolve(s));
-            s.spacing.item_spacing = vec2(10.0, std::f32::consts::PI * 1.76643);
+            s.spacing.item_spacing = vec2(10.0, f32::consts::PI * 1.76643);
         });
 
         let scene = Arc::new(RwLock::new(None));
@@ -77,7 +78,7 @@ impl App {
             render: Render::new(render_texture, image_buffer),
             properties: Properties::new(),
             statusbar: StatusBar::new(),
-            preview: Preview::new(scene.clone()),
+            preview: Preview::new(Arc::<RwLock<Option<Scene>>>::clone(&scene)),
             render_result: RenderResult::new(),
             yaml_menu: YamlMenu::new(),
             scene,

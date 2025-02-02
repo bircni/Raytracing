@@ -152,7 +152,6 @@ impl Properties {
         });
     }
 
-    #[allow(clippy::blocks_in_conditions)]
     fn skybox_options(&mut self, ui: &mut Ui, scene: &mut Scene) {
         ui.label(format!("{}:", t!("background")));
 
@@ -221,7 +220,7 @@ impl Properties {
         let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
             Path::new(p)
                 .extension()
-                .map_or(false, |ext| ext.eq_ignore_ascii_case("exr"))
+                .is_some_and(|ext| ext.eq_ignore_ascii_case("exr"))
         }));
 
         dialog.open();

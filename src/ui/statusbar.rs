@@ -164,7 +164,7 @@ impl StatusBar {
                 .desired_width(ui.available_width() / 3.0)
                 .text(
                     RichText::new(
-                        #[allow(clippy::float_cmp)]
+                        #[expect(clippy::float_cmp, reason = "We want to compare floats")]
                         if progress == 1.0 {
                             format!(
                                 "{}: {:.2} s",

@@ -1,6 +1,6 @@
 use super::Color;
 use image::RgbImage;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Skybox {
@@ -17,7 +17,7 @@ impl Default for Skybox {
 mod yaml {
     use super::Skybox;
     use crate::scene::Color;
-    use serde::{Deserialize, Serialize};
+    use serde::{de::Error, Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize)]
     pub enum SkyboxDef {
@@ -32,7 +32,7 @@ mod yaml {
         {
             SkyboxDef::deserialize(deserializer).and_then(|yaml_extras| match yaml_extras {
                 SkyboxDef::Path(path) => Self::load_from_path(path)
-                    .map_err(|e| serde::de::Error::custom(format!("Failed to load skybox: {e}"))),
+                    .map_err(|e| Error::custom(format!("Failed to load skybox: {e}"))),
                 SkyboxDef::Color(color) => Ok(Self::Color(color)),
             })
         }
@@ -53,7 +53,7 @@ mod yaml {
 }
 
 impl Skybox {
-    fn load_from_path<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self> {
+    fn load_from_path<P: AsRef<Path>>(path: P) -> anyhow::Result<Self> {
         let image = image::open(path.as_ref())?.into_rgb8();
 
         Ok(Self::Image {

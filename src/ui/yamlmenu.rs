@@ -91,7 +91,7 @@ impl YamlMenu {
             let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
                 Path::new(p)
                     .extension()
-                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
+                    .is_some_and(|ext| ext.eq_ignore_ascii_case("yaml"))
             }));
 
             dialog.open();
@@ -109,7 +109,7 @@ impl YamlMenu {
             let mut dialog = FileDialog::save_file(None).filename_filter(Box::new(|p| {
                 Path::new(p)
                     .extension()
-                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
+                    .is_some_and(|ext| ext.eq_ignore_ascii_case("yaml"))
             }));
 
             dialog.open();
