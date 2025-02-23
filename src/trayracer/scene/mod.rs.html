@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/scene/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="trayracer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0 (90b35a623 2024-11-26)" data-channel="1.83.0" data-search-js="search-f0d225181b97f9a4.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../../../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">trayracer/scene/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/scene/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="trayracer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">trayracer/scene/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -137,13 +137,19 @@
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a></pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
+<a href="#139" id="139">139</a></pre></div><pre class="rust"><code><span class="kw">use </span>std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 <span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>log::warn;
 <span class="kw">use </span>nalgebra::Vector3;
 <span class="kw">use </span>rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-<span class="kw">use </span>serde::{de::DeserializeSeed, Deserialize, Serialize};
+<span class="kw">use </span>serde::{
+    Deserialize, Serialize,
+    de::{DeserializeSeed, Error, Unexpected},
+};
 
 <span class="kw">pub use </span><span class="self">self</span>::{
     camera::Camera, light::Light, material::Material, object::Object, settings::Settings,
@@ -192,11 +198,9 @@
     }
 }
 
-<span class="kw">struct </span>WithRelativePath&lt;P: AsRef&lt;std::path::Path&gt;&gt;(P);
+<span class="kw">struct </span>WithRelativePath&lt;P: AsRef&lt;Path&gt;&gt;(P);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'de</span>, P: AsRef&lt;std::path::Path&gt; + std::marker::Sync&gt; serde::de::DeserializeSeed&lt;<span class="lifetime">'de</span>&gt;
-    <span class="kw">for </span>WithRelativePath&lt;P&gt;
-{
+<span class="kw">impl</span>&lt;<span class="lifetime">'de</span>, P: AsRef&lt;Path&gt; + Sync&gt; DeserializeSeed&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span>WithRelativePath&lt;P&gt; {
     <span class="kw">type </span>Value = Scene;
 
     <span class="kw">fn </span>deserialize&lt;D&gt;(<span class="self">self</span>, deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Value, D::Error&gt;
@@ -207,32 +211,28 @@
 
         <span class="kw">let </span>objects = map
             .get(<span class="string">"models"</span>)
-            .ok_or_else(|| serde::de::Error::missing_field(<span class="string">"models"</span>))<span class="question-mark">?
+            .ok_or_else(|| Error::missing_field(<span class="string">"models"</span>))<span class="question-mark">?
             </span>.as_sequence()
-            .ok_or_else(|| {
-                serde::de::Error::invalid_type(serde::de::Unexpected::Map, <span class="kw-2">&amp;</span><span class="string">"a sequence"</span>)
-            })<span class="question-mark">?
+            .ok_or_else(|| Error::invalid_type(Unexpected::Map, <span class="kw-2">&amp;</span><span class="string">"a sequence"</span>))<span class="question-mark">?
             </span>.par_iter()
             .map(|v| object::WithRelativePath(<span class="self">self</span>.<span class="number">0</span>.as_ref()).deserialize(v))
             .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;Object&gt;, serde_yml::Error&gt;&gt;()
-            .map_err(serde::de::Error::custom)<span class="question-mark">?</span>;
+            .map_err(Error::custom)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>lights = map
             .get(<span class="string">"pointLights"</span>)
-            .ok_or_else(|| serde::de::Error::missing_field(<span class="string">"pointLights"</span>))<span class="question-mark">?
+            .ok_or_else(|| Error::missing_field(<span class="string">"pointLights"</span>))<span class="question-mark">?
             </span>.as_sequence()
-            .ok_or_else(|| {
-                serde::de::Error::invalid_type(serde::de::Unexpected::Map, <span class="kw-2">&amp;</span><span class="string">"a sequence"</span>)
-            })<span class="question-mark">?
+            .ok_or_else(|| Error::invalid_type(Unexpected::Map, <span class="kw-2">&amp;</span><span class="string">"a sequence"</span>))<span class="question-mark">?
             </span>.iter()
             .map(Light::deserialize)
             .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;Light&gt;, serde_yml::Error&gt;&gt;()
-            .map_err(serde::de::Error::custom)<span class="question-mark">?</span>;
+            .map_err(Error::custom)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>camera = map
             .get(<span class="string">"camera"</span>)
-            .ok_or_else(|| serde::de::Error::missing_field(<span class="string">"camera"</span>))<span class="question-mark">?</span>;
-        <span class="kw">let </span>camera = Camera::deserialize(camera).map_err(serde::de::Error::custom)<span class="question-mark">?</span>;
+            .ok_or_else(|| Error::missing_field(<span class="string">"camera"</span>))<span class="question-mark">?</span>;
+        <span class="kw">let </span>camera = Camera::deserialize(camera).map_err(Error::custom)<span class="question-mark">?</span>;
 
         <span class="comment">// dont fail if extraArgs is missing but warn
         </span><span class="kw">let </span>settings = map
@@ -259,8 +259,8 @@
 }
 
 <span class="kw">impl </span>Scene {
-    <span class="kw">pub fn </span>load&lt;P: AsRef&lt;std::path::Path&gt;&gt;(path: P) -&gt; anyhow::Result&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>s = std::fs::read_to_string(path.as_ref()).context(<span class="macro">format!</span>(
+    <span class="kw">pub fn </span>load&lt;P: AsRef&lt;Path&gt;&gt;(path: P) -&gt; anyhow::Result&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">let </span>s = fs::read_to_string(path.as_ref()).context(<span class="macro">format!</span>(
             <span class="string">"Failed to read file from path: {}"</span>,
             path.as_ref().display()
         ))<span class="question-mark">?</span>;

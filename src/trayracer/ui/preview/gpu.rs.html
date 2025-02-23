@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/preview/gpu.rs`."><title>gpu.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="trayracer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0 (90b35a623 2024-11-26)" data-channel="1.83.0" data-search-js="search-f0d225181b97f9a4.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../../../../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">trayracer/ui/preview/</div>gpu.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/preview/gpu.rs`."><title>gpu.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="trayracer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../../../static.files/storage-59e33391.js"></script><script defer src="../../../../static.files/src-script-56102188.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">trayracer/ui/preview/</div>gpu.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -413,25 +413,23 @@
 <a href="#412" id="412">412</a>
 <a href="#413" id="413">413</a>
 <a href="#414" id="414">414</a>
-<a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a></pre></div><pre class="rust"><code><span class="kw">use </span>std::{borrow::Cow, sync::Arc};
+<a href="#415" id="415">415</a></pre></div><pre class="rust"><code><span class="kw">use </span>std::{borrow::Cow, convert, iter, mem, sync::Arc};
 
 <span class="kw">use </span><span class="kw">crate</span>::scene::Scene;
 <span class="kw">use </span>eframe::wgpu::PipelineCompilationOptions;
 <span class="kw">use </span>egui::mutex::RwLock;
 <span class="kw">use </span>egui_wgpu::{
+    CallbackTrait,
     wgpu::{
-        <span class="self">self</span>,
-        util::{BufferInitDescriptor, DeviceExt},
-        BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+        <span class="self">self</span>, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
         BindGroupLayoutEntry, BindingType, Buffer, BufferBindingType, BufferDescriptor,
         BufferUsages, ColorTargetState, ColorWrites, CompareFunction, DepthBiasState,
         DepthStencilState, FragmentState, FrontFace, MultisampleState, PipelineLayoutDescriptor,
         PolygonMode, PrimitiveState, PrimitiveTopology, RenderPipeline, RenderPipelineDescriptor,
         ShaderModuleDescriptor, ShaderSource, ShaderStages, StencilState, TextureFormat,
         VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+        util::{BufferInitDescriptor, DeviceExt},
     },
-    CallbackTrait,
 };
 <span class="kw">use </span>log::debug;
 <span class="kw">use </span>nalgebra::{Isometry3, Perspective3};
@@ -480,9 +478,9 @@
     intensity: f32,
 }
 
-<span class="attr">#[allow(clippy::expect_used)]
+<span class="attr">#[expect(clippy::expect_used, reason = <span class="string">"bytemuck is used for conversion"</span>)]
 </span><span class="kw">impl </span>CallbackTrait <span class="kw">for </span>WgpuPainter {
-    <span class="attr">#[allow(clippy::too_many_lines)]
+    <span class="attr">#[expect(clippy::too_many_lines, reason = <span class="string">"This function is necessary"</span>)]
     </span><span class="kw">fn </span>prepare(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         device: <span class="kw-2">&amp;</span>wgpu::Device,
@@ -532,7 +530,7 @@
                         <span class="kw">let </span>color = m
                             .as_ref()
                             .and_then(|m| m.diffuse_color)
-                            .map_or([<span class="number">0.9</span>; <span class="number">3</span>], std::convert::Into::into);
+                            .map_or([<span class="number">0.9</span>; <span class="number">3</span>], convert::Into::into);
                         [
                             bytemuck::bytes_of(<span class="kw-2">&amp;</span>[t.a.into(), t.a_normal.into(), color]),
                             bytemuck::bytes_of(<span class="kw-2">&amp;</span>(i <span class="kw">as </span>u32)),
@@ -594,7 +592,7 @@
                     intensity: l.intensity,
                     ..Default::default()
                 })
-                .chain(std::iter::repeat(ShaderLight::default()))
+                .chain(iter::repeat(ShaderLight::default()))
                 .take(<span class="self">Self</span>::MAX_LIGHTS)
                 .flat_map(|x| bytemuck::bytes_of(<span class="kw-2">&amp;</span>x).to_vec())
                 .collect::&lt;Vec&lt;u8&gt;&gt;()
@@ -608,7 +606,7 @@
                 .objects
                 .iter()
                 .map(|o| o.transform().to_homogeneous())
-                .chain(std::iter::repeat(Isometry3::identity().to_homogeneous()))
+                .chain(iter::repeat(Isometry3::identity().to_homogeneous()))
                 .take(<span class="self">Self</span>::MAX_OBJECTS)
                 .flat_map(|m| bytemuck::cast_slice(m.as_slice()).to_vec())
                 .collect::&lt;Vec&lt;u8&gt;&gt;()
@@ -641,7 +639,7 @@
 }
 
 <span class="comment">// setup the wgpu pipeline
-</span><span class="attr">#[allow(clippy::too_many_lines)]
+</span><span class="attr">#[expect(clippy::too_many_lines, reason = <span class="string">"This function is necessary"</span>)]
 </span><span class="kw">pub fn </span>init_wgpu(render_state: <span class="kw-2">&amp;</span>egui_wgpu::RenderState) {
     <span class="kw">let </span>device = <span class="kw-2">&amp;</span>render_state.device;
 
@@ -700,7 +698,7 @@
             entry_point: <span class="prelude-val">Some</span>(<span class="string">"vs_main"</span>),
             buffers: <span class="kw-2">&amp;</span>[VertexBufferLayout {
                 <span class="comment">// 3x f32 for position, 3x f32 for normal, 3x f32 for color, 1x u32 for transform index
-                </span>array_stride: std::mem::size_of::&lt;f32&gt;() <span class="kw">as </span>u64 * (<span class="number">3 </span>+ <span class="number">3 </span>+ <span class="number">3 </span>+ <span class="number">1</span>),
+                </span>array_stride: mem::size_of::&lt;f32&gt;() <span class="kw">as </span>u64 * (<span class="number">3 </span>+ <span class="number">3 </span>+ <span class="number">3 </span>+ <span class="number">1</span>),
                 step_mode: VertexStepMode::Vertex,
                 attributes: <span class="kw-2">&amp;</span>[
                     <span class="comment">// position
@@ -712,19 +710,19 @@
                     <span class="comment">// normal
                     </span>VertexAttribute {
                         format: VertexFormat::Float32x3,
-                        offset: std::mem::size_of::&lt;f32&gt;() <span class="kw">as </span>u64 * <span class="number">3</span>,
+                        offset: mem::size_of::&lt;f32&gt;() <span class="kw">as </span>u64 * <span class="number">3</span>,
                         shader_location: <span class="number">1</span>,
                     },
                     <span class="comment">// color
                     </span>VertexAttribute {
                         format: VertexFormat::Float32x3,
-                        offset: std::mem::size_of::&lt;f32&gt;() <span class="kw">as </span>u64 * <span class="number">6</span>,
+                        offset: mem::size_of::&lt;f32&gt;() <span class="kw">as </span>u64 * <span class="number">6</span>,
                         shader_location: <span class="number">2</span>,
                     },
                     <span class="comment">// transform index
                     </span>VertexAttribute {
                         format: VertexFormat::Uint32,
-                        offset: std::mem::size_of::&lt;f32&gt;() <span class="kw">as </span>u64 * <span class="number">9</span>,
+                        offset: mem::size_of::&lt;f32&gt;() <span class="kw">as </span>u64 * <span class="number">9</span>,
                         shader_location: <span class="number">3</span>,
                     },
                 ],
@@ -765,21 +763,21 @@
     <span class="kw">let </span>uniform_buffer = device.create_buffer(<span class="kw-2">&amp;</span>BufferDescriptor {
         label: <span class="prelude-val">Some</span>(<span class="string">"preview uniform buffer"</span>),
         usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-        size: std::mem::size_of::&lt;ShaderUniforms&gt;() <span class="kw">as </span>u64,
+        size: mem::size_of::&lt;ShaderUniforms&gt;() <span class="kw">as </span>u64,
         mapped_at_creation: <span class="bool-val">false</span>,
     });
 
     <span class="kw">let </span>lights_buffer = device.create_buffer(<span class="kw-2">&amp;</span>BufferDescriptor {
         label: <span class="prelude-val">Some</span>(<span class="string">"preview lights buffer"</span>),
         usage: BufferUsages::STORAGE | BufferUsages::COPY_DST,
-        size: std::mem::size_of::&lt;ShaderLight&gt;() <span class="kw">as </span>u64 * WgpuPainter::MAX_LIGHTS <span class="kw">as </span>u64,
+        size: mem::size_of::&lt;ShaderLight&gt;() <span class="kw">as </span>u64 * WgpuPainter::MAX_LIGHTS <span class="kw">as </span>u64,
         mapped_at_creation: <span class="bool-val">false</span>,
     });
 
     <span class="kw">let </span>transforms_buffer = device.create_buffer(<span class="kw-2">&amp;</span>BufferDescriptor {
         label: <span class="prelude-val">Some</span>(<span class="string">"preview transforms buffer"</span>),
         usage: BufferUsages::STORAGE | BufferUsages::COPY_DST,
-        size: std::mem::size_of::&lt;[[f32; <span class="number">4</span>]; <span class="number">4</span>]&gt;() <span class="kw">as </span>u64 * WgpuPainter::MAX_OBJECTS <span class="kw">as </span>u64,
+        size: mem::size_of::&lt;[[f32; <span class="number">4</span>]; <span class="number">4</span>]&gt;() <span class="kw">as </span>u64 * WgpuPainter::MAX_OBJECTS <span class="kw">as </span>u64,
         mapped_at_creation: <span class="bool-val">false</span>,
     });
 
