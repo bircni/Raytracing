@@ -8,8 +8,8 @@ use log::warn;
 use nalgebra::Vector3;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::{
-    de::{DeserializeSeed, Error, Unexpected},
     Deserialize, Serialize,
+    de::{DeserializeSeed, Error, Unexpected},
 };
 
 pub use self::{

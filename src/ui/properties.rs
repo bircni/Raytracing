@@ -1,16 +1,16 @@
 use crate::{
+    Scene,
     raytracer::render::Render,
     scene::{Color, Light, Object, Skybox},
-    Scene,
 };
 use anyhow::Context;
 use egui::{
-    color_picker, hex_color, include_image, Align, Button, CollapsingHeader, DragValue, FontFamily,
-    ImageButton, Layout, RichText, Slider, SliderClamping, Ui,
+    Align, Button, CollapsingHeader, DragValue, FontFamily, ImageButton, Layout, RichText, Slider,
+    SliderClamping, Ui, color_picker, hex_color, include_image,
 };
 use egui_file::FileDialog;
 use log::warn;
-use nalgebra::{coordinates::XYZ, Scale3, Translation3, UnitQuaternion};
+use nalgebra::{Scale3, Translation3, UnitQuaternion, coordinates::XYZ};
 use rust_i18n::t;
 use std::{f32::consts, path::Path};
 

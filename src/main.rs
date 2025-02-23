@@ -1,9 +1,9 @@
 use std::process;
 
 use anyhow::Context;
-use eframe::{icon_data, Renderer};
+use eframe::{Renderer, icon_data};
 use egui::ViewportBuilder;
-use log::{error, info, LevelFilter};
+use log::{LevelFilter, error, info};
 use rust_i18n::i18n;
 use scene::Scene;
 use simplelog::{ColorChoice, ConfigBuilder, TerminalMode};

@@ -1,7 +1,7 @@
 use super::{
+    Color,
     material::{IlluminationModel, Material},
     triangle::Triangle,
-    Color,
 };
 use crate::raytracer::{Hit, Ray};
 use anyhow::Context;
@@ -305,8 +305,8 @@ mod yaml {
 
     use nalgebra::{Point3, Scale3, Translation3, UnitQuaternion, Vector3};
     use serde::{
-        de::{DeserializeSeed, Error},
         Deserialize, Serialize,
+        de::{DeserializeSeed, Error},
     };
 
     use super::{Object, WithRelativePath};

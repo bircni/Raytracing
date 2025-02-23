@@ -9,12 +9,12 @@ use anyhow::Context;
 use eframe::CreationContext;
 use egui::mutex::{Mutex, RwLock};
 use egui::{
-    vec2, CentralPanel, ColorImage, ImageData, ScrollArea, SidePanel, TextStyle, TextureOptions,
+    CentralPanel, ColorImage, ImageData, ScrollArea, SidePanel, TextStyle, TextureOptions, vec2,
 };
 use image::ImageBuffer;
 use std::f32;
-use std::sync::atomic::Ordering;
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use std::thread::JoinHandle;
 
 mod preview;

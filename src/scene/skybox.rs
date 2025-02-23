@@ -17,7 +17,7 @@ impl Default for Skybox {
 mod yaml {
     use super::Skybox;
     use crate::scene::Color;
-    use serde::{de::Error, Deserialize, Serialize};
+    use serde::{Deserialize, Serialize, de::Error};
 
     #[derive(Serialize, Deserialize)]
     pub enum SkyboxDef {

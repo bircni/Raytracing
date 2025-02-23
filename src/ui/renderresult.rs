@@ -1,5 +1,5 @@
 use crate::{raytracer::render::Render, scene::Scene};
-use egui::{pos2, Color32, CornerRadius, CursorIcon, Frame, Rect, Sense, Stroke, Ui, Vec2};
+use egui::{Color32, CornerRadius, CursorIcon, Frame, Rect, Sense, Stroke, Ui, Vec2, pos2};
 
 pub struct RenderResult {
     // zoom factor where 0 is no zoom

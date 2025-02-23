@@ -130,7 +130,7 @@ impl Raytracer {
             .material
             .and_then(|m| m.diffuse_texture.as_ref())
             .map(|map| Self::texture(map, hit.uv))
-            .or_else(|| hit.material.and_then(|m| m.diffuse_color).map(Color::from))
+            .or_else(|| hit.material.and_then(|m| m.diffuse_color))
             .unwrap_or(Self::NO_MATERIAL_COLOR);
 
         let specular_color = hit

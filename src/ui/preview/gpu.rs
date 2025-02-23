@@ -4,18 +4,17 @@ use crate::scene::Scene;
 use eframe::wgpu::PipelineCompilationOptions;
 use egui::mutex::RwLock;
 use egui_wgpu::{
+    CallbackTrait,
     wgpu::{
-        self,
-        util::{BufferInitDescriptor, DeviceExt},
-        BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+        self, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
         BindGroupLayoutEntry, BindingType, Buffer, BufferBindingType, BufferDescriptor,
         BufferUsages, ColorTargetState, ColorWrites, CompareFunction, DepthBiasState,
         DepthStencilState, FragmentState, FrontFace, MultisampleState, PipelineLayoutDescriptor,
         PolygonMode, PrimitiveState, PrimitiveTopology, RenderPipeline, RenderPipelineDescriptor,
         ShaderModuleDescriptor, ShaderSource, ShaderStages, StencilState, TextureFormat,
         VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+        util::{BufferInitDescriptor, DeviceExt},
     },
-    CallbackTrait,
 };
 use log::debug;
 use nalgebra::{Isometry3, Perspective3};

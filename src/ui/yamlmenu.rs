@@ -1,6 +1,6 @@
 use crate::scene::{Camera, Scene, Settings};
 use anyhow::Context;
-use egui::{hex_color, include_image, Align, ImageButton, Layout, RichText, Ui};
+use egui::{Align, ImageButton, Layout, RichText, Ui, hex_color, include_image};
 use egui_file::FileDialog;
 use log::{info, warn};
 use rust_i18n::t;

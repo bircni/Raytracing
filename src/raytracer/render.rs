@@ -1,12 +1,12 @@
 use crate::{raytracer::Raytracer, scene::Scene};
-use egui::{mutex::Mutex, Color32, ColorImage, ImageData, TextureHandle, TextureOptions};
+use egui::{Color32, ColorImage, ImageData, TextureHandle, TextureOptions, mutex::Mutex};
 use image::RgbImage;
 use log::{debug, info};
 use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 use std::{
     sync::{
-        atomic::{AtomicBool, AtomicU16, AtomicU32, AtomicUsize, Ordering},
         Arc,
+        atomic::{AtomicBool, AtomicU16, AtomicU32, AtomicUsize, Ordering},
     },
     thread,
     time::Instant,

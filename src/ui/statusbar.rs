@@ -2,7 +2,7 @@ use std::sync::atomic::Ordering;
 
 use egui::special_emojis::GITHUB;
 use egui::{
-    vec2, Align, Align2, Button, Color32, Frame, Layout, ProgressBar, RichText, Ui, Window,
+    Align, Align2, Button, Color32, Frame, Layout, ProgressBar, RichText, Ui, Window, vec2,
 };
 use egui_file::FileDialog;
 use log::{info, warn};
