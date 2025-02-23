@@ -1,21 +1,20 @@
-use std::{borrow::Cow, sync::Arc};
+use std::{borrow::Cow, convert, iter, mem, sync::Arc};
 
 use crate::scene::Scene;
 use eframe::wgpu::PipelineCompilationOptions;
 use egui::mutex::RwLock;
 use egui_wgpu::{
+    CallbackTrait,
     wgpu::{
-        self,
-        util::{BufferInitDescriptor, DeviceExt},
-        BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+        self, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
         BindGroupLayoutEntry, BindingType, Buffer, BufferBindingType, BufferDescriptor,
         BufferUsages, ColorTargetState, ColorWrites, CompareFunction, DepthBiasState,
         DepthStencilState, FragmentState, FrontFace, MultisampleState, PipelineLayoutDescriptor,
         PolygonMode, PrimitiveState, PrimitiveTopology, RenderPipeline, RenderPipelineDescriptor,
         ShaderModuleDescriptor, ShaderSource, ShaderStages, StencilState, TextureFormat,
         VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+        util::{BufferInitDescriptor, DeviceExt},
     },
-    CallbackTrait,
 };
 use log::debug;
 use nalgebra::{Isometry3, Perspective3};
@@ -64,9 +63,9 @@ struct ShaderLight {
     intensity: f32,
 }
 
-#[allow(clippy::expect_used)]
+#[expect(clippy::expect_used, reason = "bytemuck is used for conversion")]
 impl CallbackTrait for WgpuPainter {
-    #[allow(clippy::too_many_lines)]
+    #[expect(clippy::too_many_lines, reason = "This function is necessary")]
     fn prepare(
         &self,
         device: &wgpu::Device,
@@ -116,7 +115,7 @@ impl CallbackTrait for WgpuPainter {
                         let color = m
                             .as_ref()
                             .and_then(|m| m.diffuse_color)
-                            .map_or([0.9; 3], std::convert::Into::into);
+                            .map_or([0.9; 3], convert::Into::into);
                         [
                             bytemuck::bytes_of(&[t.a.into(), t.a_normal.into(), color]),
                             bytemuck::bytes_of(&(i as u32)),
@@ -178,7 +177,7 @@ impl CallbackTrait for WgpuPainter {
                     intensity: l.intensity,
                     ..Default::default()
                 })
-                .chain(std::iter::repeat(ShaderLight::default()))
+                .chain(iter::repeat(ShaderLight::default()))
                 .take(Self::MAX_LIGHTS)
                 .flat_map(|x| bytemuck::bytes_of(&x).to_vec())
                 .collect::<Vec<u8>>()
@@ -192,7 +191,7 @@ impl CallbackTrait for WgpuPainter {
                 .objects
                 .iter()
                 .map(|o| o.transform().to_homogeneous())
-                .chain(std::iter::repeat(Isometry3::identity().to_homogeneous()))
+                .chain(iter::repeat(Isometry3::identity().to_homogeneous()))
                 .take(Self::MAX_OBJECTS)
                 .flat_map(|m| bytemuck::cast_slice(m.as_slice()).to_vec())
                 .collect::<Vec<u8>>()
@@ -225,7 +224,7 @@ impl CallbackTrait for WgpuPainter {
 }
 
 // setup the wgpu pipeline
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines, reason = "This function is necessary")]
 pub fn init_wgpu(render_state: &egui_wgpu::RenderState) {
     let device = &render_state.device;
 
@@ -284,7 +283,7 @@ pub fn init_wgpu(render_state: &egui_wgpu::RenderState) {
             entry_point: Some("vs_main"),
             buffers: &[VertexBufferLayout {
                 // 3x f32 for position, 3x f32 for normal, 3x f32 for color, 1x u32 for transform index
-                array_stride: std::mem::size_of::<f32>() as u64 * (3 + 3 + 3 + 1),
+                array_stride: mem::size_of::<f32>() as u64 * (3 + 3 + 3 + 1),
                 step_mode: VertexStepMode::Vertex,
                 attributes: &[
                     // position
@@ -296,19 +295,19 @@ pub fn init_wgpu(render_state: &egui_wgpu::RenderState) {
                     // normal
                     VertexAttribute {
                         format: VertexFormat::Float32x3,
-                        offset: std::mem::size_of::<f32>() as u64 * 3,
+                        offset: mem::size_of::<f32>() as u64 * 3,
                         shader_location: 1,
                     },
                     // color
                     VertexAttribute {
                         format: VertexFormat::Float32x3,
-                        offset: std::mem::size_of::<f32>() as u64 * 6,
+                        offset: mem::size_of::<f32>() as u64 * 6,
                         shader_location: 2,
                     },
                     // transform index
                     VertexAttribute {
                         format: VertexFormat::Uint32,
-                        offset: std::mem::size_of::<f32>() as u64 * 9,
+                        offset: mem::size_of::<f32>() as u64 * 9,
                         shader_location: 3,
                     },
                 ],
@@ -349,21 +348,21 @@ pub fn init_wgpu(render_state: &egui_wgpu::RenderState) {
     let uniform_buffer = device.create_buffer(&BufferDescriptor {
         label: Some("preview uniform buffer"),
         usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-        size: std::mem::size_of::<ShaderUniforms>() as u64,
+        size: mem::size_of::<ShaderUniforms>() as u64,
         mapped_at_creation: false,
     });
 
     let lights_buffer = device.create_buffer(&BufferDescriptor {
         label: Some("preview lights buffer"),
         usage: BufferUsages::STORAGE | BufferUsages::COPY_DST,
-        size: std::mem::size_of::<ShaderLight>() as u64 * WgpuPainter::MAX_LIGHTS as u64,
+        size: mem::size_of::<ShaderLight>() as u64 * WgpuPainter::MAX_LIGHTS as u64,
         mapped_at_creation: false,
     });
 
     let transforms_buffer = device.create_buffer(&BufferDescriptor {
         label: Some("preview transforms buffer"),
         usage: BufferUsages::STORAGE | BufferUsages::COPY_DST,
-        size: std::mem::size_of::<[[f32; 4]; 4]>() as u64 * WgpuPainter::MAX_OBJECTS as u64,
+        size: mem::size_of::<[[f32; 4]; 4]>() as u64 * WgpuPainter::MAX_OBJECTS as u64,
         mapped_at_creation: false,
     });
 

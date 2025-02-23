@@ -1,9 +1,9 @@
 use self::gpu::WgpuPainter;
 use crate::scene::{Object, Scene, Skybox};
 use egui::{
-    mutex::RwLock, pos2, Align, Align2, Color32, Context, CursorGrab, DroppedFile, Event, Frame,
-    Id, Key, LayerId, Layout, Order, Pos2, Rect, RichText, Sense, Shape, TextStyle, Ui, Vec2,
-    ViewportCommand,
+    Align, Align2, Color32, Context, CursorGrab, DroppedFile, Event, Frame, Id, Key, LayerId,
+    Layout, Order, Pos2, Rect, RichText, Sense, Shape, TextStyle, Ui, Vec2, ViewportCommand,
+    mutex::RwLock, pos2,
 };
 use egui_wgpu::Callback;
 use log::warn;
@@ -208,6 +208,10 @@ impl Preview {
         }
     }
 
+    #[expect(
+        clippy::wildcard_enum_match_arm,
+        reason = "We want to match all variants"
+    )]
     fn move_camera(&mut self, ui: &Ui, response: &egui::Response, scene: &mut Scene) {
         if ui.input(|i| i.key_pressed(egui::Key::Escape)) && self.active {
             // exit movement mode using ESC

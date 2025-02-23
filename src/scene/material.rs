@@ -10,7 +10,7 @@ pub struct Material {
     pub diffuse_texture: Option<RgbImage>,
     pub illumination_model: IlluminationModel,
     pub dissolve: Option<f32>,
-    #[allow(dead_code)]
+    #[expect(dead_code, reason = "Not implemented")]
     pub refraction_index: Option<f32>,
 }
 

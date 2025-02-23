@@ -1,5 +1,8 @@
 use crate::raytracer::Ray;
-use bvh::{aabb::Bounded, bounding_hierarchy::BHShape};
+use bvh::{
+    aabb::{self, Bounded},
+    bounding_hierarchy::BHShape,
+};
 use nalgebra::{Point3, Vector2, Vector3};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -18,7 +21,7 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments, reason = "This is a necessary constructor")]
     pub const fn new(
         a: Point3<f32>,
         b: Point3<f32>,
@@ -83,8 +86,8 @@ impl Triangle {
 }
 
 impl Bounded<f32, 3> for Triangle {
-    fn aabb(&self) -> bvh::aabb::Aabb<f32, 3> {
-        bvh::aabb::Aabb::empty()
+    fn aabb(&self) -> aabb::Aabb<f32, 3> {
+        aabb::Aabb::empty()
             .grow(&self.a)
             .grow(&self.b)
             .grow(&(self.c + Vector3::new(0.0001, 0.0001, 0.0001)))
