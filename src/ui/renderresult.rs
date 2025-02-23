@@ -1,5 +1,5 @@
 use crate::{raytracer::render::Render, scene::Scene};
-use egui::{pos2, Color32, CursorIcon, Frame, Rect, Rounding, Sense, Stroke, Ui, Vec2};
+use egui::{pos2, Color32, CornerRadius, CursorIcon, Frame, Rect, Sense, Stroke, Ui, Vec2};
 
 pub struct RenderResult {
     // zoom factor where 0 is no zoom
@@ -48,13 +48,14 @@ impl RenderResult {
                             ),
                             Vec2::splat(cell_size),
                         ),
-                        Rounding::default(),
+                        CornerRadius::default(),
                         if (x + y) % 2 == 0 {
                             Color32::GRAY
                         } else {
                             Color32::DARK_GRAY
                         },
                         Stroke::NONE,
+                        egui::StrokeKind::Outside,
                     );
                 }
             }

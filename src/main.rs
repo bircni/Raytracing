@@ -27,7 +27,7 @@ fn main() -> anyhow::Result<()> {
         LevelFilter::Info,
         ConfigBuilder::new()
             // suppress all logs from dependencies
-            .add_filter_allow_str("raytracing")
+            .add_filter_allow_str("trayracer")
             .build(),
         TerminalMode::Mixed,
         ColorChoice::Auto,

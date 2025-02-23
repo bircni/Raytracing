@@ -58,7 +58,7 @@ impl StatusBar {
     }
 
     pub fn about_us_button(&mut self, ui: &mut Ui) {
-        ui.add(Button::new(" ? ").rounding(40.0))
+        ui.add(Button::new(" ? ").corner_radius(40.0))
             .clicked()
             .then(|| {
                 self.show_about = true;
@@ -78,7 +78,7 @@ impl StatusBar {
                     ui.add(
                         egui::Image::new(egui::include_image!("../../res/icon.png"))
                             .shrink_to_fit()
-                            .rounding(10.0),
+                            .corner_radius(10.0),
                     );
 
                     ui.label(format!("{}: {}", t!("version"), env!("CARGO_PKG_VERSION")));
