@@ -1,4 +1,5 @@
 {
     "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.cargo.targetDir": "target-ra",
     "editor.formatOnSave": true
 }

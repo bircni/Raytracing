@@ -2,7 +2,7 @@ use std::sync::atomic::Ordering;
 
 use egui::special_emojis::GITHUB;
 use egui::{
-    vec2, Align, Align2, Button, Color32, Frame, Layout, ProgressBar, RichText, Ui, Window,
+    Align, Align2, Button, Color32, Frame, Layout, ProgressBar, RichText, Ui, Window, vec2,
 };
 use egui_file::FileDialog;
 use log::{info, warn};
@@ -58,7 +58,7 @@ impl StatusBar {
     }
 
     pub fn about_us_button(&mut self, ui: &mut Ui) {
-        ui.add(Button::new(" ? ").rounding(40.0))
+        ui.add(Button::new(" ? ").corner_radius(40.0))
             .clicked()
             .then(|| {
                 self.show_about = true;
@@ -78,7 +78,7 @@ impl StatusBar {
                     ui.add(
                         egui::Image::new(egui::include_image!("../../res/icon.png"))
                             .shrink_to_fit()
-                            .rounding(10.0),
+                            .corner_radius(10.0),
                     );
 
                     ui.label(format!("{}: {}", t!("version"), env!("CARGO_PKG_VERSION")));
@@ -164,7 +164,7 @@ impl StatusBar {
                 .desired_width(ui.available_width() / 3.0)
                 .text(
                     RichText::new(
-                        #[allow(clippy::float_cmp)]
+                        #[expect(clippy::float_cmp, reason = "We want to compare floats")]
                         if progress == 1.0 {
                             format!(
                                 "{}: {:.2} s",

@@ -1,18 +1,22 @@
 use crate::{raytracer::Raytracer, scene::Scene};
-use egui::{mutex::Mutex, Color32, ColorImage, ImageData, TextureHandle, TextureOptions};
+use egui::{Color32, ColorImage, ImageData, TextureHandle, TextureOptions, mutex::Mutex};
 use image::RgbImage;
 use log::{debug, info};
 use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
-use std::sync::{
-    atomic::{AtomicBool, AtomicU16, AtomicU32, AtomicUsize, Ordering},
-    Arc,
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicBool, AtomicU16, AtomicU32, AtomicUsize, Ordering},
+    },
+    thread,
+    time::Instant,
 };
 
 pub struct Render {
     pub texture: TextureHandle,
     /// Progress of the rendering in the range [0, `u16::MAX`]
     pub progress: Arc<AtomicU16>,
-    pub thread: Option<std::thread::JoinHandle<()>>,
+    pub thread: Option<thread::JoinHandle<()>>,
     /// Cancel the rendering if true
     pub cancel: Arc<AtomicBool>,
     pub image: Arc<Mutex<RgbImage>>,
@@ -51,17 +55,17 @@ impl Render {
         self.time.store(0, Ordering::Relaxed);
 
         let args = RenderingThread {
-            cancel: self.cancel.clone(),
+            cancel: Arc::<AtomicBool>::clone(&self.cancel),
             ctx,
             scene: scene.clone(),
-            progress: self.progress.clone(),
+            progress: Arc::<AtomicU16>::clone(&self.progress),
             texture: self.texture.clone(),
-            image: self.image.clone(),
-            time: self.time.clone(),
+            image: Arc::<Mutex<RgbImage>>::clone(&self.image),
+            time: Arc::<AtomicU32>::clone(&self.time),
         };
 
         // spawn rendering thread
-        self.thread = Some(std::thread::spawn(move || {
+        self.thread = Some(thread::spawn(move || {
             args.run();
         }));
     }
@@ -83,10 +87,13 @@ struct RenderingThread {
 }
 
 impl RenderingThread {
-    #[allow(clippy::significant_drop_tightening)]
+    #[expect(
+        clippy::significant_drop_tightening,
+        reason = "no need to drop the texture"
+    )]
     /// main rendering thread
     fn run(self) {
-        let start = std::time::Instant::now();
+        let start = Instant::now();
 
         let (width, height) = self.image.lock().dimensions();
 
