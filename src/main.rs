@@ -56,7 +56,7 @@ fn main() -> anyhow::Result<()> {
         },
         Box::new(|cc| {
             Ok(Box::new(ui::App::new(cc).unwrap_or_else(|e| {
-                error!("Failed to create app: {}", e);
+                error!("Failed to create app: {e}");
                 process::exit(1);
             })))
         }),

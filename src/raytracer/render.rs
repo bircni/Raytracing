@@ -38,7 +38,7 @@ impl Render {
 
     pub fn render(&mut self, ctx: egui::Context, scene: &Scene) {
         let rsize = scene.camera.resolution;
-        info!("Rendering scene with resolution {:?}", rsize);
+        info!("Rendering scene with resolution {rsize:?}");
 
         // resize texture and image buffer to match the new resolution
         self.texture.set(
