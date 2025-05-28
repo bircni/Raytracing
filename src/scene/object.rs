@@ -31,8 +31,8 @@ pub struct Object {
 fn load_texture<P: AsRef<Path>>(path: P) -> anyhow::Result<RgbImage> {
     Ok(image::open(path.as_ref())
         .context(format!(
-            "Failed to load image from path: {:?}",
-            path.as_ref()
+            "Failed to load image from path: {}",
+            path.as_ref().display()
         ))?
         .into_rgb8())
 }
@@ -91,7 +91,7 @@ impl Object {
                         .and_then(|p| {
                             load_texture(p.as_path())
                                 .map_err(|e| {
-                                    warn!("Failed to load texture from path: {:?}: {}", p, e);
+                                    warn!("Failed to load texture from path: {}: {e}", p.display());
                                 })
                                 .ok()
                         })

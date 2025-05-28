@@ -157,7 +157,7 @@ impl Preview {
             Some("yaml" | "yml") => {
                 Scene::load(path).map_or_else(
                     |e| {
-                        warn!("Failed to load scene: {}", e);
+                        warn!("Failed to load scene: {e}");
                     },
                     |s| {
                         scene.replace(s);
@@ -173,7 +173,7 @@ impl Preview {
                         Scale3::identity(),
                     ) {
                         Ok(object) => scene.objects.push(object),
-                        Err(e) => warn!("Failed to load object: {}", e),
+                        Err(e) => warn!("Failed to load object: {e}"),
                     }
                 }
             }
