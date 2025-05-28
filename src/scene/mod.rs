@@ -101,7 +101,7 @@ impl<'de, P: AsRef<Path> + Sync> DeserializeSeed<'de> for WithRelativePath<P> {
             .map(Settings::deserialize)
             .transpose()
             .map_err(|e| {
-                warn!("Failed to deserialize extraArgs: {}", e);
+                warn!("Failed to deserialize extraArgs: {e}");
                 e
             })
             .unwrap_or_default()

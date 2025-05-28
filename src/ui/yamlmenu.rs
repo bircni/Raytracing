@@ -27,7 +27,7 @@ impl YamlMenu {
                     info!("Loading scene from {}", p.display());
                     Scene::load(p)
                         .map_err(|e| {
-                            warn!("{}", e);
+                            warn!("{e}");
                         })
                         .map(|s| {
                             scene.replace(s);
@@ -174,7 +174,7 @@ impl YamlMenu {
                             Ok(s) => {
                                 scene.replace(s);
                             }
-                            Err(e) => warn!("{}", e),
+                            Err(e) => warn!("{e}"),
                         }
                     }
                 });
@@ -191,7 +191,7 @@ impl YamlMenu {
                         fs::write(scene.path.as_path(), str).context("Failed to save config")
                     })
                     .unwrap_or_else(|e| {
-                        warn!("{}", e);
+                        warn!("{e}");
                     });
             }
             None => {

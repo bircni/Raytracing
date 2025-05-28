@@ -175,7 +175,7 @@ impl Properties {
                         scene.settings.skybox = skybox;
                     }
                     Err(e) => {
-                        warn!("Failed to load skybox: {}", e);
+                        warn!("Failed to load skybox: {e}");
                     }
                 }
 
@@ -404,7 +404,7 @@ impl Properties {
                                         Ok(object) => {
                                             scene.objects.push(object);
                                         }
-                                        Err(e) => warn!("Failed to load object: {}", e),
+                                        Err(e) => warn!("Failed to load object: {e}"),
                                     }
                                 }
                             }

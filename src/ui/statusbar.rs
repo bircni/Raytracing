@@ -120,9 +120,9 @@ impl StatusBar {
             if dialog.show(ui.ctx()).selected() {
                 match dialog.path() {
                     Some(path) => {
-                        log::info!("Saving image to {:?}", path);
+                        log::info!("Saving image to {}", path.display());
                         render.image.lock().save(path).unwrap_or_else(|e| {
-                            warn!("Failed to save image: {}", e);
+                            warn!("Failed to save image: {e}");
                         });
                     }
                     None => {
