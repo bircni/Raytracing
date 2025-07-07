@@ -155,8 +155,8 @@ impl Properties {
     fn skybox_options(&mut self, ui: &mut Ui, scene: &mut Scene) {
         ui.label(format!("{}:", t!("background")));
 
-        if let Some(dialog) = &mut self.skybox_dialog {
-            if dialog.show(ui.ctx()).selected() {
+        if let Some(dialog) = &mut self.skybox_dialog
+            && dialog.show(ui.ctx()).selected() {
                 match (|| {
                     let path = dialog
                         .path()
@@ -181,7 +181,6 @@ impl Properties {
 
                 self.skybox_dialog = None;
             }
-        }
 
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
@@ -392,9 +391,9 @@ impl Properties {
                             self.object_dialog = Some(dialog);
                         }
 
-                        if let Some(dialog) = &mut self.object_dialog {
-                            if dialog.show(ui.ctx()).selected() {
-                                if let Some(file) = dialog.path() {
+                        if let Some(dialog) = &mut self.object_dialog
+                            && dialog.show(ui.ctx()).selected()
+                                && let Some(file) = dialog.path() {
                                     match Object::from_obj(
                                         file,
                                         Translation3::identity(),
@@ -407,8 +406,6 @@ impl Properties {
                                         Err(e) => warn!("Failed to load object: {e}"),
                                     }
                                 }
-                            }
-                        }
                     });
                 });
             });

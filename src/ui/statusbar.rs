@@ -116,8 +116,8 @@ impl StatusBar {
                 .open();
         }
 
-        if let Some(dialog) = self.save_render_dialog.as_mut() {
-            if dialog.show(ui.ctx()).selected() {
+        if let Some(dialog) = self.save_render_dialog.as_mut()
+            && dialog.show(ui.ctx()).selected() {
                 match dialog.path() {
                     Some(path) => {
                         log::info!("Saving image to {}", path.display());
@@ -130,7 +130,6 @@ impl StatusBar {
                     }
                 }
             }
-        }
     }
 
     pub fn render_button(

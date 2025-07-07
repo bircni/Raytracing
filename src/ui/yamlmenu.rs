@@ -21,8 +21,8 @@ impl YamlMenu {
 
     pub fn show(&mut self, scene: &mut Option<Scene>, ui: &mut Ui) {
         // show open yaml dialog if present
-        if let Some(d) = self.open_yaml_dialog.as_mut() {
-            if d.show(ui.ctx()).selected() {
+        if let Some(d) = self.open_yaml_dialog.as_mut()
+            && d.show(ui.ctx()).selected() {
                 if let Some(p) = d.path() {
                     info!("Loading scene from {}", p.display());
                     Scene::load(p)
@@ -39,11 +39,10 @@ impl YamlMenu {
 
                 self.open_yaml_dialog = None;
             }
-        }
 
         // show create yaml dialog if present
-        if let Some(d) = self.create_yaml_dialog.as_mut() {
-            if d.show(ui.ctx()).selected() {
+        if let Some(d) = self.create_yaml_dialog.as_mut()
+            && d.show(ui.ctx()).selected() {
                 match d.path() {
                     Some(p) => {
                         info!("Created new scene at {}", p.display());
@@ -64,7 +63,6 @@ impl YamlMenu {
 
                 self.create_yaml_dialog = None;
             }
-        }
 
         ui.horizontal(|ui| {
             ui.heading(t!("yaml"));

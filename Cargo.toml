@@ -64,7 +64,7 @@ obj = "0.10"
 
 # automatic parallelization
 rayon = "1.10"
-bytemuck = { version = "1.21", features = ["derive"] }
+bytemuck = { version = "1.23", features = ["derive"] }
 
 # total order for floats
 ordered-float = "5.0"

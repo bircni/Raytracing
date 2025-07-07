@@ -100,13 +100,12 @@ impl Raytracer {
         while let Some(hit) = self.raycast(ray) {
             hits.push(hit.clone());
 
-            if let Some(material) = hit.material {
-                if material.illumination_model.transparency() {
+            if let Some(material) = hit.material
+                && material.illumination_model.transparency() {
                     // hochwissenschaftliche Formel
                     ray.origin += ray.direction * 0.05;
                     continue;
                 }
-            }
             break;
         }
 

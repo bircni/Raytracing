@@ -49,7 +49,7 @@ impl RenderResult {
                             Vec2::splat(cell_size),
                         ),
                         CornerRadius::default(),
-                        if (x + y) % 2 == 0 {
+                        if (x + y).is_multiple_of(2) {
                             Color32::GRAY
                         } else {
                             Color32::DARK_GRAY
