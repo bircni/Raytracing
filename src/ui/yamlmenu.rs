@@ -21,49 +21,49 @@ impl YamlMenu {
 
     pub fn show(&mut self, scene: &mut Option<Scene>, ui: &mut Ui) {
         // show open yaml dialog if present
-        if let Some(d) = self.open_yaml_dialog.as_mut() {
-            if d.show(ui.ctx()).selected() {
-                if let Some(p) = d.path() {
-                    info!("Loading scene from {}", p.display());
-                    Scene::load(p)
-                        .map_err(|e| {
-                            warn!("{e}");
-                        })
-                        .map(|s| {
-                            scene.replace(s);
-                        })
-                        .ok();
-                } else {
-                    warn!("Open yaml dialog selected but returned no path");
-                }
-
-                self.open_yaml_dialog = None;
+        if let Some(d) = self.open_yaml_dialog.as_mut()
+            && d.show(ui.ctx()).selected()
+        {
+            if let Some(p) = d.path() {
+                info!("Loading scene from {}", p.display());
+                Scene::load(p)
+                    .map_err(|e| {
+                        warn!("{e}");
+                    })
+                    .map(|s| {
+                        scene.replace(s);
+                    })
+                    .ok();
+            } else {
+                warn!("Open yaml dialog selected but returned no path");
             }
+
+            self.open_yaml_dialog = None;
         }
 
         // show create yaml dialog if present
-        if let Some(d) = self.create_yaml_dialog.as_mut() {
-            if d.show(ui.ctx()).selected() {
-                match d.path() {
-                    Some(p) => {
-                        info!("Created new scene at {}", p.display());
-                        scene.replace(Scene {
-                            path: p.to_path_buf(),
-                            objects: vec![],
-                            lights: vec![],
-                            camera: Camera::default(),
-                            settings: Settings::default(),
-                        });
+        if let Some(d) = self.create_yaml_dialog.as_mut()
+            && d.show(ui.ctx()).selected()
+        {
+            match d.path() {
+                Some(p) => {
+                    info!("Created new scene at {}", p.display());
+                    scene.replace(Scene {
+                        path: p.to_path_buf(),
+                        objects: vec![],
+                        lights: vec![],
+                        camera: Camera::default(),
+                        settings: Settings::default(),
+                    });
 
-                        Self::save_scene(scene.as_ref());
-                    }
-                    None => {
-                        warn!("Create yaml dialog selected but returned no path");
-                    }
+                    Self::save_scene(scene.as_ref());
                 }
-
-                self.create_yaml_dialog = None;
+                None => {
+                    warn!("Create yaml dialog selected but returned no path");
+                }
             }
+
+            self.create_yaml_dialog = None;
         }
 
         ui.horizontal(|ui| {
