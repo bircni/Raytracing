@@ -83,7 +83,7 @@ eframe = { version = "0.31", features = [
 ], default-features = false }
 egui = { version = "0.31", features = ["log", "color-hex"] }
 egui-wgpu = { version = "0.31" }
-egui_file = "0.22"
+egui_file = "0.24"
 egui_extras = { version = "0.31", features = ["svg", "image"] }
 
 # BVH
