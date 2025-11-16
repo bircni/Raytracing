@@ -84,7 +84,7 @@ eframe = { version = "0.31", features = [
 egui = { version = "0.31", features = ["log", "color-hex"] }
 egui-wgpu = { version = "0.31" }
 egui_file = "0.22"
-egui_extras = { version = "0.31", features = ["svg", "image"] }
+egui_extras = { version = "0.33", features = ["svg", "image"] }
 
 # BVH
 bvh = "0.11.0"
