@@ -56,7 +56,7 @@ log = "0.4"
 simplelog = "0.12"
 
 # linear algebra
-nalgebra = { version = "0.33", features = ["glam022"] }
+nalgebra = { version = "0.34", features = ["glam022"] }
 rand = "0.9"
 
 # obj file loading
