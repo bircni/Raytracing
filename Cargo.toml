@@ -87,7 +87,7 @@ egui_file = "0.22"
 egui_extras = { version = "0.31", features = ["svg", "image"] }
 
 # BVH
-bvh = "0.11.0"
+bvh = "0.12.0"
 rust-i18n = "3.1.5"
 sys-locale = "0.3.2"
 
