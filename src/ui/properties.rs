@@ -155,32 +155,32 @@ impl Properties {
     fn skybox_options(&mut self, ui: &mut Ui, scene: &mut Scene) {
         ui.label(format!("{}:", t!("background")));
 
-        if let Some(dialog) = &mut self.skybox_dialog {
-            if dialog.show(ui.ctx()).selected() {
-                match (|| {
-                    let path = dialog
-                        .path()
-                        .ok_or_else(|| anyhow::anyhow!("No path selected"))?;
+        if let Some(dialog) = &mut self.skybox_dialog
+            && dialog.show(ui.ctx()).selected()
+        {
+            match (|| {
+                let path = dialog
+                    .path()
+                    .ok_or_else(|| anyhow::anyhow!("No path selected"))?;
 
-                    let image = image::open(path)
-                        .context("Failed to open image")?
-                        .into_rgb8();
+                let image = image::open(path)
+                    .context("Failed to open image")?
+                    .into_rgb8();
 
-                    Ok::<_, anyhow::Error>(Skybox::Image {
-                        path: path.to_path_buf(),
-                        image,
-                    })
-                })() {
-                    Ok(skybox) => {
-                        scene.settings.skybox = skybox;
-                    }
-                    Err(e) => {
-                        warn!("Failed to load skybox: {e}");
-                    }
+                Ok::<_, anyhow::Error>(Skybox::Image {
+                    path: path.to_path_buf(),
+                    image,
+                })
+            })() {
+                Ok(skybox) => {
+                    scene.settings.skybox = skybox;
                 }
-
-                self.skybox_dialog = None;
+                Err(e) => {
+                    warn!("Failed to load skybox: {e}");
+                }
             }
+
+            self.skybox_dialog = None;
         }
 
         ui.vertical(|ui| {
@@ -392,21 +392,20 @@ impl Properties {
                             self.object_dialog = Some(dialog);
                         }
 
-                        if let Some(dialog) = &mut self.object_dialog {
-                            if dialog.show(ui.ctx()).selected() {
-                                if let Some(file) = dialog.path() {
-                                    match Object::from_obj(
-                                        file,
-                                        Translation3::identity(),
-                                        UnitQuaternion::identity(),
-                                        Scale3::identity(),
-                                    ) {
-                                        Ok(object) => {
-                                            scene.objects.push(object);
-                                        }
-                                        Err(e) => warn!("Failed to load object: {e}"),
-                                    }
+                        if let Some(dialog) = &mut self.object_dialog
+                            && dialog.show(ui.ctx()).selected()
+                            && let Some(file) = dialog.path()
+                        {
+                            match Object::from_obj(
+                                file,
+                                Translation3::identity(),
+                                UnitQuaternion::identity(),
+                                Scale3::identity(),
+                            ) {
+                                Ok(object) => {
+                                    scene.objects.push(object);
                                 }
+                                Err(e) => warn!("Failed to load object: {e}"),
                             }
                         }
                     });

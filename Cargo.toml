@@ -56,40 +56,43 @@ log = "0.4"
 simplelog = "0.12"
 
 # linear algebra
-nalgebra = { version = "0.33", features = ["glam022"] }
+nalgebra = { version = "0.34", features = ["glam022"] }
 rand = "0.9"
 
 # obj file loading
 obj = "0.10"
 
 # automatic parallelization
-rayon = "1.10"
-bytemuck = { version = "1.21", features = ["derive"] }
+rayon = "1.11"
+bytemuck = { version = "1.24", features = ["derive"] }
 
 # total order for floats
-ordered-float = "5.0"
+ordered-float = "5.1"
 
 # generic serialization / deserialization
 serde = { version = "1", features = ["derive"] }
 serde_yml = "0.0.12"
 
 # GUI
-eframe = { version = "0.31", features = [
+eframe = { version = "0.33", features = [
     "wgpu",
     "accesskit",
     "default_fonts",
     "wayland",
     "x11",
 ], default-features = false }
-egui = { version = "0.31", features = ["log", "color-hex"] }
-egui-wgpu = { version = "0.31" }
-egui_file = "0.22"
-egui_extras = { version = "0.31", features = ["svg", "image"] }
+egui = { version = "0.33", features = ["color-hex"] }
+egui-wgpu = { version = "0.33" }
+egui_file = "0.24"
+egui_extras = { version = "0.33", features = ["svg", "image"] }
 
 # BVH
 bvh = "0.11.0"
 rust-i18n = "3.1.5"
 sys-locale = "0.3.2"
+
+[patch.crates-io]
+bvh = { git = "https://github.com/svenstaro/bvh", rev = "8005e043cb3eca95de3fab630f0c3fabbd708c1e" }
 
 [build-dependencies]
 anyhow = "1"
