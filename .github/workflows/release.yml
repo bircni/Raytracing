@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: taiki-e/upload-rust-binary-action@v1.21.1
+      - uses: taiki-e/upload-rust-binary-action@v1.27.0
         with:
           bin: raytracing
           tar: unix

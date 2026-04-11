@@ -42,10 +42,10 @@ impl Render {
 
         // resize texture and image buffer to match the new resolution
         self.texture.set(
-            ImageData::Color(Arc::new(ColorImage {
-                size: [rsize.0 as usize, rsize.1 as usize],
-                pixels: vec![Color32::BLACK; (rsize.0 * rsize.1) as usize],
-            })),
+            ImageData::Color(Arc::new(ColorImage::new(
+                [rsize.0 as usize, rsize.1 as usize],
+                vec![Color32::BLACK; (rsize.0 * rsize.1) as usize],
+            ))),
             TextureOptions::default(),
         );
         *self.image.lock() = RgbImage::new(rsize.0, rsize.1);
@@ -159,10 +159,10 @@ impl RenderingThread {
                         (x_block * block_size[0]) as usize,
                         (y_block * block_size[1]) as usize,
                     ],
-                    ImageData::Color(Arc::new(ColorImage {
-                        size: [block_size[0] as usize, block_size[1] as usize],
-                        pixels: pixels.clone(),
-                    })),
+                    ImageData::Color(Arc::new(ColorImage::new(
+                        [block_size[0] as usize, block_size[1] as usize],
+                        pixels.clone(),
+                    ))),
                     TextureOptions::default(),
                 );
 

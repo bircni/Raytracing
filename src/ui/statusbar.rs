@@ -105,7 +105,7 @@ impl StatusBar {
             self.save_render_dialog
                 .get_or_insert_with(|| {
                     let (x, y) = render.image.lock().dimensions();
-                    FileDialog::save_file(None)
+                    FileDialog::save_file()
                         .default_filename(format!("render_{x}x{y}.png"))
                         .filename_filter(Box::new(|name| {
                             [".png", ".jpg", ".jpeg"]
@@ -116,18 +116,18 @@ impl StatusBar {
                 .open();
         }
 
-        if let Some(dialog) = self.save_render_dialog.as_mut() {
-            if dialog.show(ui.ctx()).selected() {
-                match dialog.path() {
-                    Some(path) => {
-                        log::info!("Saving image to {}", path.display());
-                        render.image.lock().save(path).unwrap_or_else(|e| {
-                            warn!("Failed to save image: {e}");
-                        });
-                    }
-                    None => {
-                        warn!("Save dialog returned no path");
-                    }
+        if let Some(dialog) = self.save_render_dialog.as_mut()
+            && dialog.show(ui.ctx()).selected()
+        {
+            match dialog.path() {
+                Some(path) => {
+                    log::info!("Saving image to {}", path.display());
+                    render.image.lock().save(path).unwrap_or_else(|e| {
+                        warn!("Failed to save image: {e}");
+                    });
+                }
+                None => {
+                    warn!("Save dialog returned no path");
                 }
             }
         }

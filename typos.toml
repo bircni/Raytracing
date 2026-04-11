@@ -1,2 +1,2 @@
 [files]
-extend-exclude = ["locales/*"]
+extend-exclude = ["locales/*", "res/*"]

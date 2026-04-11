@@ -1,3 +1,7 @@
+#![expect(
+    deprecated,
+    reason = "ImageButton is deprecated but doesn't have all the new features yet"
+)]
 use std::process;
 
 use anyhow::Context;
