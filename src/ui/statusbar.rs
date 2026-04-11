@@ -105,7 +105,7 @@ impl StatusBar {
             self.save_render_dialog
                 .get_or_insert_with(|| {
                     let (x, y) = render.image.lock().dimensions();
-                    FileDialog::save_file(None)
+                    FileDialog::save_file()
                         .default_filename(format!("render_{x}x{y}.png"))
                         .filename_filter(Box::new(|name| {
                             [".png", ".jpg", ".jpeg"]

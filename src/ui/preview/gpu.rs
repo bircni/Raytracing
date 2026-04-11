@@ -271,8 +271,8 @@ pub fn init_wgpu(render_state: &egui_wgpu::RenderState) {
 
     let pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
         label: Some("preview pipeline layout"),
-        bind_group_layouts: &[&bind_group_layout],
-        push_constant_ranges: &[],
+        bind_group_layouts: &[Some(&bind_group_layout)],
+        immediate_size: 0,
     });
 
     let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
@@ -335,13 +335,13 @@ pub fn init_wgpu(render_state: &egui_wgpu::RenderState) {
         },
         depth_stencil: Some(DepthStencilState {
             format: TextureFormat::Depth32Float,
-            depth_write_enabled: true,
-            depth_compare: CompareFunction::Less,
+            depth_write_enabled: Some(true),
+            depth_compare: Some(CompareFunction::Less),
             stencil: StencilState::default(),
             bias: DepthBiasState::default(),
         }),
         multisample: MultisampleState::default(),
-        multiview: None,
+        multiview_mask: None,
         cache: None,
     });
 

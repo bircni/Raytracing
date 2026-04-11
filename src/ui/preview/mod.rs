@@ -246,7 +246,7 @@ impl Preview {
             scene.camera.position + (new_point - scene.camera.position).normalize();
 
         scene.camera.fov = ui
-            .input(|i| i.raw_scroll_delta.y)
+            .input(|i| i.smooth_scroll_delta.y)
             .mul_add(-0.001, scene.camera.fov)
             .clamp(0.0_f32.to_radians(), 180.0_f32.to_radians());
 

@@ -88,7 +88,7 @@ impl YamlMenu {
             .as_ref()
             .is_some_and(egui_file::FileDialog::visible)
         {
-            let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
+            let mut dialog = FileDialog::open_file().filename_filter(Box::new(|p| {
                 Path::new(p)
                     .extension()
                     .is_some_and(|ext| ext.eq_ignore_ascii_case("yaml"))
@@ -106,7 +106,7 @@ impl YamlMenu {
             .as_ref()
             .is_some_and(egui_file::FileDialog::visible)
         {
-            let mut dialog = FileDialog::save_file(None).filename_filter(Box::new(|p| {
+            let mut dialog = FileDialog::save_file().filename_filter(Box::new(|p| {
                 Path::new(p)
                     .extension()
                     .is_some_and(|ext| ext.eq_ignore_ascii_case("yaml"))

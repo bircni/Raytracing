@@ -217,7 +217,7 @@ impl Properties {
     }
 
     fn load_skybox_img(&mut self) {
-        let mut dialog = FileDialog::open_file(None).filename_filter(Box::new(|p| {
+        let mut dialog = FileDialog::open_file().filename_filter(Box::new(|p| {
             Path::new(p)
                 .extension()
                 .is_some_and(|ext| ext.eq_ignore_ascii_case("exr"))
@@ -384,7 +384,7 @@ impl Properties {
                             .clicked()
                         {
                             let mut dialog =
-                                FileDialog::open_file(None).show_files_filter(Box::new(|path| {
+                                FileDialog::open_file().show_files_filter(Box::new(|path| {
                                     path.extension()
                                         .is_some_and(|ext| ext.eq_ignore_ascii_case("obj"))
                                 }));

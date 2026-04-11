@@ -88,7 +88,7 @@ impl App {
 
 /// Main application loop (called every frame)
 impl eframe::App for App {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         // check if the render thread has finished and reset it
         self.render
             .thread
@@ -101,7 +101,7 @@ impl eframe::App for App {
 
         // lock the scene for the duration of the frame
         let mut scene = self.scene.write();
-        CentralPanel::default().show(ctx, |ui| {
+        CentralPanel::default().show(ui.ctx(), |ui| {
             self.statusbar
                 .show(ui, scene.as_mut(), &mut self.render, &mut self.current_tab);
 
