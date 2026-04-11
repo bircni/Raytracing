@@ -12,11 +12,11 @@ use serde::{
     de::{DeserializeSeed, Error, Unexpected},
 };
 
+pub use self::triangle::Triangle;
 pub use self::{
     camera::Camera, light::Light, material::Material, object::Object, settings::Settings,
     skybox::Skybox,
 };
-pub use self::triangle::Triangle;
 
 mod camera;
 mod light;

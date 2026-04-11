@@ -131,9 +131,7 @@ fn build_atlas(materials: &[&Material]) -> (RgbImage, Vec<AtlasEntry>) {
 
 fn pack_material(m: &Material, entry: &AtlasEntry) -> GpuMaterial {
     GpuMaterial {
-        diffuse_color: m
-            .diffuse_color
-            .map_or([0.9, 0.9, 0.9], |c| [c.x, c.y, c.z]),
+        diffuse_color: m.diffuse_color.map_or([0.9, 0.9, 0.9], |c| [c.x, c.y, c.z]),
         specular_exponent: m.specular_exponent.unwrap_or(1.0),
         specular_color: m
             .specular_color

@@ -6,13 +6,13 @@ use crate::raytracer::{gpu::GpuRaytrace, render::Render};
 use crate::scene::Scene;
 use crate::ui::properties::Properties;
 use anyhow::Context;
-use log::warn;
 use eframe::CreationContext;
 use egui::mutex::{Mutex, RwLock};
 use egui::{
     CentralPanel, ColorImage, ImageData, ScrollArea, SidePanel, TextStyle, TextureOptions, vec2,
 };
 use image::ImageBuffer;
+use log::warn;
 use std::f32;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
@@ -62,15 +62,16 @@ impl App {
         );
         let image_buffer = Arc::new(Mutex::new(ImageBuffer::new(0, 0)));
 
-        let gpu = cc.wgpu_render_state.as_ref().and_then(|rs| {
-            match GpuRaytrace::new(rs) {
+        let gpu = cc
+            .wgpu_render_state
+            .as_ref()
+            .and_then(|rs| match GpuRaytrace::new(rs) {
                 Ok(g) => Some(Arc::new(g)),
                 Err(e) => {
                     warn!("GPU raytracing unavailable, using CPU: {e:#}");
                     None
                 }
-            }
-        });
+            });
 
         cc.egui_ctx.style_mut(|s| {
             s.text_styles.insert(
