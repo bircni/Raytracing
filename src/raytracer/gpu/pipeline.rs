@@ -5,6 +5,7 @@ use std::{
         Arc,
         atomic::{AtomicBool, AtomicU16, AtomicU32, Ordering},
     },
+    thread,
     time::Instant,
 };
 
@@ -12,7 +13,7 @@ use anyhow::Context;
 use bytemuck::cast_slice;
 use egui::{Color32, ColorImage, ImageData, TextureHandle, TextureOptions, mutex::Mutex};
 use image::RgbImage;
-use log::info;
+use log::{info, warn};
 use nalgebra::Rotation3;
 use wgpu::util::DeviceExt;
 
@@ -22,6 +23,27 @@ use super::scene::{GpuSceneData, build_gpu_scene};
 use super::types::{GpuGlobals, GpuLight};
 
 const MAX_LIGHTS: usize = 64;
+
+/// Caps samples/pixel on the GPU path.
+///
+/// The render thread shares the same wgpu queue as egui. Very high sample counts keep the GPU busy
+/// and can exhaust queue staging memory — egui then fails `write_buffer_with` (panic in
+/// `egui_wgpu::Renderer::update`). Large resolutions also hit TDR / VRAM limits. Use the CPU path
+/// for high sample counts or full-quality AA.
+fn gpu_max_samples_for_resolution(width: u32, height: u32) -> u32 {
+    let pixels = u64::from(width).saturating_mul(u64::from(height));
+    if pixels <= 2_073_600 {
+        // up to ~1080p — keep conservative; 128×AA here starves egui staging
+        32
+    } else if pixels <= 8_294_400 {
+        // up to ~4K
+        16
+    } else if pixels <= 16_588_800 {
+        12
+    } else {
+        8
+    }
+}
 
 pub struct GpuRaytrace {
     device: wgpu::Device,
@@ -349,7 +371,19 @@ impl GpuRaytrace {
         let aspect = width as f32 / height as f32;
 
         let aa = scene.settings.anti_aliasing;
-        let samples = scene.settings.samples.max(1);
+        let requested = scene.settings.samples.max(1);
+        let heuristic_cap = gpu_max_samples_for_resolution(width, height);
+        let cap = scene
+            .settings
+            .gpu_max_samples
+            .unwrap_or(heuristic_cap)
+            .max(1);
+        let samples = requested.min(cap);
+        if requested > cap {
+            warn!(
+                "GPU raytrace: anti-alias samples {requested} exceed cap {cap} (heuristic default {heuristic_cap} unless `gpu_max_samples` is set in scene settings); using {samples}. Use CPU render for more."
+            );
+        }
         let sqrt_samples = (samples as f32).sqrt().floor() as u32;
         let sqrt_samples = sqrt_samples.max(1);
 
@@ -442,12 +476,14 @@ impl GpuRaytrace {
                 self.queue.submit(std::iter::once(encoder.finish()));
                 let _ = self.device.poll(wgpu::PollType::wait_indefinitely());
 
-                staging.slice(..).map_async(wgpu::MapMode::Read, |_| {});
+                staging
+                    .slice(0..this_copy_bytes)
+                    .map_async(wgpu::MapMode::Read, |_| {});
                 let _ = self.device.poll(wgpu::PollType::wait_indefinitely());
 
-                let view = staging.slice(..).get_mapped_range();
+                let view = staging.slice(0..this_copy_bytes).get_mapped_range();
                 let mapped: &[u8] = &view;
-                let floats: &[[f32; 4]] = bytemuck::cast_slice(&mapped[..this_copy_bytes as usize]);
+                let floats: &[[f32; 4]] = bytemuck::cast_slice(mapped);
                 let mut pixels = Vec::with_capacity(this_pixels);
                 for p in floats.iter().take(this_pixels) {
                     let r = (p[0].clamp(0.0, 1.0) * 255.0) as u8;
@@ -465,6 +501,9 @@ impl GpuRaytrace {
                 }
                 drop(view);
                 staging.unmap();
+
+                // Let the UI thread run a frame before we queue more GPU work + egui uploads.
+                thread::yield_now();
 
                 texture.set_partial(
                     [ox as usize, oy as usize],

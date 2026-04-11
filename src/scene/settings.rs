@@ -9,6 +9,9 @@ pub struct Settings {
     pub ambient_intensity: f32,
     pub skybox: Skybox,
     pub anti_aliasing: bool,
+    /// When set, caps GPU anti-alias samples to this value instead of the built-in resolution-based limit.
+    /// Higher values (e.g. 64–128) can trigger GPU timeouts or egui upload failures on busy scenes; use CPU render if unstable.
+    pub gpu_max_samples: Option<u32>,
 }
 
 impl Default for Settings {
@@ -20,6 +23,7 @@ impl Default for Settings {
             ambient_intensity: 0.2,
             skybox: Skybox::default(),
             anti_aliasing: false,
+            gpu_max_samples: None,
         }
     }
 }
@@ -38,6 +42,8 @@ mod yaml {
         pub ambient_color: Color,
         pub skybox: Skybox,
         pub anti_aliasing: bool,
+        #[serde(default)]
+        pub gpu_max_samples: Option<u32>,
     }
 
     impl<'de> Deserialize<'de> for Settings {
@@ -55,6 +61,7 @@ mod yaml {
                 ambient_intensity: yaml_extras.ambient_color.norm(),
                 skybox: yaml_extras.skybox,
                 anti_aliasing: yaml_extras.anti_aliasing,
+                gpu_max_samples: yaml_extras.gpu_max_samples,
             })
         }
     }
@@ -70,6 +77,7 @@ mod yaml {
                 ambient_color: self.ambient_color * self.ambient_intensity,
                 skybox: self.skybox.clone(),
                 anti_aliasing: self.anti_aliasing,
+                gpu_max_samples: self.gpu_max_samples,
             }
             .serialize(serializer)
         }
