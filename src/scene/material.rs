@@ -40,6 +40,10 @@ impl IlluminationModel {
         }
     }
 
+    pub const fn as_i32(self) -> i32 {
+        self.0
+    }
+
     pub const fn specular(self) -> bool {
         self.0 == 2
     }

@@ -1,7 +1,10 @@
-use crate::{raytracer::Raytracer, scene::Scene};
+use crate::{
+    raytracer::{Raytracer, gpu::GpuRaytrace},
+    scene::Scene,
+};
 use egui::{Color32, ColorImage, ImageData, TextureHandle, TextureOptions, mutex::Mutex};
 use image::RgbImage;
-use log::{debug, info};
+use log::{debug, error, info};
 use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 use std::{
     sync::{
@@ -22,10 +25,15 @@ pub struct Render {
     pub image: Arc<Mutex<RgbImage>>,
     /// Write the rendering time in milliseconds
     pub time: Arc<AtomicU32>,
+    pub gpu: Option<Arc<GpuRaytrace>>,
 }
 
 impl Render {
-    pub fn new(texture: TextureHandle, image: Arc<Mutex<RgbImage>>) -> Self {
+    pub fn new(
+        texture: TextureHandle,
+        image: Arc<Mutex<RgbImage>>,
+        gpu: Option<Arc<GpuRaytrace>>,
+    ) -> Self {
         Self {
             texture,
             progress: Arc::new(AtomicU16::new(0)),
@@ -33,6 +41,7 @@ impl Render {
             cancel: Arc::new(AtomicBool::new(false)),
             image,
             time: Arc::new(AtomicU32::new(0)),
+            gpu,
         }
     }
 
@@ -62,6 +71,7 @@ impl Render {
             texture: self.texture.clone(),
             image: Arc::<Mutex<RgbImage>>::clone(&self.image),
             time: Arc::<AtomicU32>::clone(&self.time),
+            gpu: self.gpu.clone(),
         };
 
         // spawn rendering thread
@@ -84,6 +94,7 @@ struct RenderingThread {
     progress: Arc<AtomicU16>,
     /// Write the rendering time in milliseconds
     time: Arc<AtomicU32>,
+    gpu: Option<Arc<GpuRaytrace>>,
 }
 
 impl RenderingThread {
@@ -93,6 +104,22 @@ impl RenderingThread {
     )]
     /// main rendering thread
     fn run(self) {
+        if let Some(gpu) = self.gpu {
+            match gpu.render(
+                &self.scene,
+                self.texture.clone(),
+                &self.image,
+                &self.ctx,
+                &self.cancel,
+                &self.progress,
+                &self.time,
+            ) {
+                Ok(()) => {}
+                Err(e) => error!("GPU render failed: {e:#}"),
+            }
+            return;
+        }
+
         let start = Instant::now();
 
         let (width, height) = self.image.lock().dimensions();
@@ -102,7 +129,8 @@ impl RenderingThread {
         // the resolution is not a multiple of 20
         let block_size = [width / 20, height / 20];
         let anti_aliasing = self.scene.settings.anti_aliasing;
-        let raytracer = Raytracer::new(self.scene, 1e-5, 5);
+        let max_bounces = self.scene.settings.max_bounces;
+        let raytracer = Raytracer::new(self.scene, 1e-5, max_bounces);
 
         let blocks_rendered = AtomicUsize::new(0);
 

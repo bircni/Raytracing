@@ -2,10 +2,11 @@ use self::preview::Preview;
 use self::renderresult::RenderResult;
 use self::statusbar::StatusBar;
 use self::yamlmenu::YamlMenu;
-use crate::raytracer::render::Render;
+use crate::raytracer::{gpu::GpuRaytrace, render::Render};
 use crate::scene::Scene;
 use crate::ui::properties::Properties;
 use anyhow::Context;
+use log::warn;
 use eframe::CreationContext;
 use egui::mutex::{Mutex, RwLock};
 use egui::{
@@ -61,6 +62,16 @@ impl App {
         );
         let image_buffer = Arc::new(Mutex::new(ImageBuffer::new(0, 0)));
 
+        let gpu = cc.wgpu_render_state.as_ref().and_then(|rs| {
+            match GpuRaytrace::new(rs) {
+                Ok(g) => Some(Arc::new(g)),
+                Err(e) => {
+                    warn!("GPU raytracing unavailable, using CPU: {e:#}");
+                    None
+                }
+            }
+        });
+
         cc.egui_ctx.style_mut(|s| {
             s.text_styles.insert(
                 TextStyle::Name("subheading".into()),
@@ -75,7 +86,7 @@ impl App {
 
         Ok(Self {
             current_tab: Tab::Preview,
-            render: Render::new(render_texture, image_buffer),
+            render: Render::new(render_texture, image_buffer, gpu),
             properties: Properties::new(),
             statusbar: StatusBar::new(),
             preview: Preview::new(Arc::<RwLock<Option<Scene>>>::clone(&scene)),

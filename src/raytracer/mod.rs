@@ -5,6 +5,7 @@ use ordered_float::OrderedFloat;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::f32;
 
+pub mod gpu;
 pub mod render;
 
 #[derive(Debug, Clone, Copy, PartialEq)]

@@ -3,10 +3,12 @@
     reason = "ImageButton is deprecated but doesn't have all the new features yet"
 )]
 use std::process;
+use std::sync::Arc;
 
 use anyhow::Context;
-use eframe::{Renderer, icon_data};
+use eframe::Renderer;
 use egui::ViewportBuilder;
+use egui_wgpu::WgpuSetup;
 use log::{LevelFilter, error, info};
 use rust_i18n::i18n;
 use scene::Scene;
@@ -46,18 +48,40 @@ fn main() -> anyhow::Result<()> {
         .with_app_id("raytracer")
         .with_inner_size(egui::vec2(1600.0, 900.0))
         .with_icon(
-            icon_data::from_png_bytes(include_bytes!("../res/icon.png")).unwrap_or_default(),
+            eframe::icon_data::from_png_bytes(include_bytes!("../res/icon.png"))
+                .unwrap_or_default(),
         );
+
+    let mut native_options = eframe::NativeOptions {
+        viewport,
+        renderer: Renderer::Wgpu,
+        depth_buffer: 32,
+        centered: true,
+        ..Default::default()
+    };
+
+    if let WgpuSetup::CreateNew(ref mut create_new) = native_options.wgpu_options.wgpu_setup {
+        let prev = Arc::clone(&create_new.device_descriptor);
+        create_new.device_descriptor = Arc::new(move |adapter| {
+            let mut desc = prev(adapter);
+            let al = adapter.limits();
+            // Default WebGPU-style cap is 128 MiB; GPU raytrace triangle storage can exceed that.
+            let want: u64 = 512 << 20;
+            desc.required_limits.max_storage_buffer_binding_size = desc
+                .required_limits
+                .max_storage_buffer_binding_size
+                .max(want.min(al.max_storage_buffer_binding_size));
+            desc.required_limits.max_buffer_size = desc
+                .required_limits
+                .max_buffer_size
+                .max(want.min(al.max_buffer_size));
+            desc
+        });
+    }
 
     eframe::run_native(
         "TrayRacer",
-        eframe::NativeOptions {
-            viewport,
-            renderer: Renderer::Wgpu,
-            depth_buffer: 32,
-            centered: true,
-            ..Default::default()
-        },
+        native_options,
         Box::new(|cc| {
             Ok(Box::new(ui::App::new(cc).unwrap_or_else(|e| {
                 error!("Failed to create app: {e}");
